@@ -12,7 +12,7 @@ import type { MaskRegion, UseEditorReturn } from "../types";
  * @returns {UseEditorReturn} 領域管理の状態と操作関数
  */
 export function useEditor(): UseEditorReturn {
-  const [regions, setRegions] = useState<MaskRegion[]>([]);
+  const [regions, setRegionsState] = useState<MaskRegion[]>([]);
 
   /**
    * 領域の有効/無効を切り替える
@@ -20,7 +20,9 @@ export function useEditor(): UseEditorReturn {
    * @param id - 切り替える領域のID
    */
   const toggleRegion = useCallback((id: string) => {
-    setRegions((prev) => prev.map((r) => (r.id === id ? { ...r, isEnabled: !r.isEnabled } : r)));
+    setRegionsState((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, isEnabled: !r.isEnabled } : r))
+    );
   }, []);
 
   /**
@@ -34,7 +36,25 @@ export function useEditor(): UseEditorReturn {
       id: crypto.randomUUID(),
       isEnabled: true,
     };
-    setRegions((prev) => [...prev, newRegion]);
+    setRegionsState((prev) => [...prev, newRegion]);
+  }, []);
+
+  /**
+   * 複数の領域を一括でセットする（既存領域は置き換え）
+   *
+   * 検出結果などをまとめて反映する際に使用し、
+   * 複数回の addRegion 呼び出しによる余分な再レンダリングを防ぐ。
+   *
+   * @param newRegions - 設定する領域の配列（id と isEnabled を除く）
+   */
+  const setRegions = useCallback((newRegions: Omit<MaskRegion, "id" | "isEnabled">[]) => {
+    setRegionsState(
+      newRegions.map((r) => ({
+        ...r,
+        id: crypto.randomUUID(),
+        isEnabled: true,
+      }))
+    );
   }, []);
 
   /**
@@ -43,15 +63,22 @@ export function useEditor(): UseEditorReturn {
    * @param id - 削除する領域のID
    */
   const removeRegion = useCallback((id: string) => {
-    setRegions((prev) => prev.filter((r) => r.id !== id));
+    setRegionsState((prev) => prev.filter((r) => r.id !== id));
   }, []);
 
   /**
    * すべての領域をリセットする
    */
   const resetRegions = useCallback(() => {
-    setRegions([]);
+    setRegionsState([]);
   }, []);
 
-  return { regions, toggleRegion, addRegion, removeRegion, resetRegions };
+  return {
+    regions,
+    toggleRegion,
+    addRegion,
+    setRegions,
+    removeRegion,
+    resetRegions,
+  };
 }

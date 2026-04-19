@@ -77,9 +77,17 @@ export function EditorCanvas({
       const canvas = canvasRef.current;
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
-      const scale = scaleRef.current;
-      const clickX = (e.clientX - rect.left) / scale;
-      const clickY = (e.clientY - rect.top) / scale;
+      const imageScale = scaleRef.current;
+
+      /**
+       * CSSによる表示スケールと画像スケールの両方を考慮して
+       * クリック位置を元画像の座標系に変換する。
+       * cssScaleX = canvas の CSS 表示幅 / canvas の実ピクセル幅
+       */
+      const cssScaleX = rect.width / canvas.width;
+      const cssScaleY = rect.height / canvas.height;
+      const clickX = (e.clientX - rect.left) / cssScaleX / imageScale;
+      const clickY = (e.clientY - rect.top) / cssScaleY / imageScale;
 
       for (const region of regions) {
         if (

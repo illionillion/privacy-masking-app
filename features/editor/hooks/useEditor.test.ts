@@ -57,6 +57,23 @@ describe("useEditor", () => {
     expect(result.current.regions).toHaveLength(0);
   });
 
+  it("setRegions で複数領域を一括セットできる", () => {
+    vi.stubGlobal("crypto", {
+      randomUUID: vi.fn().mockReturnValueOnce("bulk-1").mockReturnValueOnce("bulk-2"),
+    });
+    const { result } = renderHook(() => useEditor());
+    act(() => {
+      result.current.setRegions([
+        { x: 0, y: 0, width: 50, height: 50, type: "face" },
+        { x: 10, y: 10, width: 30, height: 30, type: "manual" },
+      ]);
+    });
+    expect(result.current.regions).toHaveLength(2);
+    expect(result.current.regions[0].id).toBe("bulk-1");
+    expect(result.current.regions[1].id).toBe("bulk-2");
+    expect(result.current.regions[0].isEnabled).toBe(true);
+  });
+
   it("resetRegions ですべての領域をリセットできる", () => {
     vi.stubGlobal("crypto", {
       randomUUID: vi.fn().mockReturnValueOnce("id-1").mockReturnValueOnce("id-2"),

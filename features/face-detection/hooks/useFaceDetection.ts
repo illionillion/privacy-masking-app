@@ -7,7 +7,7 @@ import type { FaceDetectionResult, UseFaceDetectionReturn } from "../types";
 const MODEL_URL = "/models";
 
 /**
- * 顔検出フックs
+ * 顔検出フック
  *
  * face-api.js の TinyFaceDetector を使用して、
  * モデルのロードと顔検出処理を提供する。

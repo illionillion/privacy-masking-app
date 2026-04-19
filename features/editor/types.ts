@@ -31,6 +31,8 @@ export interface UseEditorReturn {
   toggleRegion: (id: string) => void;
   /** 領域を追加する */
   addRegion: (region: Omit<MaskRegion, "id" | "isEnabled">) => void;
+  /** 複数の領域を一括でセットする（既存領域は置き換え） */
+  setRegions: (regions: Omit<MaskRegion, "id" | "isEnabled">[]) => void;
   /** 領域を削除する */
   removeRegion: (id: string) => void;
   /** すべての領域をリセットする */

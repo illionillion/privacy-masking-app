@@ -75,6 +75,7 @@ export function ImageUpload({ onUpload, disabled = false }: ImageUploadProps) {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) handleFile(file);
+      // 同じファイルを連続で選択できるよう、入力値をリセットする
       e.target.value = "";
     },
     [handleFile]

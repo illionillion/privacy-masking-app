@@ -23,21 +23,17 @@ export function MaskingEditor() {
     error: detectionError,
     detectFaces,
   } = useFaceDetection();
-  const { addRegion, resetRegions } = useEditor();
+  const { setRegions, resetRegions } = useEditor();
 
   /** ファイルアップロード時の処理 */
-  const handleUpload = useCallback(
-    (file: File) => {
-      setImageFile(file);
-      resetRegions();
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImageDataUrl(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    },
-    [resetRegions]
-  );
+  const handleUpload = useCallback((file: File) => {
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImageDataUrl(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  }, []);
 
   /** 画像ロード完了後、自動で顔検出を実行 */
   useEffect(() => {
@@ -51,13 +47,18 @@ export function MaskingEditor() {
     img.src = imageDataUrl;
   }, [imageDataUrl, isModelLoading, detectFaces]);
 
-  /** 検出結果をエディター領域に登録 */
+  /** 検出結果をエディター領域に一括登録 */
   useEffect(() => {
-    resetRegions();
-    for (const det of detections) {
-      addRegion({ x: det.x, y: det.y, width: det.width, height: det.height, type: "face" });
-    }
-  }, [detections, addRegion, resetRegions]);
+    setRegions(
+      detections.map((det) => ({
+        x: det.x,
+        y: det.y,
+        width: det.width,
+        height: det.height,
+        type: "face" as const,
+      }))
+    );
+  }, [detections, setRegions]);
 
   /** 再検出ボタン */
   const handleRedetect = useCallback(async () => {
