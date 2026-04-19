@@ -193,11 +193,20 @@ export function MaskingGallery() {
 
     const fetchAll = downloadableImages.map(async (image) => {
       const res = await fetch(image.maskedDataUrl as string);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch masked image: ${image.name}`);
+      }
       const buffer = await res.arrayBuffer();
       return { name: createDownloadFileName(image.name), data: new Uint8Array(buffer) };
     });
 
-    void Promise.all(fetchAll).then((entries) => {
+    void Promise.allSettled(fetchAll).then((results) => {
+      const entries = results.flatMap((result) =>
+        result.status === "fulfilled" ? [result.value] : []
+      );
+
+      if (entries.length === 0) return;
+
       /** 同名ファイルが複数ある場合に連番サフィックスを付与 */
       const nameCounts = new Map<string, number>();
       const fileMap: Record<string, Uint8Array> = {};
@@ -212,7 +221,7 @@ export function MaskingGallery() {
 
       zip(fileMap, (err, data) => {
         if (err) return;
-        const blob = new Blob([data.buffer as ArrayBuffer], { type: "application/zip" });
+        const blob = new Blob([data as Uint8Array<ArrayBuffer>], { type: "application/zip" });
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement("a");
         anchor.href = url;
