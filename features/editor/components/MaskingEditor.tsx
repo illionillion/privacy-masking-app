@@ -1,10 +1,76 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import clsx from "clsx";
 import { ImageUpload } from "@/components/ImageUpload";
-import { FaceDetectionCanvas, useFaceDetection } from "@/features/face-detection";
+import {
+  FaceDetectionCanvas,
+  useFaceDetection,
+  type FaceDetectionResult,
+} from "@/features/face-detection";
 import { useEditor } from "../hooks/useEditor";
+
+interface EditorImageItem {
+  id: string;
+  name: string;
+  size: number;
+  imageDataUrl: string;
+  detections: FaceDetectionResult[];
+  maskedDataUrl: string | null;
+}
+
+/**
+ * File を Data URL へ変換する
+ *
+ * @param file - 変換対象の画像ファイル
+ * @returns Data URL
+ */
+const readFileAsDataUrl = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result;
+      if (typeof result === "string") {
+        resolve(result);
+        return;
+      }
+      reject(new Error("画像の読み込みに失敗しました"));
+    };
+    reader.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
+    reader.readAsDataURL(file);
+  });
+};
+
+/**
+ * 画像URLから HTMLImageElement を生成する
+ *
+ * @param src - 画像のData URL
+ * @returns 読み込み済みのHTMLImageElement
+ */
+const loadImageElement = (src: string): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
+    img.src = src;
+  });
+};
+
+/**
+ * ダウンロード時のファイル名を生成する
+ *
+ * @param originalName - 元ファイル名
+ * @returns マスク済みファイル名
+ */
+const createDownloadFileName = (originalName: string): string => {
+  const extensionIndex = originalName.lastIndexOf(".");
+  if (extensionIndex <= 0) {
+    return `${originalName}-masked.png`;
+  }
+
+  const basename = originalName.slice(0, extensionIndex);
+  return `${basename}-masked.png`;
+};
 
 /**
  * メインマスキングエディターコンポーネント
@@ -13,49 +79,22 @@ import { useEditor } from "../hooks/useEditor";
  * 将来的な編集UI（手動追加・削除・ON/OFF切替）の受け口となる。
  */
 export function MaskingEditor() {
-  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
-  const {
-    isModelLoading,
-    isDetecting,
-    detections,
-    error: detectionError,
-    detectFaces,
-  } = useFaceDetection();
+  const [images, setImages] = useState<EditorImageItem[]>([]);
+  const [activeImageId, setActiveImageId] = useState<string | null>(null);
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+  const { isModelLoading, isDetecting, error: detectionError, detectFaces } = useFaceDetection();
   const { setRegions, resetRegions } = useEditor();
 
-  /** ファイルアップロード時の処理 */
-  const handleUpload = useCallback((file: File) => {
-    setImageFile(file);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result;
-      if (typeof result === "string") {
-        setImageDataUrl(result);
-        return;
-      }
-      setImageDataUrl(null);
-    };
-    reader.readAsDataURL(file);
-  }, []);
-
-  /** 画像ロード完了後、自動で顔検出を実行 */
+  /** アクティブ画像の検出結果をエディター領域に同期 */
   useEffect(() => {
-    if (!imageDataUrl || isModelLoading) return;
+    const activeImage = images.find((image) => image.id === activeImageId);
+    if (!activeImage) {
+      resetRegions();
+      return;
+    }
 
-    const img = new Image();
-    img.onload = async () => {
-      imgRef.current = img;
-      await detectFaces(img);
-    };
-    img.src = imageDataUrl;
-  }, [imageDataUrl, isModelLoading, detectFaces]);
-
-  /** 検出結果をエディター領域に一括登録 */
-  useEffect(() => {
     setRegions(
-      detections.map((det) => ({
+      activeImage.detections.map((det) => ({
         x: det.x,
         y: det.y,
         width: det.width,
@@ -63,19 +102,117 @@ export function MaskingEditor() {
         type: "face" as const,
       }))
     );
-  }, [detections, setRegions]);
+  }, [images, activeImageId, setRegions, resetRegions]);
 
-  /** 再検出ボタン */
-  const handleRedetect = useCallback(async () => {
-    if (imgRef.current) {
-      await detectFaces(imgRef.current);
-    }
-  }, [detectFaces]);
+  /**
+   * ファイルアップロード時の処理
+   *
+   * @param files - アップロードされた画像ファイル一覧
+   */
+  const handleUpload = useCallback(
+    async (files: File[]) => {
+      if (files.length === 0 || isModelLoading) return;
+
+      setIsBatchProcessing(true);
+      try {
+        const uploadedAt = Date.now();
+        const nextImages: EditorImageItem[] = [];
+
+        for (const [index, file] of files.entries()) {
+          try {
+            const imageDataUrl = await readFileAsDataUrl(file);
+            const imageElement = await loadImageElement(imageDataUrl);
+            const detections = await detectFaces(imageElement);
+
+            nextImages.push({
+              id: `${file.name}-${file.lastModified}-${file.size}-${uploadedAt}-${index}`,
+              name: file.name,
+              size: file.size,
+              imageDataUrl,
+              detections,
+              maskedDataUrl: null,
+            });
+          } catch {
+            continue;
+          }
+        }
+
+        if (nextImages.length > 0) {
+          setImages((prev) => [...prev, ...nextImages]);
+          setActiveImageId((prev) => prev ?? nextImages[0]?.id ?? null);
+        }
+      } finally {
+        setIsBatchProcessing(false);
+      }
+    },
+    [detectFaces, isModelLoading]
+  );
+
+  /**
+   * 個別画像を再検出する
+   *
+   * @param imageId - 再検出対象画像ID
+   */
+  const handleRedetect = useCallback(
+    async (imageId: string) => {
+      const target = images.find((image) => image.id === imageId);
+      if (!target || isModelLoading) return;
+
+      try {
+        const imageElement = await loadImageElement(target.imageDataUrl);
+        const detections = await detectFaces(imageElement);
+
+        setImages((prev) =>
+          prev.map((image) =>
+            image.id === imageId
+              ? {
+                  ...image,
+                  detections,
+                  maskedDataUrl: null,
+                }
+              : image
+          )
+        );
+      } catch {
+        return;
+      }
+    },
+    [images, detectFaces, isModelLoading]
+  );
+
+  /**
+   * Canvas描画後の画像を保持する
+   *
+   * @param imageId - 対象画像ID
+   * @param dataUrl - 描画済みData URL
+   */
+  const handleRendered = useCallback((imageId: string, dataUrl: string) => {
+    setImages((prev) =>
+      prev.map((image) => {
+        if (image.id !== imageId || image.maskedDataUrl === dataUrl) {
+          return image;
+        }
+
+        return {
+          ...image,
+          maskedDataUrl: dataUrl,
+        };
+      })
+    );
+  }, []);
+
+  /** 全画像をクリアする */
+  const handleClearAll = useCallback(() => {
+    setImages([]);
+    setActiveImageId(null);
+    resetRegions();
+  }, [resetRegions]);
+
+  const isProcessing = isBatchProcessing || isDetecting;
 
   return (
     <div className="flex flex-col gap-6">
-      {/* ステータスバー */}
-      {isModelLoading && (
+      {(isModelLoading || isBatchProcessing) && (
         <div
           role="status"
           className="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700"
@@ -83,75 +220,104 @@ export function MaskingEditor() {
           <span className="animate-spin" aria-hidden="true">
             ⏳
           </span>
-          <span>顔検出モデルをロード中…</span>
+          <span>
+            {isModelLoading
+              ? "顔検出モデルをロード中…"
+              : "画像を処理中です。しばらくお待ちください…"}
+          </span>
         </div>
       )}
 
-      {/* 画像アップロード（未選択時のみ表示） */}
-      {!imageDataUrl && <ImageUpload onUpload={handleUpload} disabled={isModelLoading} />}
+      <ImageUpload onUpload={handleUpload} disabled={isProcessing || isModelLoading} multiple />
 
-      {/* Canvas表示エリア */}
-      {imageDataUrl && (
+      {detectionError && (
+        <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+          エラー: {detectionError}
+        </p>
+      )}
+
+      {images.length > 0 && (
         <div className="flex flex-col gap-4">
-          {/* ツールバー */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-zinc-600">
-              {isDetecting ? (
-                <span className="flex items-center gap-1">
-                  <span className="animate-spin" aria-hidden="true">
-                    🔍
-                  </span>
-                  顔を検出中…
-                </span>
-              ) : (
-                `検出結果: ${detections.length} 件の顔を検出`
-              )}
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleRedetect}
-                disabled={isDetecting || isModelLoading}
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-zinc-600">処理済み: {images.length} 枚</p>
+            <button
+              type="button"
+              onClick={handleClearAll}
+              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+            >
+              すべてクリア
+            </button>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {images.map((image) => (
+              <section
+                key={image.id}
                 className={clsx([
-                  "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-                  "bg-blue-600 text-white hover:bg-blue-700",
-                  (isDetecting || isModelLoading) && "cursor-not-allowed opacity-50",
+                  "rounded-xl border bg-white p-4 transition-colors",
+                  "cursor-pointer hover:border-blue-200",
+                  image.id === activeImageId ? "border-blue-300" : "border-zinc-200",
                 ])}
+                onClick={() => setActiveImageId(image.id)}
               >
-                再検出
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setImageDataUrl(null);
-                  setImageFile(null);
-                  resetRegions();
-                }}
-                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
-              >
-                別の画像を選択
-              </button>
-            </div>
+                <div className="flex items-center justify-between gap-2">
+                  <p
+                    className={clsx([
+                      "truncate text-left text-sm font-medium",
+                      image.id === activeImageId ? "text-blue-700" : "text-zinc-700",
+                    ])}
+                    title={image.name}
+                  >
+                    {image.name}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleRedetect(image.id);
+                    }}
+                    disabled={isProcessing || isModelLoading}
+                    className={clsx([
+                      "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                      "bg-blue-600 text-white hover:bg-blue-700",
+                      (isProcessing || isModelLoading) && "cursor-not-allowed opacity-50",
+                    ])}
+                  >
+                    再検出
+                  </button>
+                </div>
+
+                <p className="mt-2 text-xs text-zinc-500">検出結果: {image.detections.length} 件</p>
+
+                <div className="mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                  <FaceDetectionCanvas
+                    imageDataUrl={image.imageDataUrl}
+                    detections={image.detections}
+                    onRendered={(dataUrl) => {
+                      handleRendered(image.id, dataUrl);
+                    }}
+                  />
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <p className="text-xs text-zinc-400">
+                    {(image.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+
+                  {image.maskedDataUrl ? (
+                    <a
+                      href={image.maskedDataUrl}
+                      download={createDownloadFileName(image.name)}
+                      className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
+                    >
+                      ダウンロード
+                    </a>
+                  ) : (
+                    <span className="text-xs text-zinc-400">描画中…</span>
+                  )}
+                </div>
+              </section>
+            ))}
           </div>
-
-          {/* エラー表示 */}
-          {detectionError && (
-            <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-              エラー: {detectionError}
-            </p>
-          )}
-
-          {/* Canvas */}
-          <div className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 p-2">
-            <FaceDetectionCanvas imageDataUrl={imageDataUrl} detections={detections} />
-          </div>
-
-          {/* ファイル情報 */}
-          {imageFile && (
-            <p className="text-xs text-zinc-400">
-              {imageFile.name} ({(imageFile.size / 1024 / 1024).toFixed(2)} MB)
-            </p>
-          )}
         </div>
       )}
     </div>

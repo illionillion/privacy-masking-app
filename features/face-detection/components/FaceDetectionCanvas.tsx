@@ -10,22 +10,46 @@ interface FaceDetectionCanvasProps {
   detections: FaceDetectionResult[];
   /** Canvasの最大表示幅 */
   maxWidth?: number;
+  /** 描画完了時のデータURL通知 */
+  onRendered?: (dataUrl: string) => void;
 }
+
+/** スタンプ画像のパス一覧 */
+const STAMP_PATHS = [
+  "/stamps/beaming_face_with_smiling_eyes-64.png",
+  "/stamps/face_with_tears_of_joy-64.png",
+  "/stamps/grinning_face-64.png",
+  "/stamps/grinning_face_with_big_eyes-64.png",
+  "/stamps/grinning_face_with_smiling_eyes-64.png",
+  "/stamps/grinning_squinting_face-64.png",
+  "/stamps/rolling_on_the_floor_laughing-64.png",
+  "/stamps/smiling_face_with_halo-64.png",
+  "/stamps/smiling_face_with_hearts-64.png",
+  "/stamps/smiling_face_with_smiling_eyes-64.png",
+  "/stamps/winking_face-64.png",
+];
 
 /**
  * 顔検出結果を表示するCanvasコンポーネント
  *
  * アップロードされた画像を描画し、検出された顔の領域に
- * 緑色の矩形を重ねて表示する。
+ * ランダムに選ばれたスタンプ画像を重ねて表示する。
  */
 export function FaceDetectionCanvas({
   imageDataUrl,
   detections,
   maxWidth = 800,
+  onRendered,
 }: FaceDetectionCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const onRenderedRef = useRef(onRendered);
 
   useEffect(() => {
+    onRenderedRef.current = onRendered;
+  }, [onRendered]);
+
+  useEffect(() => {
+    let isCancelled = false;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -34,6 +58,7 @@ export function FaceDetectionCanvas({
 
     const img = new Image();
     img.onload = () => {
+      if (isCancelled) return;
       /** 表示スケールを計算 */
       const scale = Math.min(1, maxWidth / img.width);
       canvas.width = img.width * scale;
@@ -41,29 +66,45 @@ export function FaceDetectionCanvas({
 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-      /** 検出矩形を描画 */
-      ctx.strokeStyle = "#22c55e";
-      ctx.lineWidth = Math.max(2, scale * 2);
-      ctx.font = `${Math.max(12, scale * 14)}px sans-serif`;
-      ctx.fillStyle = "#22c55e";
+      /** スタンプ画像を全て先読みしてから各顔領域にランダム描画 */
+      const stampPromises = STAMP_PATHS.map((src) => {
+        return new Promise<HTMLImageElement>((resolve, reject) => {
+          const si = new Image();
+          si.onload = () => resolve(si);
+          si.onerror = reject;
+          si.src = src;
+        });
+      });
 
-      for (const det of detections) {
-        const x = det.x * scale;
-        const y = det.y * scale;
-        const w = det.width * scale;
-        const h = det.height * scale;
+      void Promise.all(stampPromises)
+        .then((stamps) => {
+          if (isCancelled) return;
+          for (const det of detections) {
+            const cx = (det.x + det.width / 2) * scale;
+            const cy = (det.y + det.height / 2) * scale;
+            const size = Math.max(det.width, det.height) * scale;
+            const stamp = stamps[Math.floor(Math.random() * stamps.length)];
+            ctx.drawImage(stamp, cx - size / 2, cy - size / 2, size, size);
+          }
 
-        ctx.strokeRect(x, y, w, h);
-
-        /** スコアラベルを描画 */
-        const label = `${Math.round(det.score * 100)}%`;
-        ctx.fillText(label, x + 2, y > 16 ? y - 4 : y + h + 16);
-      }
+          onRenderedRef.current?.(canvas.toDataURL("image/png"));
+        })
+        .catch(() => {
+          if (isCancelled) return;
+          onRenderedRef.current?.(canvas.toDataURL("image/png"));
+        });
     };
     img.src = imageDataUrl;
+
+    return () => {
+      isCancelled = true;
+    };
   }, [imageDataUrl, detections, maxWidth]);
 
   return (
-    <canvas ref={canvasRef} className="max-w-full rounded-lg border border-zinc-200 shadow-sm" />
+    <canvas
+      ref={canvasRef}
+      className="h-auto max-w-full rounded-lg border border-zinc-200 shadow-sm"
+    />
   );
 }

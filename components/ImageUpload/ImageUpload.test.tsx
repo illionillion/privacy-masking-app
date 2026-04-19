@@ -15,7 +15,7 @@ describe("ImageUpload", () => {
   it("ガイドテキストが表示される", () => {
     render(<ImageUpload onUpload={vi.fn()} />);
     expect(screen.getByText("画像をドラッグ＆ドロップ")).toBeInTheDocument();
-    expect(screen.getByText("または クリックしてファイルを選択")).toBeInTheDocument();
+    expect(screen.getByText("または クリックしてファイルを複数選択")).toBeInTheDocument();
   });
 
   it("許可形式テキストが表示される", () => {
@@ -59,6 +59,17 @@ describe("ImageUpload", () => {
     const file = new File(["content"], "photo.jpg", { type: "image/jpeg" });
     Object.defineProperty(input, "files", { value: [file] });
     fireEvent.change(input);
-    expect(onUpload).toHaveBeenCalledWith(file);
+    expect(onUpload).toHaveBeenCalledWith([file]);
+  });
+
+  it("複数の有効ファイルを選択すると配列でonUploadが呼ばれる", () => {
+    const onUpload = vi.fn();
+    render(<ImageUpload onUpload={onUpload} />);
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const file1 = new File(["content1"], "photo1.jpg", { type: "image/jpeg" });
+    const file2 = new File(["content2"], "photo2.png", { type: "image/png" });
+    Object.defineProperty(input, "files", { value: [file1, file2] });
+    fireEvent.change(input);
+    expect(onUpload).toHaveBeenCalledWith([file1, file2]);
   });
 });

@@ -27,5 +27,5 @@ export interface UseFaceDetectionReturn {
   /** エラーメッセージ */
   error: string | null;
   /** 顔検出を実行する関数 */
-  detectFaces: (imageElement: HTMLImageElement) => Promise<void>;
+  detectFaces: (imageElement: HTMLImageElement) => Promise<FaceDetectionResult[]>;
 }

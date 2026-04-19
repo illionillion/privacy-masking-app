@@ -11,9 +11,11 @@ const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
 interface ImageUploadProps {
   /** ファイル選択時のコールバック */
-  onUpload: (file: File) => void;
+  onUpload: (files: File[]) => void;
   /** 無効化フラグ */
   disabled?: boolean;
+  /** 複数選択を許可するか */
+  multiple?: boolean;
 }
 
 /**
@@ -22,28 +24,37 @@ interface ImageUploadProps {
  * ドラッグ＆ドロップとファイル選択の両方に対応。
  * 許可形式: JPEG / PNG / WebP / GIF（最大20MB）
  */
-export function ImageUpload({ onUpload, disabled = false }: ImageUploadProps) {
+export function ImageUpload({ onUpload, disabled = false, multiple = true }: ImageUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   /**
-   * ファイルのバリデーションを行い、問題なければコールバックを呼ぶ
+   * ファイル配列のバリデーションを行い、問題ないファイルのみコールバックを呼ぶ
    *
-   * @param file - アップロード対象ファイル
+   * @param files - アップロード対象ファイル配列
    */
-  const handleFile = useCallback(
-    (file: File) => {
-      setError(null);
-      if (!ACCEPTED_TYPES.includes(file.type)) {
-        setError("JPEG / PNG / WebP / GIF 形式の画像を選択してください");
-        return;
+  const handleFiles = useCallback(
+    (files: File[]) => {
+      const validFiles: File[] = [];
+      let validationError: string | null = null;
+
+      for (const file of files) {
+        if (!ACCEPTED_TYPES.includes(file.type)) {
+          validationError = "JPEG / PNG / WebP / GIF 形式の画像を選択してください";
+          continue;
+        }
+        if (file.size > MAX_FILE_SIZE) {
+          validationError = "ファイルサイズは20MB以下にしてください";
+          continue;
+        }
+        validFiles.push(file);
       }
-      if (file.size > MAX_FILE_SIZE) {
-        setError("ファイルサイズは20MB以下にしてください");
-        return;
+
+      setError(validationError);
+      if (validFiles.length > 0) {
+        onUpload(validFiles);
       }
-      onUpload(file);
     },
     [onUpload]
   );
@@ -53,10 +64,11 @@ export function ImageUpload({ onUpload, disabled = false }: ImageUploadProps) {
       e.preventDefault();
       setIsDragOver(false);
       if (disabled) return;
-      const file = e.dataTransfer.files[0];
-      if (file) handleFile(file);
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length === 0) return;
+      handleFiles(multiple ? files : [files[0]]);
     },
-    [disabled, handleFile]
+    [disabled, handleFiles, multiple]
   );
 
   const handleDragOver = useCallback(
@@ -73,12 +85,14 @@ export function ImageUpload({ onUpload, disabled = false }: ImageUploadProps) {
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) handleFile(file);
+      const files = e.target.files ? Array.from(e.target.files) : [];
+      if (files.length > 0) {
+        handleFiles(multiple ? files : [files[0]]);
+      }
       // 同じファイルを連続で選択できるよう、入力値をリセットする
       e.target.value = "";
     },
-    [handleFile]
+    [handleFiles, multiple]
   );
 
   const handleKeyDown = useCallback(
@@ -118,13 +132,16 @@ export function ImageUpload({ onUpload, disabled = false }: ImageUploadProps) {
         </span>
         <div className="flex flex-col gap-1">
           <p className="font-medium text-zinc-700">画像をドラッグ＆ドロップ</p>
-          <p className="text-sm text-zinc-500">または クリックしてファイルを選択</p>
+          <p className="text-sm text-zinc-500">
+            または クリックして{multiple ? "ファイルを複数選択" : "ファイルを選択"}
+          </p>
           <p className="text-xs text-zinc-400">JPEG / PNG / WebP / GIF（最大 20MB）</p>
         </div>
         <input
           ref={inputRef}
           type="file"
           accept={ACCEPTED_TYPES.join(",")}
+          multiple={multiple}
           className="hidden"
           onChange={handleChange}
           disabled={disabled}

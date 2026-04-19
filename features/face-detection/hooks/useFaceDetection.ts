@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { FaceDetectionResult, UseFaceDetectionReturn } from "../types";
 
 /** モデルのロードURLパス */
@@ -53,35 +53,39 @@ export function useFaceDetection(): UseFaceDetectionReturn {
    *
    * @param imageElement - 検出対象の HTMLImageElement
    */
-  const detectFaces = async (imageElement: HTMLImageElement): Promise<void> => {
-    const requestId = ++detectRequestRef.current;
-    setIsDetecting(true);
-    setError(null);
-    try {
-      const faceapi = await import("@vladmandic/face-api");
-      const results = await faceapi.detectAllFaces(
-        imageElement,
-        new faceapi.TinyFaceDetectorOptions()
-      );
-      if (requestId !== detectRequestRef.current) return;
-      setDetections(
-        results.map((d) => ({
+  const detectFaces = useCallback(
+    async (imageElement: HTMLImageElement): Promise<FaceDetectionResult[]> => {
+      const requestId = ++detectRequestRef.current;
+      setIsDetecting(true);
+      setError(null);
+      try {
+        const faceapi = await import("@vladmandic/face-api");
+        const results = await faceapi.detectAllFaces(
+          imageElement,
+          new faceapi.TinyFaceDetectorOptions()
+        );
+        const mappedDetections: FaceDetectionResult[] = results.map((d) => ({
           x: d.box.x,
           y: d.box.y,
           width: d.box.width,
           height: d.box.height,
           score: d.score,
-        }))
-      );
-    } catch (err) {
-      if (requestId !== detectRequestRef.current) return;
-      setError(err instanceof Error ? err.message : "顔検出中にエラーが発生しました");
-    } finally {
-      if (requestId === detectRequestRef.current) {
-        setIsDetecting(false);
+        }));
+        if (requestId !== detectRequestRef.current) return [];
+        setDetections(mappedDetections);
+        return mappedDetections;
+      } catch (err) {
+        if (requestId !== detectRequestRef.current) return [];
+        setError(err instanceof Error ? err.message : "顔検出中にエラーが発生しました");
+        return [];
+      } finally {
+        if (requestId === detectRequestRef.current) {
+          setIsDetecting(false);
+        }
       }
-    }
-  };
+    },
+    []
+  );
 
   return { isModelLoading, isDetecting, detections, error, detectFaces };
 }
