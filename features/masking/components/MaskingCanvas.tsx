@@ -69,6 +69,11 @@ export function MaskingCanvas({
       }
     };
     img.src = imageDataUrl;
+
+    return () => {
+      /** 再描画・アンマウント時に onload を無効化してstale描画を防止 */
+      img.onload = null;
+    };
   }, [imageDataUrl, regions, maxWidth]);
 
   /** クリック位置から領域を特定してコールバックを呼ぶ */
