@@ -1,15 +1,19 @@
 name: CD
 
 permissions:
-  contents: read
+  contents: write
 
 on:
   push:
     branches: ["main"]
 
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
-    name: Build Next.js
+  deploy:
+    name: Build & Deploy to GitHub Pages
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -29,8 +33,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Next.js
+      - name: Build Next.js (static export to docs/)
         run: pnpm build
+        env:
+          NODE_ENV: production
 
-      # デプロイ先が決まったらここに追加
-      # 例: Vercel, Cloudflare Pages, GitHub Pages など
+      - name: Commit and push docs/
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: "docs"
+          default_author: github_actions
+          message: "chore: ビルド成果物を更新 [skip ci]"
+          pull: "--rebase --autostash"
