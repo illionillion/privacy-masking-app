@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useCallback, useEffect } from "react";
+import type { MouseEvent } from "react";
 import type { MaskRegion } from "../types";
 
 export interface MaskingCanvasProps {
@@ -72,7 +73,7 @@ export function MaskingCanvas({
 
   /** クリック位置から領域を特定してコールバックを呼ぶ */
   const handleCanvasClick = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
+    (e: MouseEvent<HTMLCanvasElement>) => {
       if (!onRegionClick) return;
       const canvas = canvasRef.current;
       if (!canvas) return;

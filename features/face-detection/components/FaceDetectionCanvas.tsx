@@ -17,20 +17,26 @@ interface FaceDetectionCanvasProps {
   onRendered?: (blobUrl: string) => void;
 }
 
-/** スタンプ画像のパス一覧 */
-const STAMP_PATHS = [
-  "/stamps/beaming_face_with_smiling_eyes-64.png",
-  "/stamps/face_with_tears_of_joy-64.png",
-  "/stamps/grinning_face-64.png",
-  "/stamps/grinning_face_with_big_eyes-64.png",
-  "/stamps/grinning_face_with_smiling_eyes-64.png",
-  "/stamps/grinning_squinting_face-64.png",
-  "/stamps/rolling_on_the_floor_laughing-64.png",
-  "/stamps/smiling_face_with_halo-64.png",
-  "/stamps/smiling_face_with_hearts-64.png",
-  "/stamps/smiling_face_with_smiling_eyes-64.png",
-  "/stamps/winking_face-64.png",
+/** 公開URLのベースパス。サブパス配信時は `NEXT_PUBLIC_BASE_PATH` を設定する。 */
+const PUBLIC_BASE_PATH = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/$/, "");
+
+/** スタンプ画像のファイル名一覧 */
+const STAMP_FILE_NAMES = [
+  "beaming_face_with_smiling_eyes-64.png",
+  "face_with_tears_of_joy-64.png",
+  "grinning_face-64.png",
+  "grinning_face_with_big_eyes-64.png",
+  "grinning_face_with_smiling_eyes-64.png",
+  "grinning_squinting_face-64.png",
+  "rolling_on_the_floor_laughing-64.png",
+  "smiling_face_with_halo-64.png",
+  "smiling_face_with_hearts-64.png",
+  "smiling_face_with_smiling_eyes-64.png",
+  "winking_face-64.png",
 ];
+
+/** スタンプ画像のパス一覧 */
+const STAMP_PATHS = STAMP_FILE_NAMES.map((fileName) => `${PUBLIC_BASE_PATH}/stamps/${fileName}`);
 
 /** モジュールスコープのスタンプ画像キャッシュ（初回ロード後は再利用） */
 const stampImageCache = new Map<string, Promise<HTMLImageElement>>();

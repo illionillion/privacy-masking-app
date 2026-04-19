@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { FaceDetectionResult, UseFaceDetectionReturn } from "../types";
 
-/** モデルのロードURLパス */
-const MODEL_URL = "/models";
+/** モデルのロードURLパス（相対パスでサブパス配信にも対応） */
+const MODEL_URL = "models";
 
 /**
  * 顔検出フック
