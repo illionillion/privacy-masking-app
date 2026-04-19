@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { ImageUpload } from "@/components/ImageUpload";
 import { FaceDetectionCanvas, useFaceDetection } from "@/features/face-detection";
-import { useEditor } from "@/features/editor";
+import { useEditor } from "../hooks/useEditor";
 
 /**
  * メインマスキングエディターコンポーネント
@@ -30,7 +30,12 @@ export function MaskingEditor() {
     setImageFile(file);
     const reader = new FileReader();
     reader.onload = (e) => {
-      setImageDataUrl(e.target?.result as string);
+      const result = e.target?.result;
+      if (typeof result === "string") {
+        setImageDataUrl(result);
+        return;
+      }
+      setImageDataUrl(null);
     };
     reader.readAsDataURL(file);
   }, []);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { FaceDetectionResult, UseFaceDetectionReturn } from "../types";
 
 /** モデルのロードURLパス */
@@ -19,6 +19,8 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   const [isDetecting, setIsDetecting] = useState(false);
   const [detections, setDetections] = useState<FaceDetectionResult[]>([]);
   const [error, setError] = useState<string | null>(null);
+  /** 最後に開始した検出リクエストのID（古い結果の state 上書きを防ぐ） */
+  const detectRequestRef = useRef(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -52,6 +54,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
    * @param imageElement - 検出対象の HTMLImageElement
    */
   const detectFaces = async (imageElement: HTMLImageElement): Promise<void> => {
+    const requestId = ++detectRequestRef.current;
     setIsDetecting(true);
     setError(null);
     try {
@@ -60,6 +63,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         imageElement,
         new faceapi.TinyFaceDetectorOptions()
       );
+      if (requestId !== detectRequestRef.current) return;
       setDetections(
         results.map((d) => ({
           x: d.box.x,
@@ -70,9 +74,12 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         }))
       );
     } catch (err) {
+      if (requestId !== detectRequestRef.current) return;
       setError(err instanceof Error ? err.message : "顔検出中にエラーが発生しました");
     } finally {
-      setIsDetecting(false);
+      if (requestId === detectRequestRef.current) {
+        setIsDetecting(false);
+      }
     }
   };
 

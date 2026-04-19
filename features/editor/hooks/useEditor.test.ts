@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { describe, expect, it, beforeEach, vi } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import { useEditor } from "./useEditor";
 
 describe("useEditor", () => {
@@ -8,6 +8,10 @@ describe("useEditor", () => {
     vi.stubGlobal("crypto", {
       randomUUID: vi.fn(() => "test-uuid"),
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("初期状態では領域が空", () => {
