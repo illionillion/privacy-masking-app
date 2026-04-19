@@ -1,5 +1,5 @@
 /**
- * エディター機能の型定義
+ * マスキング機能の型定義
  */
 
 /** マスキング対象領域の種別 */
@@ -23,8 +23,8 @@ export interface MaskRegion {
   type: MaskRegionType;
 }
 
-/** useEditor フックの戻り値 */
-export interface UseEditorReturn {
+/** useMaskingRegions フックの戻り値 */
+export interface UseMaskingRegionsReturn {
   /** マスキング領域の一覧 */
   regions: MaskRegion[];
   /** 領域の有効/無効を切り替える */

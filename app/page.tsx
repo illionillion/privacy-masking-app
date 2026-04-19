@@ -1,4 +1,4 @@
-import { MaskingGallery } from "@/features/editor";
+import { MaskingGallery } from "@/features/masking";
 
 /**
  * メインページ

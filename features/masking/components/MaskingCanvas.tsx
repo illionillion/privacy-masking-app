@@ -3,7 +3,7 @@
 import { useRef, useCallback, useEffect } from "react";
 import type { MaskRegion } from "../types";
 
-interface EditorCanvasProps {
+export interface MaskingCanvasProps {
   /** 表示する画像のデータURL */
   imageDataUrl: string;
   /** マスキング領域の一覧 */
@@ -15,17 +15,17 @@ interface EditorCanvasProps {
 }
 
 /**
- * マスキング編集用Canvasコンポーネント
+ * マスキング領域の表示用Canvasコンポーネント
  *
  * 画像を描画し、マスキング領域を重ねて表示する。
  * 将来的な編集UI（ON/OFF切替・手動追加・削除）の受け口。
  */
-export function EditorCanvas({
+export function MaskingCanvas({
   imageDataUrl,
   regions,
   onRegionClick,
   maxWidth = 800,
-}: EditorCanvasProps) {
+}: MaskingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scaleRef = useRef(1);
 
@@ -109,7 +109,7 @@ export function EditorCanvas({
       ref={canvasRef}
       className="max-w-full cursor-pointer rounded-lg border border-zinc-200 shadow-sm"
       onClick={handleCanvasClick}
-      aria-label="マスキング編集キャンバス"
+      aria-label="マスキング表示キャンバス"
     />
   );
 }

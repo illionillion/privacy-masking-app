@@ -1,17 +1,17 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { MaskRegion, UseEditorReturn } from "../types";
+import type { MaskRegion, UseMaskingRegionsReturn } from "../types";
 
 /**
- * エディターフック
+ * マスキング領域管理フック
  *
  * マスキング対象領域の管理（追加・削除・有効/無効の切り替え）を提供する。
  * 将来的な編集UI（手動追加・削除・ON/OFF切替）の受け口となる。
  *
- * @returns {UseEditorReturn} 領域管理の状態と操作関数
+ * @returns {UseMaskingRegionsReturn} 領域管理の状態と操作関数
  */
-export function useEditor(): UseEditorReturn {
+export function useMaskingRegions(): UseMaskingRegionsReturn {
   const [regions, setRegionsState] = useState<MaskRegion[]>([]);
 
   /**

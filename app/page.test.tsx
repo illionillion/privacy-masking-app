@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import Home from "./page";
 
 // MaskingGallery をモック
-vi.mock("@/features/editor", () => ({
+vi.mock("@/features/masking", () => ({
   MaskingGallery: () => <div data-testid="masking-gallery">MaskingGallery</div>,
 }));
 

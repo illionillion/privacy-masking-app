@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import clsx from "clsx";
 import { ImageUpload } from "@/components/ImageUpload";
 import {
@@ -8,9 +8,8 @@ import {
   useFaceDetection,
   type FaceDetectionResult,
 } from "@/features/face-detection";
-import { useEditor } from "../hooks/useEditor";
 
-interface EditorImageItem {
+interface MaskingImageItem {
   id: string;
   name: string;
   size: number;
@@ -76,33 +75,12 @@ const createDownloadFileName = (originalName: string): string => {
  * メインマスキングギャラリーコンポーネント
  *
  * 画像アップロード、顔検出、Canvas表示を統合する。
- * 将来的な編集UI（手動追加・削除・ON/OFF切替）の受け口となる。
  */
 export function MaskingGallery() {
-  const [images, setImages] = useState<EditorImageItem[]>([]);
+  const [images, setImages] = useState<MaskingImageItem[]>([]);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const { isModelLoading, isDetecting, error: detectionError, detectFaces } = useFaceDetection();
-  const { setRegions, resetRegions } = useEditor();
-
-  /** アクティブ画像の検出結果をエディター領域に同期 */
-  useEffect(() => {
-    const activeImage = images.find((image) => image.id === activeImageId);
-    if (!activeImage) {
-      resetRegions();
-      return;
-    }
-
-    setRegions(
-      activeImage.detections.map((det) => ({
-        x: det.x,
-        y: det.y,
-        width: det.width,
-        height: det.height,
-        type: "face" as const,
-      }))
-    );
-  }, [images, activeImageId, setRegions, resetRegions]);
 
   /**
    * ファイルアップロード時の処理
@@ -116,7 +94,7 @@ export function MaskingGallery() {
       setIsBatchProcessing(true);
       try {
         const uploadedAt = Date.now();
-        const nextImages: EditorImageItem[] = [];
+        const nextImages: MaskingImageItem[] = [];
 
         for (const [index, file] of files.entries()) {
           try {
@@ -205,8 +183,19 @@ export function MaskingGallery() {
   const handleClearAll = useCallback(() => {
     setImages([]);
     setActiveImageId(null);
-    resetRegions();
-  }, [resetRegions]);
+  }, []);
+
+  /** 描画済み画像をすべてダウンロードする */
+  const handleDownloadAll = useCallback(() => {
+    for (const image of images) {
+      if (!image.maskedDataUrl) continue;
+
+      const anchor = document.createElement("a");
+      anchor.href = image.maskedDataUrl;
+      anchor.download = createDownloadFileName(image.name);
+      anchor.click();
+    }
+  }, [images]);
 
   const isProcessing = isBatchProcessing || isDetecting;
   const loadingMessage = isModelLoading
@@ -214,6 +203,7 @@ export function MaskingGallery() {
     : isBatchProcessing
       ? "画像を処理中です。しばらくお待ちください…"
       : null;
+  const downloadableImagesCount = images.filter((image) => image.maskedDataUrl).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -234,13 +224,28 @@ export function MaskingGallery() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm text-zinc-600">処理済み: {images.length} 枚</p>
-            <button
-              type="button"
-              onClick={handleClearAll}
-              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
-            >
-              すべてクリア
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleDownloadAll}
+                disabled={downloadableImagesCount === 0}
+                className={clsx([
+                  "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
+                  "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100",
+                  downloadableImagesCount === 0 && "cursor-not-allowed opacity-50",
+                ])}
+              >
+                すべてダウンロード
+              </button>
+
+              <button
+                type="button"
+                onClick={handleClearAll}
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+              >
+                すべてクリア
+              </button>
+            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">

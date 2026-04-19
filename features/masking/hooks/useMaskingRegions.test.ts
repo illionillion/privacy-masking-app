@@ -1,8 +1,8 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
-import { useEditor } from "./useEditor";
+import { useMaskingRegions } from "./useMaskingRegions";
 
-describe("useEditor", () => {
+describe("useMaskingRegions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("crypto", {
@@ -15,12 +15,12 @@ describe("useEditor", () => {
   });
 
   it("初期状態では領域が空", () => {
-    const { result } = renderHook(() => useEditor());
+    const { result } = renderHook(() => useMaskingRegions());
     expect(result.current.regions).toHaveLength(0);
   });
 
   it("addRegion で領域を追加できる", () => {
-    const { result } = renderHook(() => useEditor());
+    const { result } = renderHook(() => useMaskingRegions());
     act(() => {
       result.current.addRegion({ x: 10, y: 20, width: 100, height: 80, type: "face" });
     });
@@ -37,7 +37,7 @@ describe("useEditor", () => {
 
   it("toggleRegion で isEnabled を切り替えられる", () => {
     vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("id-1") });
-    const { result } = renderHook(() => useEditor());
+    const { result } = renderHook(() => useMaskingRegions());
     act(() => {
       result.current.addRegion({ x: 0, y: 0, width: 50, height: 50, type: "face" });
     });
@@ -50,7 +50,7 @@ describe("useEditor", () => {
 
   it("removeRegion で領域を削除できる", () => {
     vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("id-del") });
-    const { result } = renderHook(() => useEditor());
+    const { result } = renderHook(() => useMaskingRegions());
     act(() => {
       result.current.addRegion({ x: 0, y: 0, width: 50, height: 50, type: "face" });
     });
@@ -65,7 +65,7 @@ describe("useEditor", () => {
     vi.stubGlobal("crypto", {
       randomUUID: vi.fn().mockReturnValueOnce("bulk-1").mockReturnValueOnce("bulk-2"),
     });
-    const { result } = renderHook(() => useEditor());
+    const { result } = renderHook(() => useMaskingRegions());
     act(() => {
       result.current.setRegions([
         { x: 0, y: 0, width: 50, height: 50, type: "face" },
@@ -82,7 +82,7 @@ describe("useEditor", () => {
     vi.stubGlobal("crypto", {
       randomUUID: vi.fn().mockReturnValueOnce("id-1").mockReturnValueOnce("id-2"),
     });
-    const { result } = renderHook(() => useEditor());
+    const { result } = renderHook(() => useMaskingRegions());
     act(() => {
       result.current.addRegion({ x: 0, y: 0, width: 50, height: 50, type: "face" });
       result.current.addRegion({ x: 10, y: 10, width: 30, height: 30, type: "manual" });
