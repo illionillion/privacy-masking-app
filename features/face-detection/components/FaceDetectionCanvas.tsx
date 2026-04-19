@@ -10,8 +10,11 @@ interface FaceDetectionCanvasProps {
   detections: FaceDetectionResult[];
   /** Canvasの最大表示幅 */
   maxWidth?: number;
-  /** 描画完了時のデータURL通知 */
-  onRendered?: (dataUrl: string) => void;
+  /**
+   * 描画完了時のBlob URL通知。
+   * Blob URLの解放はこのコンポーネントが管理するため、呼び出し元での revokeObjectURL は不要。
+   */
+  onRendered?: (blobUrl: string) => void;
 }
 
 /** スタンプ画像のパス一覧 */
@@ -29,6 +32,25 @@ const STAMP_PATHS = [
   "/stamps/winking_face-64.png",
 ];
 
+/** モジュールスコープのスタンプ画像キャッシュ（初回ロード後は再利用） */
+const stampImageCache = new Map<string, Promise<HTMLImageElement>>();
+
+/**
+ * スタンプ画像を読み込む。キャッシュ済みの場合はキャッシュから返す。
+ */
+function loadStampImage(src: string): Promise<HTMLImageElement> {
+  const cached = stampImageCache.get(src);
+  if (cached) return cached;
+  const promise = new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+  stampImageCache.set(src, promise);
+  return promise;
+}
+
 /**
  * 顔検出結果を表示するCanvasコンポーネント
  *
@@ -43,6 +65,8 @@ export function FaceDetectionCanvas({
 }: FaceDetectionCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const onRenderedRef = useRef(onRendered);
+  /** 現在のBlob URLを保持（再描画・アンマウント時に解放するため管理） */
+  const blobUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     onRenderedRef.current = onRendered;
@@ -66,38 +90,52 @@ export function FaceDetectionCanvas({
 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-      /** スタンプ画像を全て先読みしてから各顔領域にランダム描画 */
-      const stampPromises = STAMP_PATHS.map((src) => {
-        return new Promise<HTMLImageElement>((resolve, reject) => {
-          const si = new Image();
-          si.onload = () => resolve(si);
-          si.onerror = reject;
-          si.src = src;
-        });
-      });
+      /** スタンプ画像を全て読み込み（失敗したものは個別にフォールバック） */
+      void Promise.allSettled(STAMP_PATHS.map(loadStampImage)).then((results) => {
+        if (isCancelled) return;
 
-      void Promise.all(stampPromises)
-        .then((stamps) => {
-          if (isCancelled) return;
-          for (const det of detections) {
-            const cx = (det.x + det.width / 2) * scale;
-            const cy = (det.y + det.height / 2) * scale;
-            const size = Math.max(det.width, det.height) * scale;
-            const stamp = stamps[Math.floor(Math.random() * stamps.length)];
+        const availableStamps = results
+          .filter((r): r is PromiseFulfilledResult<HTMLImageElement> => r.status === "fulfilled")
+          .map((r) => r.value);
+
+        for (const det of detections) {
+          const cx = (det.x + det.width / 2) * scale;
+          const cy = (det.y + det.height / 2) * scale;
+          const size = Math.max(det.width, det.height) * scale;
+
+          if (availableStamps.length > 0) {
+            const stamp = availableStamps[Math.floor(Math.random() * availableStamps.length)];
             ctx.drawImage(stamp, cx - size / 2, cy - size / 2, size, size);
+          } else {
+            /** スタンプが全滅した場合のフォールバック: 半透明の黒矩形でマスキング */
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fillRect(cx - size / 2, cy - size / 2, size, size);
           }
+        }
 
-          onRenderedRef.current?.(canvas.toDataURL("image/png"));
-        })
-        .catch(() => {
-          if (isCancelled) return;
-          onRenderedRef.current?.(canvas.toDataURL("image/png"));
-        });
+        /** toDataURL の代わりに toBlob を使用してメインスレッドのブロックを回避 */
+        canvas.toBlob((blob) => {
+          if (isCancelled || !blob) return;
+          /** 前回のBlob URLを解放してから新しいURLを生成 */
+          if (blobUrlRef.current) {
+            URL.revokeObjectURL(blobUrlRef.current);
+            blobUrlRef.current = null;
+          }
+          const url = URL.createObjectURL(blob);
+          blobUrlRef.current = url;
+          onRenderedRef.current?.(url);
+        }, "image/png");
+      });
     };
     img.src = imageDataUrl;
 
     return () => {
       isCancelled = true;
+      /** 再描画・アンマウント時にBlob URLを解放 */
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
     };
   }, [imageDataUrl, detections, maxWidth]);
 
