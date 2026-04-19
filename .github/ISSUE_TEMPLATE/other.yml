@@ -1,0 +1,66 @@
+name: その他・汎用
+description: その他の問い合わせや提案
+title: "[Other] "
+labels: ["question"]
+body:
+  - type: dropdown
+    id: category
+    attributes:
+      label: カテゴリ
+      description: 該当するカテゴリを選択してください。
+      options:
+        - 質問・相談
+        - 提案・アイデア
+        - 環境・設定
+        - セキュリティ
+        - パフォーマンス
+        - デザイン・UI/UX
+        - ライブラリ・依存関係
+        - その他
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope_limitations
+    attributes:
+      label: 対象外・制限事項
+      description: 今回の問い合わせ・提案では対象外とする範囲や制限事項を明記してください。
+      placeholder: |
+        例：
+        - サーバーサイド処理は対象外
+        - 動画対応は別途検討
+    validations:
+      required: false
+
+  - type: textarea
+    id: details
+    attributes:
+      label: 内容詳細
+      description: 詳細な内容を記載してください。
+      placeholder: 具体的な内容、背景、目的などを記載してください。
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 背景・文脈
+      description: この問い合わせの背景や関連する情報があれば記載してください。
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected_outcome
+    attributes:
+      label: 期待する結果・回答
+      description: どのような回答や結果を期待しているかを記載してください。
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: その他・補足
+      description: 参考資料や関連情報があれば記載してください。
+    validations:
+      required: false
