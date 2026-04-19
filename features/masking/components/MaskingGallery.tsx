@@ -278,12 +278,20 @@ export function MaskingGallery() {
             {images.map((image) => (
               <section
                 key={image.id}
+                role="button"
+                tabIndex={0}
                 className={clsx([
                   "rounded-xl border bg-white p-4 transition-colors",
                   "cursor-pointer hover:border-blue-200",
                   image.id === activeImageId ? "border-blue-300" : "border-zinc-200",
                 ])}
                 onClick={() => setActiveImageId(image.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setActiveImageId(image.id);
+                  }
+                }}
               >
                 <div className="flex items-center justify-between gap-2">
                   <p
@@ -297,7 +305,8 @@ export function MaskingGallery() {
                   </p>
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       void handleRedetect(image.id);
                     }}
                     disabled={isProcessing || isModelLoading}
@@ -332,6 +341,7 @@ export function MaskingGallery() {
                     <a
                       href={image.maskedDataUrl}
                       download={createDownloadFileName(image.name)}
+                      onClick={(e) => e.stopPropagation()}
                       className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
                     >
                       ダウンロード
