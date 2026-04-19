@@ -209,30 +209,20 @@ export function MaskingGallery() {
   }, [resetRegions]);
 
   const isProcessing = isBatchProcessing || isDetecting;
+  const loadingMessage = isModelLoading
+    ? "顔検出モデルをロード中…"
+    : isBatchProcessing
+      ? "画像を処理中です。しばらくお待ちください…"
+      : null;
 
   return (
     <div className="flex flex-col gap-6">
-      {isModelLoading && (
-        <div
-          role="status"
-          className="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700"
-        >
-          <span className="animate-spin" aria-hidden="true">
-            ⏳
-          </span>
-          <span>
-            {isModelLoading
-              ? "顔検出モデルをロード中…"
-              : "画像を処理中です。しばらくお待ちください…"}
-          </span>
-        </div>
-      )}
-
-      <ImageUpload onUpload={handleUpload} disabled={isProcessing || isModelLoading} multiple />
-
-      <div aria-live="polite" className="min-h-5 text-sm text-zinc-600">
-        {isBatchProcessing && !isModelLoading ? "画像を処理中です。しばらくお待ちください…" : ""}
-      </div>
+      <ImageUpload
+        onUpload={handleUpload}
+        disabled={isProcessing || isModelLoading}
+        multiple
+        loadingMessage={loadingMessage}
+      />
 
       {detectionError && (
         <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">

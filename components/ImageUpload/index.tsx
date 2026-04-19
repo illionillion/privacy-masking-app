@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import clsx from "clsx";
+import { ImageIcon, LoaderCircle } from "lucide-react";
 
 /** 許可するファイル形式 */
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -16,6 +17,8 @@ interface ImageUploadProps {
   disabled?: boolean;
   /** 複数選択を許可するか */
   multiple?: boolean;
+  /** ローディング表示メッセージ */
+  loadingMessage?: string | null;
 }
 
 /**
@@ -24,7 +27,12 @@ interface ImageUploadProps {
  * ドラッグ＆ドロップとファイル選択の両方に対応。
  * 許可形式: JPEG / PNG / WebP / GIF（最大20MB）
  */
-export function ImageUpload({ onUpload, disabled = false, multiple = true }: ImageUploadProps) {
+export function ImageUpload({
+  onUpload,
+  disabled = false,
+  multiple = true,
+  loadingMessage = null,
+}: ImageUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -112,6 +120,7 @@ export function ImageUpload({ onUpload, disabled = false, multiple = true }: Ima
         tabIndex={disabled ? -1 : 0}
         aria-label="画像をアップロード。クリックまたはドラッグ＆ドロップ"
         aria-disabled={disabled}
+        aria-busy={Boolean(loadingMessage)}
         className={clsx([
           "flex cursor-pointer flex-col items-center justify-center gap-3",
           "rounded-xl border-2 border-dashed px-6 py-12 text-center",
@@ -127,16 +136,23 @@ export function ImageUpload({ onUpload, disabled = false, multiple = true }: Ima
         onClick={() => !disabled && inputRef.current?.click()}
         onKeyDown={handleKeyDown}
       >
-        <span className="text-4xl" aria-hidden="true">
-          🖼️
-        </span>
-        <div className="flex flex-col gap-1">
-          <p className="font-medium text-zinc-700">画像をドラッグ＆ドロップ</p>
-          <p className="text-sm text-zinc-500">
-            または クリックして{multiple ? "ファイルを複数選択" : "ファイルを選択"}
-          </p>
-          <p className="text-xs text-zinc-400">JPEG / PNG / WebP / GIF（最大 20MB）</p>
-        </div>
+        {loadingMessage ? (
+          <div className="flex flex-col items-center gap-2">
+            <LoaderCircle className="h-10 w-10 animate-spin text-blue-600" aria-hidden="true" />
+            <p className="text-sm font-medium text-blue-700">{loadingMessage}</p>
+          </div>
+        ) : (
+          <>
+            <ImageIcon className="h-10 w-10 text-zinc-500" aria-hidden="true" />
+            <div className="flex flex-col gap-1">
+              <p className="font-medium text-zinc-700">画像をドラッグ＆ドロップ</p>
+              <p className="text-sm text-zinc-500">
+                または クリックして{multiple ? "ファイルを複数選択" : "ファイルを選択"}
+              </p>
+              <p className="text-xs text-zinc-400">JPEG / PNG / WebP / GIF（最大 20MB）</p>
+            </div>
+          </>
+        )}
         <input
           ref={inputRef}
           type="file"
