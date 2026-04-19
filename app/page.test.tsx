@@ -2,22 +2,26 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import Home from "./page";
 
-// Next.js の next/image をモック
-vi.mock("next/image", () => ({
-  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img {...props} alt={props.alt ?? ""} />
-  ),
+// MaskingEditor をモック
+vi.mock("@/features/editor", () => ({
+  MaskingEditor: () => <div data-testid="masking-editor">MaskingEditor</div>,
 }));
 
 describe("Home", () => {
-  it("見出しが表示される", () => {
+  it("ページタイトルが表示される", () => {
     render(<Home />);
-    expect(screen.getByText("To get started, edit the page.tsx file.")).toBeInTheDocument();
+    expect(screen.getByText("画像プライバシーマスキング")).toBeInTheDocument();
   });
 
-  it("Next.jsロゴが表示される", () => {
+  it("説明テキストが表示される", () => {
     render(<Home />);
-    expect(screen.getByAltText("Next.js logo")).toBeInTheDocument();
+    expect(
+      screen.getByText("画像をアップロードすると、顔を自動で検出して矩形表示します")
+    ).toBeInTheDocument();
+  });
+
+  it("MaskingEditorコンポーネントが表示される", () => {
+    render(<Home />);
+    expect(screen.getByTestId("masking-editor")).toBeInTheDocument();
   });
 });
