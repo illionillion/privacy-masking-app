@@ -1,4 +1,4 @@
-import { MaskingEditor } from "@/features/editor";
+import { MaskingGallery } from "@/features/editor";
 
 /**
  * メインページ
@@ -17,7 +17,7 @@ export default function Home() {
           画像をアップロードすると、顔を自動で検出して矩形表示します
         </p>
       </div>
-      <MaskingEditor />
+      <MaskingGallery />
     </div>
   );
 }

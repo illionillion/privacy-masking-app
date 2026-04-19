@@ -73,12 +73,12 @@ const createDownloadFileName = (originalName: string): string => {
 };
 
 /**
- * メインマスキングエディターコンポーネント
+ * メインマスキングギャラリーコンポーネント
  *
  * 画像アップロード、顔検出、Canvas表示を統合する。
  * 将来的な編集UI（手動追加・削除・ON/OFF切替）の受け口となる。
  */
-export function MaskingEditor() {
+export function MaskingGallery() {
   const [images, setImages] = useState<EditorImageItem[]>([]);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
@@ -212,7 +212,7 @@ export function MaskingEditor() {
 
   return (
     <div className="flex flex-col gap-6">
-      {(isModelLoading || isBatchProcessing) && (
+      {isModelLoading && (
         <div
           role="status"
           className="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700"
@@ -229,6 +229,10 @@ export function MaskingEditor() {
       )}
 
       <ImageUpload onUpload={handleUpload} disabled={isProcessing || isModelLoading} multiple />
+
+      <div aria-live="polite" className="min-h-5 text-sm text-zinc-600">
+        {isBatchProcessing && !isModelLoading ? "画像を処理中です。しばらくお待ちください…" : ""}
+      </div>
 
       {detectionError && (
         <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">

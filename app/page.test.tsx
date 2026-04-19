@@ -2,9 +2,9 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import Home from "./page";
 
-// MaskingEditor をモック
+// MaskingGallery をモック
 vi.mock("@/features/editor", () => ({
-  MaskingEditor: () => <div data-testid="masking-editor">MaskingEditor</div>,
+  MaskingGallery: () => <div data-testid="masking-gallery">MaskingGallery</div>,
 }));
 
 describe("Home", () => {
@@ -20,8 +20,8 @@ describe("Home", () => {
     ).toBeInTheDocument();
   });
 
-  it("MaskingEditorコンポーネントが表示される", () => {
+  it("MaskingGalleryコンポーネントが表示される", () => {
     render(<Home />);
-    expect(screen.getByTestId("masking-editor")).toBeInTheDocument();
+    expect(screen.getByTestId("masking-gallery")).toBeInTheDocument();
   });
 });
