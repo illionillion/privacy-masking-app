@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import clsx from "clsx";
+import { zip } from "fflate";
 import { ImageUpload } from "@/components/ImageUpload";
 import {
   FaceDetectionCanvas,
@@ -185,16 +186,41 @@ export function MaskingGallery() {
     setActiveImageId(null);
   }, []);
 
-  /** 描画済み画像をすべてダウンロードする */
+  /** 描画済み画像をすべてZIPにまとめてダウンロードする */
   const handleDownloadAll = useCallback(() => {
-    for (const image of images) {
-      if (!image.maskedDataUrl) continue;
+    const downloadableImages = images.filter((image) => image.maskedDataUrl !== null);
+    if (downloadableImages.length === 0) return;
 
-      const anchor = document.createElement("a");
-      anchor.href = image.maskedDataUrl;
-      anchor.download = createDownloadFileName(image.name);
-      anchor.click();
-    }
+    const fetchAll = downloadableImages.map(async (image) => {
+      const res = await fetch(image.maskedDataUrl as string);
+      const buffer = await res.arrayBuffer();
+      return { name: createDownloadFileName(image.name), data: new Uint8Array(buffer) };
+    });
+
+    void Promise.all(fetchAll).then((entries) => {
+      /** 同名ファイルが複数ある場合に連番サフィックスを付与 */
+      const nameCounts = new Map<string, number>();
+      const fileMap: Record<string, Uint8Array> = {};
+
+      for (const entry of entries) {
+        const count = nameCounts.get(entry.name) ?? 0;
+        nameCounts.set(entry.name, count + 1);
+        const uniqueName =
+          count === 0 ? entry.name : entry.name.replace("-masked.png", `-masked-${count}.png`);
+        fileMap[uniqueName] = entry.data;
+      }
+
+      zip(fileMap, (err, data) => {
+        if (err) return;
+        const blob = new Blob([data.buffer as ArrayBuffer], { type: "application/zip" });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = "masked-images.zip";
+        anchor.click();
+        URL.revokeObjectURL(url);
+      });
+    });
   }, [images]);
 
   const isProcessing = isBatchProcessing || isDetecting;
