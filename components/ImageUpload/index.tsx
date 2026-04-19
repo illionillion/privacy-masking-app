@@ -91,6 +91,16 @@ export function ImageUpload({
     setIsDragOver(false);
   }, []);
 
+  const handleDesktopKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        if (!disabled) inputRef.current?.click();
+      }
+    },
+    [disabled]
+  );
+
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files ? Array.from(e.target.files) : [];
@@ -103,18 +113,40 @@ export function ImageUpload({
     [handleFiles, multiple]
   );
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        if (!disabled) inputRef.current?.click();
-      }
-    },
-    [disabled]
-  );
-
   return (
     <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        aria-label="画像をアップロード。クリックしてファイルを選択"
+        aria-busy={Boolean(loadingMessage)}
+        disabled={disabled}
+        className={clsx([
+          "w-full md:hidden",
+          "inline-flex items-center justify-center gap-2",
+          "rounded-xl px-4 py-3 text-sm font-semibold",
+          "transition-colors duration-200",
+          "bg-blue-600 text-white hover:bg-blue-700",
+          disabled && "cursor-not-allowed opacity-50",
+        ])}
+        onClick={() => !disabled && inputRef.current?.click()}
+      >
+        {loadingMessage ? (
+          <>
+            <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" />
+            <span>{loadingMessage}</span>
+          </>
+        ) : (
+          <>
+            <ImageIcon className="h-5 w-5" aria-hidden="true" />
+            <span>{multiple ? "画像を選択" : "画像を選ぶ"}</span>
+          </>
+        )}
+      </button>
+
+      <p className="text-center text-xs text-zinc-500 md:hidden">
+        JPEG / PNG / WebP / GIF（最大 20MB）
+      </p>
+
       <div
         role="button"
         tabIndex={disabled ? -1 : 0}
@@ -122,7 +154,8 @@ export function ImageUpload({
         aria-disabled={disabled}
         aria-busy={Boolean(loadingMessage)}
         className={clsx([
-          "flex cursor-pointer flex-col items-center justify-center gap-3",
+          "hidden w-full md:flex",
+          "cursor-pointer flex-col items-center justify-center gap-3",
           "rounded-xl border-2 border-dashed px-6 py-12 text-center",
           "transition-colors duration-200",
           isDragOver
@@ -134,7 +167,7 @@ export function ImageUpload({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={() => !disabled && inputRef.current?.click()}
-        onKeyDown={handleKeyDown}
+        onKeyDown={handleDesktopKeyDown}
       >
         {loadingMessage ? (
           <div className="flex flex-col items-center gap-2">
@@ -153,17 +186,18 @@ export function ImageUpload({
             </div>
           </>
         )}
-        <input
-          ref={inputRef}
-          type="file"
-          accept={ACCEPTED_TYPES.join(",")}
-          multiple={multiple}
-          className="hidden"
-          onChange={handleChange}
-          disabled={disabled}
-          aria-hidden="true"
-        />
       </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={ACCEPTED_TYPES.join(",")}
+        multiple={multiple}
+        className="hidden"
+        onChange={handleChange}
+        disabled={disabled}
+        aria-hidden="true"
+      />
       {error && (
         <p role="alert" className="text-sm text-red-600">
           {error}

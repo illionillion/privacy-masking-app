@@ -9,7 +9,12 @@ describe("ImageUpload", () => {
 
   it("ドロップゾーンが表示される", () => {
     render(<ImageUpload onUpload={vi.fn()} />);
-    expect(screen.getByRole("button", { name: /画像をアップロード/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "画像をアップロード。クリックしてファイルを選択" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "画像をアップロード。クリックまたはドラッグ＆ドロップ" })
+    ).toBeInTheDocument();
   });
 
   it("ガイドテキストが表示される", () => {
@@ -20,13 +25,20 @@ describe("ImageUpload", () => {
 
   it("許可形式テキストが表示される", () => {
     render(<ImageUpload onUpload={vi.fn()} />);
-    expect(screen.getByText(/JPEG \/ PNG \/ WebP \/ GIF/)).toBeInTheDocument();
+    expect(screen.getAllByText(/JPEG \/ PNG \/ WebP \/ GIF/)).toHaveLength(2);
   });
 
   it("disabled時は操作不可になる", () => {
     render(<ImageUpload onUpload={vi.fn()} disabled />);
-    const button = screen.getByRole("button", { name: /画像をアップロード/ });
-    expect(button).toHaveAttribute("aria-disabled", "true");
+    const mobileButton = screen.getByRole("button", {
+      name: "画像をアップロード。クリックしてファイルを選択",
+    });
+    const desktopDropZone = screen.getByRole("button", {
+      name: "画像をアップロード。クリックまたはドラッグ＆ドロップ",
+    });
+
+    expect(mobileButton).toBeDisabled();
+    expect(desktopDropZone).toHaveAttribute("aria-disabled", "true");
   });
 
   it("不正なファイル形式のときエラーを表示する", () => {
