@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react";
+import { type ImgHTMLAttributes } from "react";
 import { describe, expect, it } from "vitest";
 import Home from "./page";
 
 // Next.js の next/image をモック
 vi.mock("next/image", () => ({
-  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
+  default: (props: ImgHTMLAttributes<HTMLImageElement>) => (
     // eslint-disable-next-line @next/next/no-img-element
     <img {...props} alt={props.alt ?? ""} />
   ),

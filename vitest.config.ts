@@ -7,7 +7,7 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
-    passWithNoTests: true,
+    passWithNoTests: false,
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
