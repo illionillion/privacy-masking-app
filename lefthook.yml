@@ -6,7 +6,7 @@ pre-commit:
       run: pnpm exec eslint --fix {staged_files}
       stage_fixed: true
     format:
-      glob: "**/*.{ts,tsx,mjs,json,css,md}"
+      glob: "**/*.{ts,tsx,mjs,json,css,md,yml,yaml}"
       run: pnpm exec prettier --write {staged_files}
       stage_fixed: true
     typecheck:
