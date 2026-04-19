@@ -1,0 +1,99 @@
+name: リファクタリング
+description: コードの改善・リファクタリング
+title: "[Refactor] "
+labels: ["refactor", "improvement"]
+body:
+  - type: textarea
+    id: target
+    attributes:
+      label: 対象範囲
+      description: リファクタリングする対象を記載してください。
+      placeholder: 例：マスキング処理の Canvas ロジック、顔検出フック
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: 対象範囲
+      description: 主にどの部分のリファクタリングですか？
+      options:
+        - UI（コンポーネント・レイアウト）
+        - 顔検出（face-api.js）
+        - OCR（Tesseract.js）
+        - マスキング処理（Canvas API）
+        - 編集UI（矩形・手動修正）
+        - 画像入力・出力
+        - 共通（型定義・ユーティリティ）
+        - 設定（ビルド・ESLint・環境）
+        - その他
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: リファクタリング対象外
+      description: 今回のリファクタリングでは対象外とする範囲を明記してください。
+      placeholder: |
+        例：
+        - 外部ライブラリは変更しない
+        - 既存の機能動作は維持する
+    validations:
+      required: false
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: リファクタリングの理由
+      description: なぜリファクタリングが必要なのかを記載してください。
+      placeholder: |
+        例：
+        - コードの重複が多い
+        - 可読性が低い
+        - 型安全性の向上
+        - パフォーマンスの改善
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_issues
+    attributes:
+      label: 現在の問題点
+      description: 現在のコードの具体的な問題点を記載してください。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: 改善案
+      description: どのように改善したいかの具体案を記載してください。
+      placeholder: 例：hooks に切り出し、型定義を強化、共通ユーティリティ化など
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: 影響範囲・リスク
+      description: リファクタリングによる他への影響やリスクがあれば記載してください。
+    validations:
+      required: false
+
+  - type: textarea
+    id: testing_strategy
+    attributes:
+      label: テスト戦略
+      description: リファクタリング時のテスト方針があれば記載してください。
+      placeholder: 例：既存のテストケースで動作確認、新規テストケース追加
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: その他・備考
+      description: 参考資料や補足情報があれば記載してください。
+    validations:
+      required: false

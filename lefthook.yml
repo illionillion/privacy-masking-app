@@ -1,0 +1,30 @@
+pre-commit:
+  parallel: false
+  commands:
+    lint:
+      glob: "**/*.{ts,tsx,mjs}"
+      run: pnpm exec eslint --fix {staged_files}
+      stage_fixed: true
+    format:
+      glob: "**/*.{ts,tsx,mjs,json,css,md,yml,yaml}"
+      run: pnpm exec prettier --write {staged_files}
+      stage_fixed: true
+    typecheck:
+      run: pnpm exec tsc --noEmit
+
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm exec commitlint --edit {1}
+
+post-merge:
+  commands:
+    install:
+      glob: "{package.json,pnpm-lock.yaml}"
+      run: pnpm install
+
+post-checkout:
+  commands:
+    install:
+      glob: "{package.json,pnpm-lock.yaml}"
+      run: pnpm install

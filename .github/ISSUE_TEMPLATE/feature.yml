@@ -1,0 +1,81 @@
+name: 機能実装
+description: 新機能の開発やエンハンスメント
+title: "[Feature] "
+labels: ["feature", "enhancement"]
+body:
+  - type: textarea
+    id: overview
+    attributes:
+      label: 機能概要
+      description: 実装したい機能の概要を記載してください。
+      placeholder: 例：画像のドラッグ&ドロップアップロード機能を追加したい
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: 対象範囲
+      description: 主にどの部分の機能実装ですか？
+      options:
+        - UI（コンポーネント・レイアウト）
+        - 顔検出（face-api.js）
+        - OCR（Tesseract.js）
+        - マスキング処理（Canvas API）
+        - 編集UI（矩形・手動修正）
+        - 画像入力・出力
+        - 個人情報検出（正規表現）
+        - 共通（型定義・ユーティリティ）
+        - その他
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: 対象外範囲
+      description: 今回の機能実装では対象外とする範囲を明記してください。
+      placeholder: |
+        例：
+        - サーバーサイド処理は対象外
+        - 動画対応は別Issue
+        - モバイル最適化は後回し
+    validations:
+      required: false
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 背景・動機
+      description: なぜこの機能が必要なのか、ユーザーにどんな価値を提供するかを記載してください。
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: 受け入れ条件
+      description: この機能が完成したとみなす条件を箇条書きで記載してください。
+      placeholder: |
+        - [ ] 画像をドラッグ&ドロップでアップロードできる
+        - [ ] アップロード後にプレビューが表示される
+        - [ ] ファイル形式のバリデーションが動作する
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical_notes
+    attributes:
+      label: 技術的な考慮事項
+      description: 実装時に考慮すべき技術的な要素があれば記載してください。
+      placeholder: 例：Canvas API の使い方、WebWorker での非同期処理、ライブラリの選定など
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: その他・備考
+      description: 補足情報や参考資料があれば記載してください。
+    validations:
+      required: false

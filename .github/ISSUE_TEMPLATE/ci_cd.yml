@@ -1,0 +1,86 @@
+name: CI/CD
+description: CI/CDパイプライン・自動化の設定・改善
+title: "[CI/CD] "
+labels: ["ci/cd"]
+body:
+  - type: textarea
+    id: target
+    attributes:
+      label: 対象システム
+      description: 設定・改善するCI/CDの対象を記載してください。
+      placeholder: 例：GitHub Actions ワークフロー、ビルド設定、デプロイパイプライン
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ci_cd_type
+    attributes:
+      label: CI/CDの種類
+      description: 主にどの種類のCI/CD作業ですか？
+      options:
+        - GitHub Actions ワークフロー作成・更新
+        - ビルド設定・最適化
+        - テスト自動化
+        - デプロイメント設定・自動化
+        - セキュリティスキャン・品質チェック
+        - 依存関係管理・更新自動化
+        - その他
+    validations:
+      required: true
+
+  - type: textarea
+    id: exclusions
+    attributes:
+      label: 対象外範囲
+      description: 今回のCI/CD作業では対象外とする範囲を明記してください。
+      placeholder: |
+        例：
+        - 本番環境のデプロイは手動のまま
+        - 外部サービス連携は別途設定
+    validations:
+      required: false
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 背景・目的
+      description: なぜこのCI/CD改善が必要なのかを記載してください。
+      placeholder: |
+        例：
+        - ビルド時間が長すぎる
+        - 手動デプロイでミスが発生しやすい
+        - テストが自動化されていない
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: 完了条件
+      description: このCI/CD作業が完了したとみなす条件を箇条書きで記載してください。
+      placeholder: |
+        - [ ] GitHub Actions ワークフローが正常に動作する
+        - [ ] テストが自動実行され、結果が確認できる
+        - [ ] PRマージ時にビルドが自動実行される
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度
+      description: このCI/CD作業の優先度を選択してください。
+      options:
+        - High（緊急・重要・ブロッカー）
+        - Medium（通常・計画的）
+        - Low（改善・最適化・時間があるときに）
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: その他・備考
+      description: 参考資料、関連するIssue・PR、制約事項があれば記載してください。
+    validations:
+      required: false

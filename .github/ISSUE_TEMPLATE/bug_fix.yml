@@ -1,0 +1,112 @@
+name: バグ修正
+description: バグや不具合の報告
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: バグの概要
+      description: バグの内容を簡潔に記載してください。
+      placeholder: 例：顔検出後にマスクを適用すると画像が真っ黒になる
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: 発生範囲
+      description: バグが発生している範囲を選択してください。
+      options:
+        - UI（コンポーネント・レイアウト）
+        - 顔検出（face-api.js）
+        - OCR（Tesseract.js）
+        - マスキング処理（Canvas API）
+        - 編集UI（矩形・手動修正）
+        - 画像入力・出力
+        - 個人情報検出（正規表現）
+        - その他
+    validations:
+      required: true
+
+  - type: textarea
+    id: unaffected_areas
+    attributes:
+      label: 影響範囲外
+      description: このバグ修正で影響を受けない・修正対象外とする範囲を明記してください。
+      placeholder: |
+        例：
+        - 顔検出処理自体は正常
+        - 他のマスク種別は影響なし
+    validations:
+      required: false
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 重要度
+      description: バグの影響度を選択してください。
+      options:
+        - Critical（主要機能が使用不可）
+        - High（重要機能に影響）
+        - Medium（一部機能に影響）
+        - Low（軽微な問題）
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      description: バグを再現する手順を詳しく記載してください。
+      placeholder: |
+        1. 画像をアップロード
+        2. 「顔検出」ボタンをクリック
+        3. 「マスク適用」をクリック
+        4. 画像が真っ黒になる
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待される動作
+      description: 本来どのような動作になるべきかを記載してください。
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の動作
+      description: 実際にどうなったかを記載してください。
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 環境情報
+      description: OS、ブラウザ、バージョン等の環境情報を記載してください。
+      placeholder: |
+        - OS: macOS Sequoia / Windows 11
+        - ブラウザ: Chrome 125 / Firefox 126 / Safari 17
+        - Node.js: v20.x
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: ログ・エラーメッセージ
+      description: 関連するエラーログやコンソール出力があれば貼り付けてください。
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: その他・備考
+      description: スクリーンショットや追加情報があれば記載してください。
+    validations:
+      required: false

@@ -1,0 +1,98 @@
+name: テスト作成
+description: テストケースの追加・改善
+title: "[Test] "
+labels: ["test"]
+body:
+  - type: textarea
+    id: target
+    attributes:
+      label: テスト対象
+      description: テストを作成する対象の機能・コンポーネントを記載してください。
+      placeholder: 例：マスキング処理ユーティリティ、顔検出フック、画像アップロードコンポーネント
+    validations:
+      required: true
+
+  - type: dropdown
+    id: test_type
+    attributes:
+      label: テストの種類
+      description: 作成するテストの種類を選択してください。
+      options:
+        - Unit Test（単体テスト）
+        - Integration Test（結合テスト）
+        - Component Test（コンポーネントテスト）
+        - E2E Test（エンドツーエンドテスト）
+        - その他
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: 対象範囲
+      description: 主にどの部分のテストですか？
+      options:
+        - UI（コンポーネント・レイアウト）
+        - 顔検出（face-api.js）
+        - OCR（Tesseract.js）
+        - マスキング処理（Canvas API）
+        - 編集UI（矩形・手動修正）
+        - 画像入力・出力
+        - 個人情報検出（正規表現）
+        - 共通（型定義・ユーティリティ）
+        - その他
+    validations:
+      required: true
+
+  - type: textarea
+    id: test_exclusions
+    attributes:
+      label: テスト対象外
+      description: 今回のテスト作成では対象外とする範囲を明記してください。
+      placeholder: |
+        例：
+        - 外部ライブラリの内部動作は対象外
+        - モデルのロード処理はモックで対応
+    validations:
+      required: false
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: テスト作成の理由
+      description: なぜこのテストが必要なのかを記載してください。
+      placeholder: |
+        例：
+        - 現在テストがカバーされていない
+        - バグが頻発している箇所
+        - 重要なビジネスロジックの品質保証
+    validations:
+      required: true
+
+  - type: textarea
+    id: test_scenarios
+    attributes:
+      label: テストシナリオ
+      description: テストしたい具体的なシナリオを箇条書きで記載してください。
+      placeholder: |
+        - [ ] 正常系：有効な画像ファイルの処理成功
+        - [ ] 異常系：無効なファイル形式のエラーハンドリング
+        - [ ] 境界値：空ファイル・極大サイズでの動作
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_coverage
+    attributes:
+      label: 期待するカバレッジ
+      description: 目標とするテストカバレッジや重点的にテストしたい部分を記載してください。
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: その他・備考
+      description: 補足情報や参考資料があれば記載してください。
+    validations:
+      required: false
