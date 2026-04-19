@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import clsx from "clsx";
 import { ImageIcon, LoaderCircle } from "lucide-react";
 
@@ -68,7 +69,7 @@ export function ImageUpload({
   );
 
   const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
+    (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       setIsDragOver(false);
       if (disabled) return;
@@ -80,7 +81,7 @@ export function ImageUpload({
   );
 
   const handleDragOver = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
+    (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       if (!disabled) setIsDragOver(true);
     },
@@ -92,7 +93,7 @@ export function ImageUpload({
   }, []);
 
   const handleDesktopKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLDivElement>) => {
+    (e: KeyboardEvent<HTMLDivElement>) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         if (!disabled) inputRef.current?.click();
@@ -102,7 +103,7 @@ export function ImageUpload({
   );
 
   const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files ? Array.from(e.target.files) : [];
       if (files.length > 0) {
         handleFiles(multiple ? files : [files[0]]);
