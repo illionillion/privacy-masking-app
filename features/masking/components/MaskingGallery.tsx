@@ -227,7 +227,9 @@ export function MaskingGallery() {
         anchor.href = url;
         anchor.download = "masked-images.zip";
         anchor.click();
-        URL.revokeObjectURL(url);
+        window.setTimeout(() => {
+          URL.revokeObjectURL(url);
+        }, 0);
       });
     });
   }, [images]);
@@ -287,35 +289,28 @@ export function MaskingGallery() {
             {images.map((image) => (
               <section
                 key={image.id}
-                role="button"
-                tabIndex={0}
                 className={clsx([
                   "rounded-xl border bg-white p-4 transition-colors",
-                  "cursor-pointer hover:border-blue-200",
+                  "hover:border-blue-200",
                   image.id === activeImageId ? "border-blue-300" : "border-zinc-200",
                 ])}
-                onClick={() => setActiveImageId(image.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setActiveImageId(image.id);
-                  }
-                }}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p
+                  <button
+                    type="button"
+                    onClick={() => setActiveImageId(image.id)}
                     className={clsx([
-                      "truncate text-left text-sm font-medium",
+                      "min-w-0 flex-1 truncate text-left text-sm font-medium",
+                      "rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
                       image.id === activeImageId ? "text-blue-700" : "text-zinc-700",
                     ])}
                     title={image.name}
                   >
                     {image.name}
-                  </p>
+                  </button>
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    onClick={() => {
                       void handleRedetect(image.id);
                     }}
                     disabled={isProcessing || isModelLoading}
@@ -350,7 +345,6 @@ export function MaskingGallery() {
                     <a
                       href={image.maskedDataUrl}
                       download={createDownloadFileName(image.name)}
-                      onClick={(e) => e.stopPropagation()}
                       className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
                     >
                       ダウンロード
