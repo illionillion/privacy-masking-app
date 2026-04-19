@@ -6,6 +6,8 @@
 
 目的は「SNS投稿・スクリーンショット共有時の情報漏洩防止」を簡単に行うこと。
 
+[プロトタイプアプリ](https://github.com/illionillion/face-stamp-app-prototype)
+
 ---
 
 ## 2. MVPスコープ
