@@ -14,32 +14,11 @@ interface MaskingImageItem {
   id: string;
   name: string;
   size: number;
-  imageDataUrl: string;
+  /** 表示・検出用 Blob URL（使用後は revokeObjectURL で解放する） */
+  imageUrl: string;
   detections: FaceDetectionResult[];
   maskedDataUrl: string | null;
 }
-
-/**
- * File を Data URL へ変換する
- *
- * @param file - 変換対象の画像ファイル
- * @returns Data URL
- */
-const readFileAsDataUrl = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result;
-      if (typeof result === "string") {
-        resolve(result);
-        return;
-      }
-      reject(new Error("画像の読み込みに失敗しました"));
-    };
-    reader.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
-    reader.readAsDataURL(file);
-  });
-};
 
 /**
  * 画像URLから HTMLImageElement を生成する
@@ -100,15 +79,15 @@ export function MaskingGallery() {
 
         const settledResults = await Promise.allSettled(
           files.map(async (file, index): Promise<MaskingImageItem> => {
-            const imageDataUrl = await readFileAsDataUrl(file);
-            const imageElement = await loadImageElement(imageDataUrl);
+            const imageUrl = URL.createObjectURL(file);
+            const imageElement = await loadImageElement(imageUrl);
             const detections = await detectFaces(imageElement);
 
             return {
               id: `${file.name}-${file.lastModified}-${file.size}-${uploadedAt}-${index}`,
               name: file.name,
               size: file.size,
-              imageDataUrl,
+              imageUrl,
               detections,
               maskedDataUrl: null,
             };
@@ -146,7 +125,7 @@ export function MaskingGallery() {
       if (!target || isModelLoading) return;
 
       try {
-        const imageElement = await loadImageElement(target.imageDataUrl);
+        const imageElement = await loadImageElement(target.imageUrl);
         const detections = await detectFaces(imageElement);
 
         setImages((prev) =>
@@ -188,9 +167,12 @@ export function MaskingGallery() {
     );
   }, []);
 
-  /** 全画像をクリアする */
+  /** 全画像をクリアする（Blob URL を解放してから state をリセット） */
   const handleClearAll = useCallback(() => {
-    setImages([]);
+    setImages((prev) => {
+      prev.forEach((image) => URL.revokeObjectURL(image.imageUrl));
+      return [];
+    });
     setActiveImageId(null);
   }, []);
 
@@ -343,7 +325,7 @@ export function MaskingGallery() {
 
                 <div className="mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3">
                   <FaceDetectionCanvas
-                    imageDataUrl={image.imageDataUrl}
+                    imageDataUrl={image.imageUrl}
                     detections={image.detections}
                     onRendered={(dataUrl) => {
                       handleRendered(image.id, dataUrl);
