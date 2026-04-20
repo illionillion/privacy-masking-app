@@ -50,8 +50,10 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   const [isDetecting, setIsDetecting] = useState(false);
   const [detections, setDetections] = useState<FaceDetectionResult[]>([]);
   const [error, setError] = useState<string | null>(null);
-  /** 最後に開始した検出リクエストのID（古い結果の state 上書きを防ぐ） */
+  /** 最後に開始した検出呼び出しのID（古い結果の state 上書きを防ぐ） */
   const detectRequestRef = useRef(0);
+  /** 現在処理中の検出呼び出し数（1つでも走っている間は isDetecting を true に保つ） */
+  const inFlightRef = useRef(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -86,7 +88,8 @@ export function useFaceDetection(): UseFaceDetectionReturn {
    */
   const detectFaces = useCallback(
     async (imageElement: HTMLImageElement): Promise<FaceDetectionResult[]> => {
-      const requestId = ++detectRequestRef.current;
+      const callId = ++detectRequestRef.current;
+      inFlightRef.current++;
       setIsDetecting(true);
       setError(null);
       try {
@@ -102,17 +105,18 @@ export function useFaceDetection(): UseFaceDetectionReturn {
           height: d.box.height,
           score: d.score,
         }));
-        if (requestId === detectRequestRef.current) {
+        if (callId === detectRequestRef.current) {
           setDetections(mappedDetections);
         }
         return mappedDetections;
       } catch (err) {
-        if (requestId === detectRequestRef.current) {
+        if (callId === detectRequestRef.current) {
           setError(err instanceof Error ? err.message : "顔検出中にエラーが発生しました");
         }
         return [];
       } finally {
-        if (requestId === detectRequestRef.current) {
+        inFlightRef.current--;
+        if (inFlightRef.current === 0) {
           setIsDetecting(false);
         }
       }
