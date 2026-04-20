@@ -299,23 +299,24 @@ export function MaskingGallery() {
             {images.map((image) => (
               <article
                 key={image.id}
-                onClick={() => setActiveImageId(image.id)}
                 className={clsx([
-                  "cursor-pointer rounded-xl border bg-white p-4 transition-colors",
-                  "hover:border-blue-200",
+                  "rounded-xl border bg-white p-4 transition-colors",
                   image.id === activeImageId ? "border-blue-300" : "border-zinc-200",
                 ])}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p
+                  <button
+                    type="button"
+                    onClick={() => setActiveImageId(image.id)}
                     className={clsx([
-                      "min-w-0 flex-1 truncate text-sm font-medium",
+                      "min-w-0 flex-1 truncate text-left text-sm font-medium transition-colors",
+                      "hover:underline",
                       image.id === activeImageId ? "text-blue-700" : "text-zinc-700",
                     ])}
                     title={image.name}
                   >
                     {image.name}
-                  </p>
+                  </button>
                   <button
                     type="button"
                     onClick={(e) => {
