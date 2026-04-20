@@ -296,82 +296,67 @@ export function MaskingGallery() {
             {images.map((image) => (
               <section
                 key={image.id}
+                onClick={() => setActiveImageId(image.id)}
                 className={clsx([
-                  "relative rounded-xl border bg-white p-4 transition-colors",
+                  "cursor-pointer rounded-xl border bg-white p-4 transition-colors",
                   "hover:border-blue-200",
                   image.id === activeImageId ? "border-blue-300" : "border-zinc-200",
                 ])}
               >
-                {/* カード全体クリック用オーバーレイ。内側コンテンツより z-index が低いため内側の操作は妨げない */}
-                <button
-                  type="button"
-                  aria-label={`${image.name} を選択`}
-                  onClick={() => setActiveImageId(image.id)}
-                  className="absolute inset-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-                />
+                <div className="flex items-center justify-between gap-2">
+                  <p
+                    className={clsx([
+                      "min-w-0 flex-1 truncate text-sm font-medium",
+                      image.id === activeImageId ? "text-blue-700" : "text-zinc-700",
+                    ])}
+                    title={image.name}
+                  >
+                    {image.name}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleRedetect(image.id);
+                    }}
+                    disabled={isProcessing || isModelLoading}
+                    className={clsx([
+                      "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                      "bg-blue-600 text-white hover:bg-blue-700",
+                      (isProcessing || isModelLoading) && "cursor-not-allowed opacity-50",
+                    ])}
+                  >
+                    再検出
+                  </button>
+                </div>
 
-                {/* relative z-10 でオーバーレイより上に配置し、ポインターイベントを正常に受け取る */}
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between gap-2">
-                    <p
-                      className={clsx([
-                        "truncate text-sm font-medium",
-                        image.id === activeImageId ? "text-blue-700" : "text-zinc-700",
-                      ])}
-                      title={image.name}
-                    >
-                      {image.name}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void handleRedetect(image.id);
-                      }}
-                      disabled={isProcessing || isModelLoading}
-                      className={clsx([
-                        "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                        "bg-blue-600 text-white hover:bg-blue-700",
-                        (isProcessing || isModelLoading) && "cursor-not-allowed opacity-50",
-                      ])}
-                    >
-                      再検出
-                    </button>
-                  </div>
+                <p className="mt-2 text-xs text-zinc-500">検出結果: {image.detections.length} 件</p>
 
-                  <p className="mt-2 text-xs text-zinc-500">
-                    検出結果: {image.detections.length} 件
+                <div className="mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                  <FaceDetectionCanvas
+                    imageDataUrl={image.imageDataUrl}
+                    detections={image.detections}
+                    onRendered={(dataUrl) => {
+                      handleRendered(image.id, dataUrl);
+                    }}
+                  />
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <p className="text-xs text-zinc-400">
+                    {(image.size / 1024 / 1024).toFixed(2)} MB
                   </p>
 
-                  <div
-                    className="mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3"
-                    onClick={() => setActiveImageId(image.id)}
-                  >
-                    <FaceDetectionCanvas
-                      imageDataUrl={image.imageDataUrl}
-                      detections={image.detections}
-                      onRendered={(dataUrl) => {
-                        handleRendered(image.id, dataUrl);
-                      }}
-                    />
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    <p className="text-xs text-zinc-400">
-                      {(image.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-
-                    {image.maskedDataUrl ? (
-                      <a
-                        href={image.maskedDataUrl}
-                        download={createDownloadFileName(image.name)}
-                        className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
-                      >
-                        ダウンロード
-                      </a>
-                    ) : (
-                      <span className="text-xs text-zinc-400">描画中…</span>
-                    )}
-                  </div>
+                  {image.maskedDataUrl ? (
+                    <a
+                      href={image.maskedDataUrl}
+                      download={createDownloadFileName(image.name)}
+                      className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
+                    >
+                      ダウンロード
+                    </a>
+                  ) : (
+                    <span className="text-xs text-zinc-400">描画中…</span>
+                  )}
                 </div>
               </section>
             ))}
