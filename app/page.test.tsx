@@ -16,7 +16,9 @@ describe("Home", () => {
   it("説明テキストが表示される", () => {
     render(<Home />);
     expect(
-      screen.getByText("画像をアップロードすると、顔を自動で検出して矩形表示します")
+      screen.getByText(
+        "画像をアップロードすると、顔を自動検出してスタンプでマスキングし、ダウンロードできます"
+      )
     ).toBeInTheDocument();
   });
 
