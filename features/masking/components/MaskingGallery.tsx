@@ -297,7 +297,15 @@ export function MaskingGallery() {
             {images.map((image) => (
               <section
                 key={image.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => setActiveImageId(image.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setActiveImageId(image.id);
+                  }
+                }}
                 className={clsx([
                   "cursor-pointer rounded-xl border bg-white p-4 transition-colors",
                   "hover:border-blue-200",

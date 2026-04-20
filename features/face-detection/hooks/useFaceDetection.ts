@@ -3,8 +3,24 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { FaceDetectionResult, UseFaceDetectionReturn } from "../types";
 
-/** モデルのロードURLパス（相対パスでサブパス配信にも対応） */
-const MODEL_URL = "models";
+/**
+ * `NEXT_PUBLIC_BASE_PATH` を考慮した公開アセットURLを生成する。
+ *
+ * @param assetPath - `public` 配下のアセット相対パス
+ * @returns ベースパスを考慮した公開URL
+ */
+const buildPublicAssetPath = (assetPath: string): string => {
+  const rawBasePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+  const normalizedBasePath =
+    rawBasePath === "/" || rawBasePath.length === 0
+      ? ""
+      : `/${rawBasePath.replace(/^\/+|\/+$/g, "")}`;
+  const normalizedAssetPath = assetPath.replace(/^\/+/, "");
+  return `${normalizedBasePath}/${normalizedAssetPath}`;
+};
+
+/** モデルのロードURLパス */
+const MODEL_URL = buildPublicAssetPath("models");
 
 /**
  * 顔検出フック
@@ -71,12 +87,14 @@ export function useFaceDetection(): UseFaceDetectionReturn {
           height: d.box.height,
           score: d.score,
         }));
-        if (requestId !== detectRequestRef.current) return [];
-        setDetections(mappedDetections);
+        if (requestId === detectRequestRef.current) {
+          setDetections(mappedDetections);
+        }
         return mappedDetections;
       } catch (err) {
-        if (requestId !== detectRequestRef.current) return [];
-        setError(err instanceof Error ? err.message : "顔検出中にエラーが発生しました");
+        if (requestId === detectRequestRef.current) {
+          setError(err instanceof Error ? err.message : "顔検出中にエラーが発生しました");
+        }
         return [];
       } finally {
         if (requestId === detectRequestRef.current) {
