@@ -3,7 +3,7 @@
  */
 
 /** 個人情報パターン種別 */
-export type OcrPatternType = "email" | "phone" | "url" | "apikey";
+export type OcrPatternType = "email" | "phone" | "postal" | "url" | "apikey";
 
 /** OCRで検出された個人情報領域 */
 export interface OcrRegion {

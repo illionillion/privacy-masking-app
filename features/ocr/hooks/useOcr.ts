@@ -19,6 +19,10 @@ const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
     source: String.raw`0\d{1,4}[-\s]?\d{1,4}[-\s]?\d{4}`,
   },
   {
+    type: "postal",
+    source: String.raw`〒?\d{3}[-　2]\d{4}`,
+  },
+  {
     type: "url",
     source: String.raw`https?:\/\/[^\s　]+`,
   },
@@ -61,6 +65,9 @@ interface TesseractBlock {
 
 interface TesseractPage {
   blocks: TesseractBlock[] | null;
+  lines?: TesseractLine[];
+  words?: TesseractWord[];
+  text?: string;
 }
 
 /**
@@ -73,7 +80,7 @@ interface TesseractPage {
 export function detectPersonalInfoInLine(lineText: string, words: TesseractWord[]): OcrRegion[] {
   /** 各単語の文字位置範囲をマップする */
   let pos = 0;
-  const wordPositions = words.map((w) => {
+  const wordPositions = (words ?? []).map((w) => {
     const start = pos;
     const end = pos + w.text.length;
     pos = end + 1; // 単語間のスペース
@@ -131,13 +138,32 @@ export function detectPersonalInfoInLine(lineText: string, words: TesseractWord[
 function extractOcrRegions(page: TesseractPage): OcrRegion[] {
   const regions: OcrRegion[] = [];
 
-  for (const block of page.blocks ?? []) {
-    for (const para of block.paragraphs) {
-      for (const line of para.lines) {
-        const lineRegions = detectPersonalInfoInLine(line.text, line.words);
-        regions.push(...lineRegions);
-      }
+  /**
+   * blocks が null の場合（Tesseract の出力形式によって発生）は
+   * page.lines に直接フォールバックする
+   */
+  const lines: TesseractLine[] =
+    page.blocks != null
+      ? page.blocks.flatMap((block) => block.paragraphs.flatMap((para) => para.lines))
+      : (page.lines ?? []);
+
+  if (lines.length > 0) {
+    for (const line of lines) {
+      const lineRegions = detectPersonalInfoInLine(line.text ?? "", line.words ?? []);
+      regions.push(...lineRegions);
     }
+    return regions;
+  }
+
+  /**
+   * lines も空の場合は page.words を直接使う。
+   * 全単語テキストを結合してパターンマッチし、対応する単語の bbox を統合する。
+   */
+  const words = page.words ?? [];
+  if (words.length > 0) {
+    const fullText = words.map((w) => w.text).join(" ");
+    const wordRegions = detectPersonalInfoInLine(fullText, words);
+    regions.push(...wordRegions);
   }
 
   return regions;
@@ -205,8 +231,21 @@ export function useOcr(): UseOcrReturn {
 
       try {
         const worker = await getWorker();
-        const { data } = await worker.recognize(imageElement);
-        const regions = extractOcrRegions(data as TesseractPage);
+        const { data } = await worker.recognize(imageElement, {}, { blocks: true, text: true });
+
+        if (process.env.NODE_ENV !== "production") {
+          const page = data as unknown as TesseractPage;
+          console.log("[OCR] 生テキスト:", data.text);
+          console.log("[OCR] ブロック数:", page.blocks?.length ?? 0);
+          console.log("[OCR] ライン数(直接):", page.lines?.length ?? 0);
+          console.log("[OCR] ワード数(直接):", page.words?.length ?? 0);
+        }
+
+        const regions = extractOcrRegions(data as unknown as TesseractPage);
+
+        if (process.env.NODE_ENV !== "production") {
+          console.log("[OCR] 検出された個人情報領域:", regions);
+        }
 
         if (requestId === recognizeRequestRef.current) {
           setOcrRegions(regions);
