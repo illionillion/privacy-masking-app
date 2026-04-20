@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { zip } from "fflate";
 import { ImageUpload } from "@/components/ImageUpload";
@@ -59,10 +59,21 @@ const createDownloadFileName = (originalName: string): string => {
  */
 export function MaskingGallery() {
   const [images, setImages] = useState<MaskingImageItem[]>([]);
+  const imagesRef = useRef(images);
+  useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const { isModelLoading, isDetecting, error: detectionError, detectFaces } = useFaceDetection();
+
+  /** コンポーネント破棄時に Blob URL をすべて解放する */
+  useEffect(() => {
+    return () => {
+      imagesRef.current.forEach((image) => URL.revokeObjectURL(image.imageUrl));
+    };
+  }, []);
 
   /**
    * ファイルアップロード時の処理
