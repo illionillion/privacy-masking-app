@@ -60,10 +60,13 @@ export function ImageUpload({
         validFiles.push(file);
       }
 
-      setError(validationError);
       if (validFiles.length > 0) {
+        setError(null);
         onUpload(validFiles);
+        return;
       }
+
+      setError(validationError);
     },
     [onUpload]
   );

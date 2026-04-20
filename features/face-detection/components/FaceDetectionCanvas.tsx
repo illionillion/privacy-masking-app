@@ -47,16 +47,24 @@ const stampImageCache = new Map<string, Promise<HTMLImageElement>>();
 
 /**
  * スタンプ画像を読み込む。キャッシュ済みの場合はキャッシュから返す。
+ *
+ * 一時的な読み込み失敗時に reject 済み Promise を再利用し続けないよう、
+ * 失敗したキャッシュエントリは削除して次回呼び出しで再試行できるようにする。
  */
 function loadStampImage(src: string): Promise<HTMLImageElement> {
   const cached = stampImageCache.get(src);
   if (cached) return cached;
+
   const promise = new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = reject;
+    img.onerror = () => reject(new Error(`Failed to load stamp image: ${src}`));
     img.src = src;
+  }).catch((error: unknown) => {
+    stampImageCache.delete(src);
+    throw error;
   });
+
   stampImageCache.set(src, promise);
   return promise;
 }
