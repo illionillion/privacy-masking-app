@@ -93,4 +93,34 @@ describe("useMaskingRegions", () => {
     });
     expect(result.current.regions).toHaveLength(0);
   });
+
+  it("crypto.randomUUID が未定義でも getRandomValues フォールバックで UUID を生成できる", () => {
+    vi.stubGlobal("crypto", {
+      getRandomValues: vi.fn((arr: Uint8Array) => {
+        arr.fill(0xab);
+        return arr;
+      }),
+    });
+    const { result } = renderHook(() => useMaskingRegions());
+    act(() => {
+      result.current.addRegion({ x: 0, y: 0, width: 50, height: 50, type: "face" });
+    });
+    expect(result.current.regions).toHaveLength(1);
+    /** UUID v4 形式: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx */
+    expect(result.current.regions[0].id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+    );
+  });
+
+  it("crypto が完全に未定義でも Math.random フォールバックで UUID を生成できる", () => {
+    vi.stubGlobal("crypto", undefined);
+    const { result } = renderHook(() => useMaskingRegions());
+    act(() => {
+      result.current.addRegion({ x: 0, y: 0, width: 50, height: 50, type: "face" });
+    });
+    expect(result.current.regions).toHaveLength(1);
+    expect(result.current.regions[0].id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+    );
+  });
 });

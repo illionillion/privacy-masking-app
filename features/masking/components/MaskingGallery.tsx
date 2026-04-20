@@ -68,7 +68,7 @@ export function MaskingGallery() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const { isModelLoading, isDetecting, error: detectionError, detectFaces } = useFaceDetection();
 
-  /** コンポーネント破棄時に Blob URL をすべて解放する */
+  /** コンポーネント破棄時に imageUrl の Blob URL をすべて解放する */
   useEffect(() => {
     return () => {
       imagesRef.current.forEach((image) => URL.revokeObjectURL(image.imageUrl));
@@ -185,12 +185,10 @@ export function MaskingGallery() {
     );
   }, []);
 
-  /** 全画像をクリアする（Blob URL を解放してから state をリセット） */
+  /** 全画像をクリアする（imageUrl の Blob URL を解放してから state をリセット） */
   const handleClearAll = useCallback(() => {
-    setImages((prev) => {
-      prev.forEach((image) => URL.revokeObjectURL(image.imageUrl));
-      return [];
-    });
+    imagesRef.current.forEach((image) => URL.revokeObjectURL(image.imageUrl));
+    setImages([]);
     setActiveImageId(null);
   }, []);
 
