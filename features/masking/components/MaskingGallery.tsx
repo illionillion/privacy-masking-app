@@ -288,28 +288,39 @@ export function MaskingGallery() {
 
           <div className="grid gap-4 md:grid-cols-2">
             {images.map((image) => (
-              <article
+              <div
                 key={image.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setActiveImageId(image.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setActiveImageId(image.id);
+                  }
+                }}
                 className={clsx([
-                  "rounded-xl border bg-white p-4 transition-colors",
+                  "cursor-pointer rounded-xl border bg-white p-4 transition-colors",
+                  "hover:border-blue-200",
                   image.id === activeImageId ? "border-blue-300" : "border-zinc-200",
                 ])}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setActiveImageId(image.id)}
+                  <p
                     className={clsx([
-                      "min-w-0 flex-1 truncate text-left text-sm font-medium transition-colors hover:text-blue-600",
+                      "min-w-0 flex-1 truncate text-sm font-medium",
                       image.id === activeImageId ? "text-blue-700" : "text-zinc-700",
                     ])}
                     title={image.name}
                   >
                     {image.name}
-                  </button>
+                  </p>
                   <button
                     type="button"
-                    onClick={() => void handleRedetect(image.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleRedetect(image.id);
+                    }}
                     disabled={isProcessing || isModelLoading}
                     className={clsx([
                       "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
@@ -342,6 +353,7 @@ export function MaskingGallery() {
                     <a
                       href={image.maskedBlobUrl}
                       download={createDownloadFileName(image.name)}
+                      onClick={(e) => e.stopPropagation()}
                       className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
                     >
                       ダウンロード
@@ -350,7 +362,7 @@ export function MaskingGallery() {
                     <span className="text-xs text-zinc-400">描画中…</span>
                   )}
                 </div>
-              </article>
+              </div>
             ))}
           </div>
         </div>
