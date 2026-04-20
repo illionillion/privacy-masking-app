@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type { OcrRegion } from "@/features/ocr";
 import type { FaceDetectionResult } from "../types";
 
 interface FaceDetectionCanvasProps {
@@ -8,6 +9,8 @@ interface FaceDetectionCanvasProps {
   imageDataUrl: string;
   /** 検出された顔の矩形一覧 */
   detections: FaceDetectionResult[];
+  /** OCRで検出された個人情報領域（黒塗りで描画） */
+  ocrRegions?: OcrRegion[];
   /** Canvasの最大表示幅 */
   maxWidth?: number;
   /**
@@ -70,6 +73,7 @@ function loadStampImage(src: string): Promise<HTMLImageElement> {
 export function FaceDetectionCanvas({
   imageDataUrl,
   detections,
+  ocrRegions = [],
   maxWidth = 800,
   onRendered,
 }: FaceDetectionCanvasProps) {
@@ -123,6 +127,17 @@ export function FaceDetectionCanvas({
           }
         }
 
+        /** OCR検出領域を黒塗りでマスキング */
+        ctx.fillStyle = "#000000";
+        for (const region of ocrRegions) {
+          ctx.fillRect(
+            region.x * scale,
+            region.y * scale,
+            region.width * scale,
+            region.height * scale
+          );
+        }
+
         /** toDataURL の代わりに toBlob を使用してメインスレッドのブロックを回避 */
         canvas.toBlob((blob) => {
           if (isCancelled || !blob) return;
@@ -147,7 +162,7 @@ export function FaceDetectionCanvas({
         blobUrlRef.current = null;
       }
     };
-  }, [imageDataUrl, detections, maxWidth]);
+  }, [imageDataUrl, detections, ocrRegions, maxWidth]);
 
   return (
     <canvas

@@ -9,6 +9,7 @@ import {
   useFaceDetection,
   type FaceDetectionResult,
 } from "@/features/face-detection";
+import { useOcr, type OcrRegion } from "@/features/ocr";
 
 interface MaskingImageItem {
   id: string;
@@ -17,6 +18,8 @@ interface MaskingImageItem {
   /** 表示・検出用 Blob URL（使用後は revokeObjectURL で解放する） */
   imageUrl: string;
   detections: FaceDetectionResult[];
+  /** OCRで検出された個人情報領域 */
+  ocrRegions: OcrRegion[];
   maskedDataUrl: string | null;
 }
 
@@ -62,6 +65,7 @@ export function MaskingGallery() {
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const { isModelLoading, isDetecting, error: detectionError, detectFaces } = useFaceDetection();
+  const { isRecognizing, error: ocrError, recognizeText } = useOcr();
 
   /**
    * ファイルアップロード時の処理
@@ -81,7 +85,12 @@ export function MaskingGallery() {
           files.map(async (file, index): Promise<MaskingImageItem> => {
             const imageUrl = URL.createObjectURL(file);
             const imageElement = await loadImageElement(imageUrl);
-            const detections = await detectFaces(imageElement);
+
+            /** 顔検出とOCRを並行して実行 */
+            const [detections, ocrRegions] = await Promise.all([
+              detectFaces(imageElement),
+              recognizeText(imageElement),
+            ]);
 
             return {
               id: `${file.name}-${file.lastModified}-${file.size}-${uploadedAt}-${index}`,
@@ -89,6 +98,7 @@ export function MaskingGallery() {
               size: file.size,
               imageUrl,
               detections,
+              ocrRegions,
               maskedDataUrl: null,
             };
           })
@@ -111,7 +121,7 @@ export function MaskingGallery() {
         setIsBatchProcessing(false);
       }
     },
-    [detectFaces, isModelLoading]
+    [detectFaces, recognizeText, isModelLoading]
   );
 
   /**
@@ -126,7 +136,12 @@ export function MaskingGallery() {
 
       try {
         const imageElement = await loadImageElement(target.imageUrl);
-        const detections = await detectFaces(imageElement);
+
+        /** 顔検出とOCRを並行して実行 */
+        const [detections, ocrRegions] = await Promise.all([
+          detectFaces(imageElement),
+          recognizeText(imageElement),
+        ]);
 
         setImages((prev) =>
           prev.map((image) =>
@@ -134,6 +149,7 @@ export function MaskingGallery() {
               ? {
                   ...image,
                   detections,
+                  ocrRegions,
                   maskedDataUrl: null,
                 }
               : image
@@ -143,7 +159,7 @@ export function MaskingGallery() {
         return;
       }
     },
-    [images, detectFaces, isModelLoading]
+    [images, detectFaces, recognizeText, isModelLoading]
   );
 
   /**
@@ -224,7 +240,7 @@ export function MaskingGallery() {
     });
   }, [images]);
 
-  const isProcessing = isBatchProcessing || isDetecting;
+  const isProcessing = isBatchProcessing || isDetecting || isRecognizing;
   const loadingMessage = isModelLoading
     ? "顔検出モデルをロード中…"
     : isBatchProcessing
@@ -241,9 +257,9 @@ export function MaskingGallery() {
         loadingMessage={loadingMessage}
       />
 
-      {(detectionError ?? uploadError) && (
+      {(detectionError ?? ocrError ?? uploadError) && (
         <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-          エラー: {detectionError ?? uploadError}
+          エラー: {detectionError ?? ocrError ?? uploadError}
         </p>
       )}
 
@@ -321,12 +337,15 @@ export function MaskingGallery() {
                   </button>
                 </div>
 
-                <p className="mt-2 text-xs text-zinc-500">検出結果: {image.detections.length} 件</p>
+                <p className="mt-2 text-xs text-zinc-500">
+                  顔: {image.detections.length} 件 / テキスト: {image.ocrRegions.length} 件
+                </p>
 
                 <div className="mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3">
                   <FaceDetectionCanvas
                     imageDataUrl={image.imageUrl}
                     detections={image.detections}
+                    ocrRegions={image.ocrRegions}
                     onRendered={(dataUrl) => {
                       handleRendered(image.id, dataUrl);
                     }}
