@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { zip } from "fflate";
 import { ImageUpload } from "@/components/ImageUpload";
@@ -20,13 +20,14 @@ interface MaskingImageItem {
   detections: FaceDetectionResult[];
   /** OCRで検出された個人情報領域 */
   ocrRegions: OcrRegion[];
-  maskedDataUrl: string | null;
+  /** マスキング済み画像の Blob URL（FaceDetectionCanvas の onRendered から渡される） */
+  maskedBlobUrl: string | null;
 }
 
 /**
  * 画像URLから HTMLImageElement を生成する
  *
- * @param src - 画像のData URL
+ * @param src - 画像の Data URL または Blob URL
  * @returns 読み込み済みのHTMLImageElement
  */
 const loadImageElement = (src: string): Promise<HTMLImageElement> => {
@@ -61,11 +62,22 @@ const createDownloadFileName = (originalName: string): string => {
  */
 export function MaskingGallery() {
   const [images, setImages] = useState<MaskingImageItem[]>([]);
+  const imagesRef = useRef(images);
+  useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const { isModelLoading, isDetecting, error: detectionError, detectFaces } = useFaceDetection();
   const { isRecognizing, error: ocrError, recognizeText } = useOcr();
+
+  /** コンポーネント破棄時に imageUrl の Blob URL をすべて解放する */
+  useEffect(() => {
+    return () => {
+      imagesRef.current.forEach((image) => URL.revokeObjectURL(image.imageUrl));
+    };
+  }, []);
 
   /**
    * ファイルアップロード時の処理
@@ -84,23 +96,28 @@ export function MaskingGallery() {
         const settledResults = await Promise.allSettled(
           files.map(async (file, index): Promise<MaskingImageItem> => {
             const imageUrl = URL.createObjectURL(file);
-            const imageElement = await loadImageElement(imageUrl);
+            try {
+              const imageElement = await loadImageElement(imageUrl);
 
-            /** 顔検出とOCRを並行して実行 */
-            const [detections, ocrRegions] = await Promise.all([
-              detectFaces(imageElement),
-              recognizeText(imageElement),
-            ]);
+              /** 顔検出とOCRを並行して実行 */
+              const [detections, ocrRegions] = await Promise.all([
+                detectFaces(imageElement),
+                recognizeText(imageElement),
+              ]);
 
-            return {
-              id: `${file.name}-${file.lastModified}-${file.size}-${uploadedAt}-${index}`,
-              name: file.name,
-              size: file.size,
-              imageUrl,
-              detections,
-              ocrRegions,
-              maskedDataUrl: null,
-            };
+              return {
+                id: `${file.name}-${file.lastModified}-${file.size}-${uploadedAt}-${index}`,
+                name: file.name,
+                size: file.size,
+                imageUrl,
+                detections,
+                ocrRegions,
+                maskedBlobUrl: null,
+              };
+            } catch (err) {
+              URL.revokeObjectURL(imageUrl);
+              throw err;
+            }
           })
         );
 
@@ -150,55 +167,54 @@ export function MaskingGallery() {
                   ...image,
                   detections,
                   ocrRegions,
-                  maskedDataUrl: null,
+                  maskedBlobUrl: null,
                 }
               : image
           )
         );
-      } catch {
-        return;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "再検出に失敗しました";
+        setUploadError(message);
       }
     },
     [images, detectFaces, recognizeText, isModelLoading]
   );
 
   /**
-   * Canvas描画後の画像を保持する
+   * Canvas描画後の Blob URL を保持する
    *
    * @param imageId - 対象画像ID
-   * @param dataUrl - 描画済みData URL
+   * @param blobUrl - 描画済み Blob URL
    */
-  const handleRendered = useCallback((imageId: string, dataUrl: string) => {
+  const handleRendered = useCallback((imageId: string, blobUrl: string) => {
     setImages((prev) =>
       prev.map((image) => {
-        if (image.id !== imageId || image.maskedDataUrl === dataUrl) {
+        if (image.id !== imageId || image.maskedBlobUrl === blobUrl) {
           return image;
         }
 
         return {
           ...image,
-          maskedDataUrl: dataUrl,
+          maskedBlobUrl: blobUrl,
         };
       })
     );
   }, []);
 
-  /** 全画像をクリアする（Blob URL を解放してから state をリセット） */
+  /** 全画像をクリアする（imageUrl の Blob URL を解放してから state をリセット） */
   const handleClearAll = useCallback(() => {
-    setImages((prev) => {
-      prev.forEach((image) => URL.revokeObjectURL(image.imageUrl));
-      return [];
-    });
+    imagesRef.current.forEach((image) => URL.revokeObjectURL(image.imageUrl));
+    setImages([]);
     setActiveImageId(null);
   }, []);
 
   /** 描画済み画像をすべてZIPにまとめてダウンロードする */
   const handleDownloadAll = useCallback(() => {
-    const downloadableImages = images.filter((image) => image.maskedDataUrl !== null);
+    const downloadableImages = images.filter((image) => image.maskedBlobUrl !== null);
     if (downloadableImages.length === 0) return;
 
     const fetchAll = downloadableImages.map(async (image) => {
-      const res = await fetch(image.maskedDataUrl as string);
+      const res = await fetch(image.maskedBlobUrl as string);
       if (!res.ok) {
         throw new Error(`Failed to fetch masked image: ${image.name}`);
       }
@@ -226,7 +242,11 @@ export function MaskingGallery() {
       }
 
       zip(fileMap, (err, data) => {
-        if (err) return;
+        if (err) {
+          console.error("ZIPの生成に失敗しました", err);
+          setUploadError("ZIPの生成に失敗しました");
+          return;
+        }
         const blob = new Blob([data as Uint8Array<ArrayBuffer>], { type: "application/zip" });
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement("a");
@@ -246,7 +266,7 @@ export function MaskingGallery() {
     : isBatchProcessing
       ? "画像を処理中です。しばらくお待ちください…"
       : null;
-  const downloadableImagesCount = images.filter((image) => image.maskedDataUrl).length;
+  const downloadableImagesCount = images.filter((image) => image.maskedBlobUrl).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -293,17 +313,9 @@ export function MaskingGallery() {
 
           <div className="grid gap-4 md:grid-cols-2">
             {images.map((image) => (
-              <div
+              <article
                 key={image.id}
-                role="button"
-                tabIndex={0}
                 onClick={() => setActiveImageId(image.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setActiveImageId(image.id);
-                  }
-                }}
                 className={clsx([
                   "cursor-pointer rounded-xl border bg-white p-4 transition-colors",
                   "hover:border-blue-200",
@@ -346,8 +358,8 @@ export function MaskingGallery() {
                     imageDataUrl={image.imageUrl}
                     detections={image.detections}
                     ocrRegions={image.ocrRegions}
-                    onRendered={(dataUrl) => {
-                      handleRendered(image.id, dataUrl);
+                    onRendered={(blobUrl) => {
+                      handleRendered(image.id, blobUrl);
                     }}
                   />
                 </div>
@@ -357,9 +369,9 @@ export function MaskingGallery() {
                     {(image.size / 1024 / 1024).toFixed(2)} MB
                   </p>
 
-                  {image.maskedDataUrl ? (
+                  {image.maskedBlobUrl ? (
                     <a
-                      href={image.maskedDataUrl}
+                      href={image.maskedBlobUrl}
                       download={createDownloadFileName(image.name)}
                       onClick={(e) => e.stopPropagation()}
                       className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
@@ -370,7 +382,7 @@ export function MaskingGallery() {
                     <span className="text-xs text-zinc-400">描画中…</span>
                   )}
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         </div>

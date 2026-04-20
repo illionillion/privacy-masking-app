@@ -48,10 +48,13 @@ async function getFaceApi() {
 export function useFaceDetection(): UseFaceDetectionReturn {
   const [isModelLoading, setIsModelLoading] = useState(true);
   const [isDetecting, setIsDetecting] = useState(false);
-  const [detections, setDetections] = useState<FaceDetectionResult[]>([]);
   const [error, setError] = useState<string | null>(null);
-  /** 最後に開始した検出リクエストのID（古い結果の state 上書きを防ぐ） */
+  /** 最後に開始した検出呼び出しのID（古い結果の state 上書きを防ぐ） */
   const detectRequestRef = useRef(0);
+  /** 現在処理中の検出呼び出し数（1つでも走っている間は isDetecting を true に保つ） */
+  const inFlightRef = useRef(0);
+  /** アンマウント後の state 更新を防ぐフラグ */
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -79,6 +82,13 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     };
   }, []);
 
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   /**
    * 画像内の顔を検出する
    *
@@ -86,7 +96,8 @@ export function useFaceDetection(): UseFaceDetectionReturn {
    */
   const detectFaces = useCallback(
     async (imageElement: HTMLImageElement): Promise<FaceDetectionResult[]> => {
-      const requestId = ++detectRequestRef.current;
+      const callId = ++detectRequestRef.current;
+      inFlightRef.current++;
       setIsDetecting(true);
       setError(null);
       try {
@@ -102,23 +113,22 @@ export function useFaceDetection(): UseFaceDetectionReturn {
           height: d.box.height,
           score: d.score,
         }));
-        if (requestId === detectRequestRef.current) {
-          setDetections(mappedDetections);
-        }
         return mappedDetections;
       } catch (err) {
-        if (requestId === detectRequestRef.current) {
-          setError(err instanceof Error ? err.message : "顔検出中にエラーが発生しました");
+        if (callId === detectRequestRef.current) {
+          if (isMountedRef.current)
+            setError(err instanceof Error ? err.message : "顔検出中にエラーが発生しました");
         }
         return [];
       } finally {
-        if (requestId === detectRequestRef.current) {
-          setIsDetecting(false);
+        inFlightRef.current--;
+        if (inFlightRef.current === 0) {
+          if (isMountedRef.current) setIsDetecting(false);
         }
       }
     },
     []
   );
 
-  return { isModelLoading, isDetecting, detections, error, detectFaces };
+  return { isModelLoading, isDetecting, error, detectFaces };
 }

@@ -2,6 +2,7 @@
 
 import { useRef, useCallback, useEffect } from "react";
 import type { MouseEvent } from "react";
+import clsx from "clsx";
 import type { MaskRegion } from "../types";
 
 export interface MaskingCanvasProps {
@@ -113,7 +114,10 @@ export function MaskingCanvas({
   return (
     <canvas
       ref={canvasRef}
-      className="max-w-full cursor-pointer rounded-lg border border-zinc-200 shadow-sm"
+      className={clsx([
+        "max-w-full rounded-lg border border-zinc-200 shadow-sm",
+        onRegionClick ? "cursor-pointer" : "cursor-default",
+      ])}
       onClick={handleCanvasClick}
       aria-label="マスキング表示キャンバス"
     />

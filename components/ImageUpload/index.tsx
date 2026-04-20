@@ -60,10 +60,13 @@ export function ImageUpload({
         validFiles.push(file);
       }
 
-      setError(validationError);
       if (validFiles.length > 0) {
+        setError(null);
         onUpload(validFiles);
+        return;
       }
+
+      setError(validationError);
     },
     [onUpload]
   );
@@ -89,9 +92,10 @@ export function ImageUpload({
   );
 
   const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
-    /** relatedTarget がドロップゾーン外の場合のみハイライトを解除する */
+    /** relatedTarget がドロップゾーン内の Node の場合のみハイライトを維持する */
     const container = e.currentTarget;
-    if (container.contains(e.relatedTarget as Node | null)) return;
+    const relatedTarget = e.relatedTarget;
+    if (relatedTarget instanceof Node && container.contains(relatedTarget)) return;
     setIsDragOver(false);
   }, []);
 
