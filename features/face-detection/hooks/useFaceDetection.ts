@@ -57,18 +57,18 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   const isMountedRef = useRef(true);
 
   useEffect(() => {
-    let isMounted = true;
+    isMountedRef.current = true;
 
     /** face-api モデルをロードする */
     const loadModel = async () => {
       try {
         const faceapi = await getFaceApi();
         await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-        if (isMounted) {
+        if (isMountedRef.current) {
           setIsModelLoading(false);
         }
       } catch (err) {
-        if (isMounted) {
+        if (isMountedRef.current) {
           setError(err instanceof Error ? err.message : "モデルのロードに失敗しました");
           setIsModelLoading(false);
         }
@@ -77,13 +77,6 @@ export function useFaceDetection(): UseFaceDetectionReturn {
 
     void loadModel();
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };

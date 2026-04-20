@@ -134,14 +134,14 @@ export function FaceDetectionCanvas({
         /** toDataURL の代わりに toBlob を使用してメインスレッドのブロックを回避 */
         canvas.toBlob((blob) => {
           if (isCancelled || !blob) return;
-          /** 前回のBlob URLを解放してから新しいURLを生成 */
-          if (blobUrlRef.current) {
-            URL.revokeObjectURL(blobUrlRef.current);
-            blobUrlRef.current = null;
-          }
+          /** 新しいURLを生成・通知してから前回のBlob URLを解放（親が常に有効なURLを参照できるよう） */
           const url = URL.createObjectURL(blob);
+          const prevUrl = blobUrlRef.current;
           blobUrlRef.current = url;
           onRenderedRef.current?.(url);
+          if (prevUrl) {
+            URL.revokeObjectURL(prevUrl);
+          }
         }, "image/png");
       });
     };
