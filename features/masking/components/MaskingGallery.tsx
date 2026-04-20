@@ -145,8 +145,9 @@ export function MaskingGallery() {
               : image
           )
         );
-      } catch {
-        return;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "再検出に失敗しました";
+        setUploadError(message);
       }
     },
     [images, detectFaces, isModelLoading]
