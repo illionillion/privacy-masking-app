@@ -24,6 +24,11 @@ const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
   },
   {
     type: "apikey",
+    /**
+     * 20文字以上の英数字列を APIキー・トークン候補として検出する。
+     * 意図的に広いパターンを使用しており、誤検出が生じる可能性がある。
+     * プライバシー保護を優先し、過検出を許容する設計。
+     */
     source: String.raw`[A-Za-z0-9+/=_\-]{20,}`,
   },
 ] as const;

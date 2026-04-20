@@ -20,6 +20,9 @@ interface FaceDetectionCanvasProps {
   onRendered?: (blobUrl: string) => void;
 }
 
+/** OCR検出領域のマスキングカラー（黒塗り） */
+const OCR_MASK_COLOR = "#000000";
+
 /** 公開URLのベースパス。サブパス配信時は `NEXT_PUBLIC_BASE_PATH` を設定する。 */
 const PUBLIC_BASE_PATH = (() => {
   const raw = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -128,7 +131,7 @@ export function FaceDetectionCanvas({
         }
 
         /** OCR検出領域を黒塗りでマスキング */
-        ctx.fillStyle = "#000000";
+        ctx.fillStyle = OCR_MASK_COLOR;
         for (const region of ocrRegions) {
           ctx.fillRect(
             region.x * scale,
