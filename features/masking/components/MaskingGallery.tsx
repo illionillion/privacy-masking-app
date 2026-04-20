@@ -295,7 +295,7 @@ export function MaskingGallery() {
 
           <div className="grid gap-4 md:grid-cols-2">
             {images.map((image) => (
-              <section
+              <div
                 key={image.id}
                 role="button"
                 tabIndex={0}
@@ -324,7 +324,8 @@ export function MaskingGallery() {
                   </p>
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       void handleRedetect(image.id);
                     }}
                     disabled={isProcessing || isModelLoading}
@@ -359,6 +360,7 @@ export function MaskingGallery() {
                     <a
                       href={image.maskedDataUrl}
                       download={createDownloadFileName(image.name)}
+                      onClick={(e) => e.stopPropagation()}
                       className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
                     >
                       ダウンロード
@@ -367,7 +369,7 @@ export function MaskingGallery() {
                     <span className="text-xs text-zinc-400">描画中…</span>
                   )}
                 </div>
-              </section>
+              </div>
             ))}
           </div>
         </div>

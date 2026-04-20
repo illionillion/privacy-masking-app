@@ -22,6 +22,21 @@ const buildPublicAssetPath = (assetPath: string): string => {
 /** モデルのロードURLパス */
 const MODEL_URL = buildPublicAssetPath("models");
 
+/** face-api モジュールのキャッシュ（全フックインスタンスで共有） */
+let faceapiCache: typeof import("@vladmandic/face-api") | null = null;
+
+/**
+ * face-api モジュールを取得する。初回のみ dynamic import し以降はキャッシュを返す。
+ *
+ * @returns face-api モジュール
+ */
+async function getFaceApi() {
+  if (!faceapiCache) {
+    faceapiCache = await import("@vladmandic/face-api");
+  }
+  return faceapiCache;
+}
+
 /**
  * 顔検出フック
  *
@@ -44,7 +59,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     /** face-api モデルをロードする */
     const loadModel = async () => {
       try {
-        const faceapi = await import("@vladmandic/face-api");
+        const faceapi = await getFaceApi();
         await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
         if (isMounted) {
           setIsModelLoading(false);
@@ -75,7 +90,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
       setIsDetecting(true);
       setError(null);
       try {
-        const faceapi = await import("@vladmandic/face-api");
+        const faceapi = await getFaceApi();
         const results = await faceapi.detectAllFaces(
           imageElement,
           new faceapi.TinyFaceDetectorOptions()
