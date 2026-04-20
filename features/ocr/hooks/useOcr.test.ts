@@ -12,6 +12,12 @@ const mockWorker = {
 
 vi.mock("tesseract.js", () => ({
   createWorker: vi.fn(),
+  OEM: {
+    TESSERACT_ONLY: 0,
+    LSTM_ONLY: 1,
+    TESSERACT_LSTM_COMBINED: 2,
+    DEFAULT: 3,
+  },
 }));
 
 describe("useOcr", () => {
