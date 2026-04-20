@@ -54,6 +54,8 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   const detectRequestRef = useRef(0);
   /** 現在処理中の検出呼び出し数（1つでも走っている間は isDetecting を true に保つ） */
   const inFlightRef = useRef(0);
+  /** アンマウント後の state 更新を防ぐフラグ */
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -78,6 +80,13 @@ export function useFaceDetection(): UseFaceDetectionReturn {
 
     return () => {
       isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
     };
   }, []);
 
@@ -106,18 +115,19 @@ export function useFaceDetection(): UseFaceDetectionReturn {
           score: d.score,
         }));
         if (callId === detectRequestRef.current) {
-          setDetections(mappedDetections);
+          if (isMountedRef.current) setDetections(mappedDetections);
         }
         return mappedDetections;
       } catch (err) {
         if (callId === detectRequestRef.current) {
-          setError(err instanceof Error ? err.message : "顔検出中にエラーが発生しました");
+          if (isMountedRef.current)
+            setError(err instanceof Error ? err.message : "顔検出中にエラーが発生しました");
         }
         return [];
       } finally {
         inFlightRef.current--;
         if (inFlightRef.current === 0) {
-          setIsDetecting(false);
+          if (isMountedRef.current) setIsDetecting(false);
         }
       }
     },
