@@ -48,7 +48,6 @@ async function getFaceApi() {
 export function useFaceDetection(): UseFaceDetectionReturn {
   const [isModelLoading, setIsModelLoading] = useState(true);
   const [isDetecting, setIsDetecting] = useState(false);
-  const [detections, setDetections] = useState<FaceDetectionResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   /** 最後に開始した検出呼び出しのID（古い結果の state 上書きを防ぐ） */
   const detectRequestRef = useRef(0);
@@ -114,9 +113,6 @@ export function useFaceDetection(): UseFaceDetectionReturn {
           height: d.box.height,
           score: d.score,
         }));
-        if (callId === detectRequestRef.current) {
-          if (isMountedRef.current) setDetections(mappedDetections);
-        }
         return mappedDetections;
       } catch (err) {
         if (callId === detectRequestRef.current) {
@@ -134,5 +130,5 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     []
   );
 
-  return { isModelLoading, isDetecting, detections, error, detectFaces };
+  return { isModelLoading, isDetecting, error, detectFaces };
 }

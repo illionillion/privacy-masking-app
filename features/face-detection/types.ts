@@ -22,8 +22,6 @@ export interface UseFaceDetectionReturn {
   isModelLoading: boolean;
   /** 顔検出処理中フラグ */
   isDetecting: boolean;
-  /** 検出された顔の一覧 */
-  detections: FaceDetectionResult[];
   /** エラーメッセージ */
   error: string | null;
   /** 顔検出を実行する関数 */
