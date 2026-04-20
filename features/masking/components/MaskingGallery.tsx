@@ -299,17 +299,9 @@ export function MaskingGallery() {
 
           <div className="grid gap-4 md:grid-cols-2">
             {images.map((image) => (
-              <div
+              <article
                 key={image.id}
-                role="button"
-                tabIndex={0}
                 onClick={() => setActiveImageId(image.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setActiveImageId(image.id);
-                  }
-                }}
                 className={clsx([
                   "cursor-pointer rounded-xl border bg-white p-4 transition-colors",
                   "hover:border-blue-200",
@@ -373,7 +365,7 @@ export function MaskingGallery() {
                     <span className="text-xs text-zinc-400">描画中…</span>
                   )}
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         </div>
