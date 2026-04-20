@@ -97,27 +97,28 @@ export function MaskingGallery() {
       setUploadError(null);
       try {
         const uploadedAt = Date.now();
-        const nextImages: MaskingImageItem[] = [];
-        let failedCount = 0;
 
-        for (const [index, file] of files.entries()) {
-          try {
+        const settledResults = await Promise.allSettled(
+          files.map(async (file, index): Promise<MaskingImageItem> => {
             const imageDataUrl = await readFileAsDataUrl(file);
             const imageElement = await loadImageElement(imageDataUrl);
             const detections = await detectFaces(imageElement);
 
-            nextImages.push({
+            return {
               id: `${file.name}-${file.lastModified}-${file.size}-${uploadedAt}-${index}`,
               name: file.name,
               size: file.size,
               imageDataUrl,
               detections,
               maskedDataUrl: null,
-            });
-          } catch {
-            failedCount++;
-          }
-        }
+            };
+          })
+        );
+
+        const nextImages = settledResults.flatMap((result) =>
+          result.status === "fulfilled" ? [result.value] : []
+        );
+        const failedCount = settledResults.length - nextImages.length;
 
         if (nextImages.length > 0) {
           setImages((prev) => [...prev, ...nextImages]);
@@ -222,7 +223,7 @@ export function MaskingGallery() {
         const count = nameCounts.get(entry.name) ?? 0;
         nameCounts.set(entry.name, count + 1);
         const uniqueName =
-          count === 0 ? entry.name : entry.name.replace("-masked.png", `-masked-${count}.png`);
+          count === 0 ? entry.name : entry.name.replace(/-masked\.png$/, `-masked-${count}.png`);
         fileMap[uniqueName] = entry.data;
       }
 
