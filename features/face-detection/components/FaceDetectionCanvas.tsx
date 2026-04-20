@@ -18,11 +18,8 @@ interface FaceDetectionCanvasProps {
 }
 
 /** 公開URLのベースパス。サブパス配信時は `NEXT_PUBLIC_BASE_PATH` を設定する。 */
-const PUBLIC_BASE_PATH = (() => {
-  const raw = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  if (raw === "/" || raw.length === 0) return "";
-  return `/${raw.replace(/^\/+|\/+$/g, "")}`;
-})();
+const normalizedBasePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/^\/+|\/+$/g, "");
+const PUBLIC_BASE_PATH = normalizedBasePath ? `/${normalizedBasePath}` : "";
 
 /** スタンプ画像のファイル名一覧 */
 const STAMP_FILE_NAMES = [
