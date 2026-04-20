@@ -342,7 +342,10 @@ export function MaskingGallery() {
                     検出結果: {image.detections.length} 件
                   </p>
 
-                  <div className="mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                  <div
+                    className="mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3"
+                    onClick={() => setActiveImageId(image.id)}
+                  >
                     <FaceDetectionCanvas
                       imageDataUrl={image.imageDataUrl}
                       detections={image.detections}
