@@ -89,10 +89,17 @@ export function useFaceDetection(): UseFaceDetectionReturn {
    */
   const detectFaces = useCallback(
     async (imageElement: HTMLImageElement): Promise<FaceDetectionResult[]> => {
+      if (!isMountedRef.current) {
+        return [];
+      }
+
       const callId = ++detectRequestRef.current;
       inFlightRef.current++;
-      setIsDetecting(true);
-      setError(null);
+
+      if (isMountedRef.current) {
+        setIsDetecting(true);
+        setError(null);
+      }
       try {
         const faceapi = await getFaceApi();
         const results = await faceapi.detectAllFaces(
