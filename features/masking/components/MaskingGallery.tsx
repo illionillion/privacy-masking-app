@@ -81,6 +81,7 @@ export function MaskingGallery() {
   const [images, setImages] = useState<MaskingImageItem[]>([]);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const { isModelLoading, isDetecting, error: detectionError, detectFaces } = useFaceDetection();
 
   /**
@@ -93,9 +94,11 @@ export function MaskingGallery() {
       if (files.length === 0 || isModelLoading) return;
 
       setIsBatchProcessing(true);
+      setUploadError(null);
       try {
         const uploadedAt = Date.now();
         const nextImages: MaskingImageItem[] = [];
+        let failedCount = 0;
 
         for (const [index, file] of files.entries()) {
           try {
@@ -112,13 +115,17 @@ export function MaskingGallery() {
               maskedDataUrl: null,
             });
           } catch {
-            continue;
+            failedCount++;
           }
         }
 
         if (nextImages.length > 0) {
           setImages((prev) => [...prev, ...nextImages]);
           setActiveImageId((prev) => prev ?? nextImages[0]?.id ?? null);
+        }
+
+        if (failedCount > 0) {
+          setUploadError(`${failedCount} 件の画像の処理に失敗しました`);
         }
       } finally {
         setIsBatchProcessing(false);
@@ -251,9 +258,9 @@ export function MaskingGallery() {
         loadingMessage={loadingMessage}
       />
 
-      {detectionError && (
+      {(detectionError ?? uploadError) && (
         <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-          エラー: {detectionError}
+          エラー: {detectionError ?? uploadError}
         </p>
       )}
 

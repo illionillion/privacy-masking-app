@@ -88,7 +88,10 @@ export function ImageUpload({
     [disabled]
   );
 
-  const handleDragLeave = useCallback(() => {
+  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+    /** relatedTarget がドロップゾーン外の場合のみハイライトを解除する */
+    const container = e.currentTarget;
+    if (container.contains(e.relatedTarget as Node | null)) return;
     setIsDragOver(false);
   }, []);
 
