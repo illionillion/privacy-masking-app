@@ -17,13 +17,14 @@ interface MaskingImageItem {
   /** 表示・検出用 Blob URL（使用後は revokeObjectURL で解放する） */
   imageUrl: string;
   detections: FaceDetectionResult[];
-  maskedDataUrl: string | null;
+  /** マスキング済み画像の Blob URL（FaceDetectionCanvas の onRendered から渡される） */
+  maskedBlobUrl: string | null;
 }
 
 /**
  * 画像URLから HTMLImageElement を生成する
  *
- * @param src - 画像のData URL
+ * @param src - 画像の Data URL または Blob URL
  * @returns 読み込み済みのHTMLImageElement
  */
 const loadImageElement = (src: string): Promise<HTMLImageElement> => {
@@ -80,17 +81,22 @@ export function MaskingGallery() {
         const settledResults = await Promise.allSettled(
           files.map(async (file, index): Promise<MaskingImageItem> => {
             const imageUrl = URL.createObjectURL(file);
-            const imageElement = await loadImageElement(imageUrl);
-            const detections = await detectFaces(imageElement);
+            try {
+              const imageElement = await loadImageElement(imageUrl);
+              const detections = await detectFaces(imageElement);
 
-            return {
-              id: `${file.name}-${file.lastModified}-${file.size}-${uploadedAt}-${index}`,
-              name: file.name,
-              size: file.size,
-              imageUrl,
-              detections,
-              maskedDataUrl: null,
-            };
+              return {
+                id: `${file.name}-${file.lastModified}-${file.size}-${uploadedAt}-${index}`,
+                name: file.name,
+                size: file.size,
+                imageUrl,
+                detections,
+                maskedBlobUrl: null,
+              };
+            } catch (err) {
+              URL.revokeObjectURL(imageUrl);
+              throw err;
+            }
           })
         );
 
@@ -134,7 +140,7 @@ export function MaskingGallery() {
               ? {
                   ...image,
                   detections,
-                  maskedDataUrl: null,
+                  maskedBlobUrl: null,
                 }
               : image
           )
@@ -147,21 +153,21 @@ export function MaskingGallery() {
   );
 
   /**
-   * Canvas描画後の画像を保持する
+   * Canvas描画後の Blob URL を保持する
    *
    * @param imageId - 対象画像ID
-   * @param dataUrl - 描画済みData URL
+   * @param blobUrl - 描画済み Blob URL
    */
-  const handleRendered = useCallback((imageId: string, dataUrl: string) => {
+  const handleRendered = useCallback((imageId: string, blobUrl: string) => {
     setImages((prev) =>
       prev.map((image) => {
-        if (image.id !== imageId || image.maskedDataUrl === dataUrl) {
+        if (image.id !== imageId || image.maskedBlobUrl === blobUrl) {
           return image;
         }
 
         return {
           ...image,
-          maskedDataUrl: dataUrl,
+          maskedBlobUrl: blobUrl,
         };
       })
     );
@@ -178,11 +184,11 @@ export function MaskingGallery() {
 
   /** 描画済み画像をすべてZIPにまとめてダウンロードする */
   const handleDownloadAll = useCallback(() => {
-    const downloadableImages = images.filter((image) => image.maskedDataUrl !== null);
+    const downloadableImages = images.filter((image) => image.maskedBlobUrl !== null);
     if (downloadableImages.length === 0) return;
 
     const fetchAll = downloadableImages.map(async (image) => {
-      const res = await fetch(image.maskedDataUrl as string);
+      const res = await fetch(image.maskedBlobUrl as string);
       if (!res.ok) {
         throw new Error(`Failed to fetch masked image: ${image.name}`);
       }
@@ -230,7 +236,7 @@ export function MaskingGallery() {
     : isBatchProcessing
       ? "画像を処理中です。しばらくお待ちください…"
       : null;
-  const downloadableImagesCount = images.filter((image) => image.maskedDataUrl).length;
+  const downloadableImagesCount = images.filter((image) => image.maskedBlobUrl).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -327,8 +333,8 @@ export function MaskingGallery() {
                   <FaceDetectionCanvas
                     imageDataUrl={image.imageUrl}
                     detections={image.detections}
-                    onRendered={(dataUrl) => {
-                      handleRendered(image.id, dataUrl);
+                    onRendered={(blobUrl) => {
+                      handleRendered(image.id, blobUrl);
                     }}
                   />
                 </div>
@@ -338,9 +344,9 @@ export function MaskingGallery() {
                     {(image.size / 1024 / 1024).toFixed(2)} MB
                   </p>
 
-                  {image.maskedDataUrl ? (
+                  {image.maskedBlobUrl ? (
                     <a
-                      href={image.maskedDataUrl}
+                      href={image.maskedBlobUrl}
                       download={createDownloadFileName(image.name)}
                       onClick={(e) => e.stopPropagation()}
                       className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
