@@ -57,8 +57,8 @@ interface TesseractWord {
 }
 
 interface TesseractLine {
-  text: string;
-  words: TesseractWord[];
+  text?: string;
+  words?: TesseractWord[];
 }
 
 interface TesseractParagraph {
@@ -199,7 +199,7 @@ export function useOcr(): UseOcrReturn {
    *
    * @returns Tesseract Worker
    */
-  const getWorker = useCallback(async () => {
+  const getWorker = useCallback((): Promise<import("tesseract.js").Worker> => {
     if (!workerRef.current) {
       /**
        * 初期化 Promise を先に workerRef.current へ格納する。
@@ -220,8 +220,9 @@ export function useOcr(): UseOcrReturn {
       promise.catch(() => {
         workerRef.current = null;
       });
+      return promise;
     }
-    return workerRef.current;
+    return workerRef.current!;
   }, []);
 
   useEffect(() => {
@@ -245,7 +246,6 @@ export function useOcr(): UseOcrReturn {
       const requestId = ++recognizeRequestRef.current;
       inFlightRef.current++;
       setIsRecognizing(true);
-      setError(null);
 
       try {
         const worker = await getWorker();
@@ -255,6 +255,8 @@ export function useOcr(): UseOcrReturn {
 
         if (requestId === recognizeRequestRef.current) {
           setOcrRegions(regions);
+          /** 成功時のみエラーをクリアする（開始時にクリアすると並列実行中の失敗が上書きされるため） */
+          setError(null);
         }
 
         return regions;
@@ -263,7 +265,8 @@ export function useOcr(): UseOcrReturn {
           setError(err instanceof Error ? err.message : "OCR処理中にエラーが発生しました");
           setOcrRegions([]);
         }
-        return [];
+        /** 呼び出し元（MaskingGallery 等）でOCR失敗を検知できるよう再スロー */
+        throw err;
       } finally {
         inFlightRef.current--;
         if (inFlightRef.current === 0) {

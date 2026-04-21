@@ -259,7 +259,7 @@ describe("useOcr", () => {
     const mockImage = document.createElement("img");
 
     await act(async () => {
-      await result.current.recognizeText(mockImage);
+      await expect(result.current.recognizeText(mockImage)).rejects.toThrow("OCR失敗");
     });
 
     await waitFor(() => {
@@ -290,7 +290,7 @@ describe("useOcr", () => {
     // 次に失敗させて ocrRegions がクリアされることを確認
     mockRecognize.mockRejectedValueOnce(new Error("OCR失敗"));
     await act(async () => {
-      await result.current.recognizeText(mockImage);
+      await expect(result.current.recognizeText(mockImage)).rejects.toThrow("OCR失敗");
     });
 
     await waitFor(() => {
