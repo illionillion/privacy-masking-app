@@ -1,8 +1,15 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { OcrRegion } from "@/features/ocr";
 import type { FaceDetectionResult } from "../types";
+
+/** OCR検出領域の最小構造型。features/ocr に依存せず幺数位置情報のみ保持する */
+interface MaskRegion {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 interface FaceDetectionCanvasProps {
   /** 表示する画像のデータURL */
@@ -10,7 +17,7 @@ interface FaceDetectionCanvasProps {
   /** 検出された顔の矩形一覧 */
   detections: FaceDetectionResult[];
   /** OCRで検出された個人情報領域（黒塗りで描画） */
-  ocrRegions?: OcrRegion[];
+  ocrRegions?: MaskRegion[];
   /** Canvasの最大表示幅 */
   maxWidth?: number;
   /**

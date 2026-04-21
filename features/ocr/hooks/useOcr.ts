@@ -191,6 +191,8 @@ export function useOcr(): UseOcrReturn {
   const workerRef = useRef<Promise<import("tesseract.js").Worker> | null>(null);
   /** 最後に開始した認識リクエストのID（古い結果の state 上書きを防ぐ） */
   const recognizeRequestRef = useRef(0);
+  /** 処理中リクエスト数（並列実行時に isRecognizing を正確に管理する） */
+  const inFlightRef = useRef(0);
 
   /**
    * Tesseract Worker を取得する。初回のみ生成し以降はキャッシュを返す。
@@ -208,7 +210,12 @@ export function useOcr(): UseOcrReturn {
        * "Warning: Parameter not found: language_model_ngram_on" が出力されるが、
        * これは既知の無害な警告であり OCR の動作には影響しない。
        */
-      workerRef.current = createWorker(["jpn", "eng"], OEM.LSTM_ONLY);
+      const promise = createWorker(["jpn", "eng"], OEM.LSTM_ONLY);
+      workerRef.current = promise;
+      /** reject 時はキャッシュを破棄し、次回呼び出しで再生成できるようにする */
+      promise.catch(() => {
+        workerRef.current = null;
+      });
     }
     return workerRef.current;
   }, []);
@@ -232,6 +239,7 @@ export function useOcr(): UseOcrReturn {
   const recognizeText = useCallback(
     async (imageElement: HTMLImageElement): Promise<OcrRegion[]> => {
       const requestId = ++recognizeRequestRef.current;
+      inFlightRef.current++;
       setIsRecognizing(true);
       setError(null);
 
@@ -239,19 +247,7 @@ export function useOcr(): UseOcrReturn {
         const worker = await getWorker();
         const { data } = await worker.recognize(imageElement, {}, { blocks: true, text: true });
 
-        if (process.env.NODE_ENV !== "production") {
-          const page = data as unknown as TesseractPage;
-          console.log("[OCR] 生テキスト:", data.text);
-          console.log("[OCR] ブロック数:", page.blocks?.length ?? 0);
-          console.log("[OCR] ライン数(直接):", page.lines?.length ?? 0);
-          console.log("[OCR] ワード数(直接):", page.words?.length ?? 0);
-        }
-
         const regions = extractOcrRegions(data as unknown as TesseractPage);
-
-        if (process.env.NODE_ENV !== "production") {
-          console.log("[OCR] 検出された個人情報領域:", regions);
-        }
 
         if (requestId === recognizeRequestRef.current) {
           setOcrRegions(regions);
@@ -265,7 +261,8 @@ export function useOcr(): UseOcrReturn {
         }
         return [];
       } finally {
-        if (requestId === recognizeRequestRef.current) {
+        inFlightRef.current--;
+        if (inFlightRef.current === 0) {
           setIsRecognizing(false);
         }
       }
