@@ -7,7 +7,7 @@ import type { OcrPatternType, OcrRegion, UseOcrReturn } from "../types";
  * 個人情報検出パターンの定義
  *
  * 優先度順（高→低）で適用する:
- * email > phone > url > apikey
+ * email > phone > postal > url > apikey
  */
 const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
   {
@@ -20,7 +20,7 @@ const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
   },
   {
     type: "postal",
-    source: String.raw`〒?\d{3}[-　2]\d{4}`,
+    source: String.raw`〒?\d{3}[-\s]?\d{4}`,
   },
   {
     type: "url",
@@ -255,6 +255,7 @@ export function useOcr(): UseOcrReturn {
       } catch (err) {
         if (requestId === recognizeRequestRef.current) {
           setError(err instanceof Error ? err.message : "OCR処理中にエラーが発生しました");
+          setOcrRegions([]);
         }
         return [];
       } finally {

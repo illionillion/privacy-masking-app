@@ -268,6 +268,36 @@ describe("useOcr", () => {
     expect(result.current.isRecognizing).toBe(false);
   });
 
+  it("OCR処理失敗時に ocrRegions が空配列にクリアされる", async () => {
+    // まず正常実行して ocrRegions に値をセットする
+    mockRecognize.mockResolvedValueOnce(
+      buildMockPage([
+        {
+          text: "user@example.com",
+          words: [{ text: "user@example.com", bbox: { x0: 0, y0: 0, x1: 130, y1: 20 } }],
+        },
+      ])
+    );
+
+    const { result } = renderHook(() => useOcr());
+    const mockImage = document.createElement("img");
+
+    await act(async () => {
+      await result.current.recognizeText(mockImage);
+    });
+    expect(result.current.ocrRegions).toHaveLength(1);
+
+    // 次に失敗させて ocrRegions がクリアされることを確認
+    mockRecognize.mockRejectedValueOnce(new Error("OCR失敗"));
+    await act(async () => {
+      await result.current.recognizeText(mockImage);
+    });
+
+    await waitFor(() => {
+      expect(result.current.ocrRegions).toHaveLength(0);
+    });
+  });
+
   it("recognizeText の連続呼び出しで古い結果が state を上書きしない", async () => {
     let resolveFirst!: (value: unknown) => void;
     const firstPromise = new Promise((resolve) => {
@@ -394,5 +424,37 @@ describe("detectPersonalInfoInLine", () => {
     const types = result.map((r) => r.patternType);
     expect(types).not.toContain("apikey");
     expect(types).toContain("email");
+  });
+
+  it("郵便番号（ハイフンあり）を postal として検出する", () => {
+    const result = detectPersonalInfoInLine("〒123-4567", [
+      { text: "〒123-4567", bbox: { x0: 0, y0: 0, x1: 80, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("postal");
+    expect(result[0].text).toBe("〒123-4567");
+  });
+
+  it("郵便番号（区切りなし）を postal として検出する", () => {
+    const result = detectPersonalInfoInLine("1234567", [
+      { text: "1234567", bbox: { x0: 0, y0: 0, x1: 70, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("postal");
+  });
+
+  it("郵便番号（スペース区切り）を postal として検出する", () => {
+    const result = detectPersonalInfoInLine("123 4567", [
+      { text: "123", bbox: { x0: 0, y0: 0, x1: 30, y1: 20 } },
+      { text: "4567", bbox: { x0: 35, y0: 0, x1: 65, y1: 20 } },
+    ]);
+    expect(result.some((r) => r.patternType === "postal")).toBe(true);
+  });
+
+  it("6桁以下の数字は postal として検出しない", () => {
+    const result = detectPersonalInfoInLine("12345", [
+      { text: "12345", bbox: { x0: 0, y0: 0, x1: 50, y1: 20 } },
+    ]);
+    expect(result.some((r) => r.patternType === "postal")).toBe(false);
   });
 });
