@@ -30,6 +30,9 @@ interface FaceDetectionCanvasProps {
 /** OCR検出領域のマスキングカラー（黒塗り） */
 const OCR_MASK_COLOR = "#000000";
 
+/** props 未指定時に使う空の OCR 領域配列（参照を安定させ不要な再描画を防ぐ） */
+const EMPTY_OCR_REGIONS: MaskRegion[] = [];
+
 /** 公開URLのベースパス。サブパス配信時は `NEXT_PUBLIC_BASE_PATH` を設定する。 */
 const PUBLIC_BASE_PATH = (() => {
   const raw = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -91,7 +94,7 @@ function loadStampImage(src: string): Promise<HTMLImageElement> {
 export function FaceDetectionCanvas({
   imageDataUrl,
   detections,
-  ocrRegions = [],
+  ocrRegions = EMPTY_OCR_REGIONS,
   maxWidth = 800,
   onRendered,
 }: FaceDetectionCanvasProps) {
