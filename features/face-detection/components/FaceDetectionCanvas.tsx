@@ -3,11 +3,21 @@
 import { useEffect, useRef } from "react";
 import type { FaceDetectionResult } from "../types";
 
+/** OCR検出領域の最小構造型。features/ocr に依存せず最小限の位置情報のみ保持する */
+interface MaskRegion {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 interface FaceDetectionCanvasProps {
   /** 表示する画像のデータURL */
   imageDataUrl: string;
   /** 検出された顔の矩形一覧 */
   detections: FaceDetectionResult[];
+  /** OCRで検出された個人情報領域（黒塗りで描画） */
+  ocrRegions?: MaskRegion[];
   /** Canvasの最大表示幅 */
   maxWidth?: number;
   /**
@@ -16,6 +26,12 @@ interface FaceDetectionCanvasProps {
    */
   onRendered?: (blobUrl: string) => void;
 }
+
+/** OCR検出領域のマスキングカラー（黒塗り） */
+const OCR_MASK_COLOR = "#000000";
+
+/** props 未指定時に使う空の OCR 領域配列（参照を安定させ不要な再描画を防ぐ） */
+const EMPTY_OCR_REGIONS: MaskRegion[] = [];
 
 /** 公開URLのベースパス。サブパス配信時は `NEXT_PUBLIC_BASE_PATH` を設定する。 */
 const PUBLIC_BASE_PATH = (() => {
@@ -78,6 +94,7 @@ function loadStampImage(src: string): Promise<HTMLImageElement> {
 export function FaceDetectionCanvas({
   imageDataUrl,
   detections,
+  ocrRegions = EMPTY_OCR_REGIONS,
   maxWidth = 800,
   onRendered,
 }: FaceDetectionCanvasProps) {
@@ -131,6 +148,17 @@ export function FaceDetectionCanvas({
           }
         }
 
+        /** OCR検出領域を黒塗りでマスキング */
+        ctx.fillStyle = OCR_MASK_COLOR;
+        for (const region of ocrRegions) {
+          ctx.fillRect(
+            region.x * scale,
+            region.y * scale,
+            region.width * scale,
+            region.height * scale
+          );
+        }
+
         /** toDataURL の代わりに toBlob を使用してメインスレッドのブロックを回避 */
         canvas.toBlob((blob) => {
           if (isCancelled || !blob) return;
@@ -155,7 +183,7 @@ export function FaceDetectionCanvas({
         blobUrlRef.current = null;
       }
     };
-  }, [imageDataUrl, detections, maxWidth]);
+  }, [imageDataUrl, detections, ocrRegions, maxWidth]);
 
   return (
     <canvas
