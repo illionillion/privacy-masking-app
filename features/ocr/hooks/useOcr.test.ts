@@ -381,6 +381,33 @@ describe("detectPersonalInfoInLine", () => {
     expect(result[0].patternType).toBe("phone");
   });
 
+  it("電話番号（携帯・ハイフンなし）を正しく検出する", () => {
+    const result = detectPersonalInfoInLine("09012345678", [
+      { text: "09012345678", bbox: { x0: 0, y0: 0, x1: 90, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("phone");
+    expect(result[0].text).toBe("09012345678");
+  });
+
+  it("電話番号（国際番号形式）を正しく検出する", () => {
+    const result = detectPersonalInfoInLine("+81-90-1234-5678", [
+      { text: "+81-90-1234-5678", bbox: { x0: 0, y0: 0, x1: 130, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("phone");
+    expect(result[0].text).toBe("+81-90-1234-5678");
+  });
+
+  it("電話番号（フリーダイヤル・4桁プレフィックス）を正しく検出する", () => {
+    const result = detectPersonalInfoInLine("0120-123-456", [
+      { text: "0120-123-456", bbox: { x0: 0, y0: 0, x1: 110, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("phone");
+    expect(result[0].text).toBe("0120-123-456");
+  });
+
   it("URLを正しく検出する", () => {
     const result = detectPersonalInfoInLine("https://api.example.com/v1/users", [
       {
