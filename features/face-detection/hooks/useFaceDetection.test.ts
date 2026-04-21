@@ -4,19 +4,19 @@ import { useFaceDetection } from "./useFaceDetection";
 
 vi.mock("@vladmandic/face-api", () => ({
   nets: {
-    tinyFaceDetector: {
+    ssdMobilenetv1: {
       loadFromUri: vi.fn(),
     },
   },
   detectAllFaces: vi.fn(),
-  TinyFaceDetectorOptions: vi.fn(),
+  SsdMobilenetv1Options: vi.fn(),
 }));
 
 describe("useFaceDetection", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     const faceapi = await import("@vladmandic/face-api");
-    vi.mocked(faceapi.nets.tinyFaceDetector.loadFromUri).mockResolvedValue(undefined);
+    vi.mocked(faceapi.nets.ssdMobilenetv1.loadFromUri).mockResolvedValue(undefined);
   });
 
   it("モデルのロード成功で isModelLoading が false になる", async () => {
@@ -30,7 +30,7 @@ describe("useFaceDetection", () => {
 
   it("モデルのロード失敗で error が設定され isModelLoading が false になる", async () => {
     const faceapi = await import("@vladmandic/face-api");
-    vi.mocked(faceapi.nets.tinyFaceDetector.loadFromUri).mockRejectedValueOnce(
+    vi.mocked(faceapi.nets.ssdMobilenetv1.loadFromUri).mockRejectedValueOnce(
       new Error("モデルの取得に失敗")
     );
     const { result } = renderHook(() => useFaceDetection());

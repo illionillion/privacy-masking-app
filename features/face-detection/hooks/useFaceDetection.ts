@@ -40,7 +40,7 @@ async function getFaceApi() {
 /**
  * 顔検出フック
  *
- * face-api.js の TinyFaceDetector を使用して、
+ * face-api.js の ssdMobilenetv1 を使用して、
  * モデルのロードと顔検出処理を提供する。
  *
  * @returns {UseFaceDetectionReturn} 顔検出の状態と実行関数
@@ -63,7 +63,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     const loadModel = async () => {
       try {
         const faceapi = await getFaceApi();
-        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
         if (isMountedRef.current) {
           setIsModelLoading(false);
         }
@@ -104,7 +104,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         const faceapi = await getFaceApi();
         const results = await faceapi.detectAllFaces(
           imageElement,
-          new faceapi.TinyFaceDetectorOptions()
+          new faceapi.SsdMobilenetv1Options()
         );
         const mappedDetections: FaceDetectionResult[] = results.map((d) => ({
           x: d.box.x,
