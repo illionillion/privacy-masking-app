@@ -151,6 +151,7 @@ export function MaskingGallery() {
       const target = images.find((image) => image.id === imageId);
       if (!target || isModelLoading) return;
 
+      setUploadError(null);
       try {
         const imageElement = await loadImageElement(target.imageUrl);
 
