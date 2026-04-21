@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { FaceDetectionResult } from "../types";
 
-/** OCR検出領域の最小構造型。features/ocr に依存せず幺数位置情報のみ保持する */
+/** OCR検出領域の最小構造型。features/ocr に依存せず最小限の位置情報のみ保持する */
 interface MaskRegion {
   x: number;
   y: number;

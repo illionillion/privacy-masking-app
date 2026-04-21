@@ -201,16 +201,20 @@ export function useOcr(): UseOcrReturn {
    */
   const getWorker = useCallback(async () => {
     if (!workerRef.current) {
-      const { createWorker, OEM } = await import("tesseract.js");
       /**
-       * OEM.LSTM_ONLY を明示指定する（デフォルト値と同じだが意図を明確にする）。
+       * 初期化 Promise を先に workerRef.current へ格納する。
+       * こうすることで、並列呼び出し時に複数の getWorker() が同時に
+       * null 判定を通って Worker を重複生成するのを防ぐ。
        *
+       * OEM.LSTM_ONLY を明示指定する（デフォルト値と同じだが意図を明確にする）。
        * jpn 訓練データが旧来エンジン専用のパラメータ `language_model_ngram_on` を
        * 参照するため、LSTM-only ビルドでは初期化時に
        * "Warning: Parameter not found: language_model_ngram_on" が出力されるが、
        * これは既知の無害な警告であり OCR の動作には影響しない。
        */
-      const promise = createWorker(["jpn", "eng"], OEM.LSTM_ONLY);
+      const promise = import("tesseract.js").then(({ createWorker, OEM }) =>
+        createWorker(["jpn", "eng"], OEM.LSTM_ONLY)
+      );
       workerRef.current = promise;
       /** reject 時はキャッシュを破棄し、次回呼び出しで再生成できるようにする */
       promise.catch(() => {
