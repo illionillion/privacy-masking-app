@@ -322,8 +322,10 @@ describe("useOcr", () => {
     const mockImage = document.createElement("img");
 
     /** 1回目の認識を開始（pending） */
-    void result.current.recognizeText(mockImage);
-    await new Promise<void>((r) => setTimeout(r, 0));
+    await act(async () => {
+      void result.current.recognizeText(mockImage);
+      await new Promise<void>((r) => setTimeout(r, 0));
+    });
 
     /** 2回目の認識を完了させる */
     await act(async () => {
