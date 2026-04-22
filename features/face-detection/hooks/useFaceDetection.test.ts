@@ -10,6 +10,9 @@ vi.mock("@vladmandic/face-api", () => ({
   },
   detectAllFaces: vi.fn(),
   SsdMobilenetv1Options: vi.fn(),
+  tf: {
+    setBackend: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 
 describe("useFaceDetection", () => {
