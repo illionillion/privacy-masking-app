@@ -63,6 +63,17 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     const loadModel = async () => {
       try {
         const faceapi = await getFaceApi();
+        /**
+         * TensorFlow.js のバックエンドを WebGL（GPU）に設定する。
+         * face-api の tf namespace は setBackend を型上公開していないため
+         * unknown 経由でキャストして呼び出す。
+         * 非対応環境では自動的に CPU バックエンドへフォールバックするため、
+         * setBackend の失敗はエラーとして扱わず無視する。
+         */
+        const tfWithSetBackend = faceapi.tf as unknown as {
+          setBackend: (backend: string) => Promise<void>;
+        };
+        await tfWithSetBackend.setBackend("webgl").catch(() => {});
         await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
         if (isMountedRef.current) {
           setIsModelLoading(false);
