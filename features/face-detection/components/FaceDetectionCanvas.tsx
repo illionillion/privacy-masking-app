@@ -130,17 +130,17 @@ export function FaceDetectionCanvas({
           .map((r) => r.value);
 
         for (const det of detections) {
-          const cx = det.x + det.width / 2;
-          const cy = det.y + det.height / 2;
-          const size = Math.max(det.width, det.height);
+          const centerX = det.x + det.width / 2;
+          const centerY = det.y + det.height / 2;
+          const stampSize = Math.max(det.width, det.height);
 
           if (availableStamps.length > 0) {
             const stamp = availableStamps[Math.floor(Math.random() * availableStamps.length)];
-            ctx.drawImage(stamp, cx - size / 2, cy - size / 2, size, size);
+            ctx.drawImage(stamp, centerX - stampSize / 2, centerY - stampSize / 2, stampSize, stampSize);
           } else {
             /** スタンプが全滅した場合のフォールバック: 半透明の黒矩形でマスキング */
             ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-            ctx.fillRect(cx - size / 2, cy - size / 2, size, size);
+            ctx.fillRect(centerX - stampSize / 2, centerY - stampSize / 2, stampSize, stampSize);
           }
         }
 

@@ -44,22 +44,17 @@ export function MaskingCanvas({
 
       /** マスキング領域を半透明で描画 */
       for (const region of regions) {
-        const x = region.x;
-        const y = region.y;
-        const w = region.width;
-        const h = region.height;
-
         if (region.isEnabled) {
           ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-          ctx.fillRect(x, y, w, h);
+          ctx.fillRect(region.x, region.y, region.width, region.height);
           ctx.strokeStyle = "#3b82f6";
           ctx.lineWidth = 2;
-          ctx.strokeRect(x, y, w, h);
+          ctx.strokeRect(region.x, region.y, region.width, region.height);
         } else {
           ctx.strokeStyle = "#94a3b8";
           ctx.lineWidth = 2;
           ctx.setLineDash([4, 4]);
-          ctx.strokeRect(x, y, w, h);
+          ctx.strokeRect(region.x, region.y, region.width, region.height);
           ctx.setLineDash([]);
         }
       }
