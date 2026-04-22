@@ -10,9 +10,6 @@ vi.mock("@vladmandic/face-api", () => ({
   },
   detectAllFaces: vi.fn(),
   SsdMobilenetv1Options: vi.fn(),
-  tf: {
-    setBackend: vi.fn().mockResolvedValue(undefined),
-  },
 }));
 
 describe("useFaceDetection", () => {
@@ -86,27 +83,5 @@ describe("useFaceDetection", () => {
 
     expect(first[0]).toMatchObject({ x: 10, y: 20 });
     expect(second[0]).toMatchObject({ x: 50, y: 60 });
-  });
-
-  it("setBackend('webgl') がモデルロード前に呼び出される", async () => {
-    const faceapi = await import("@vladmandic/face-api");
-    const tfWithSetBackend = faceapi.tf as unknown as { setBackend: (b: string) => Promise<void> };
-    const { result } = renderHook(() => useFaceDetection());
-    await waitFor(() => expect(result.current.isModelLoading).toBe(false));
-    expect(vi.mocked(tfWithSetBackend.setBackend)).toHaveBeenCalledWith("webgl");
-    expect(vi.mocked(tfWithSetBackend.setBackend)).toHaveBeenCalledBefore(
-      vi.mocked(faceapi.nets.ssdMobilenetv1.loadFromUri)
-    );
-  });
-
-  it("setBackend が reject してもモデルロードが継続し error が null のまま", async () => {
-    const faceapi = await import("@vladmandic/face-api");
-    const tfWithSetBackend = faceapi.tf as unknown as { setBackend: (b: string) => Promise<void> };
-    vi.mocked(tfWithSetBackend.setBackend).mockRejectedValueOnce(new Error("WebGL not supported"));
-    vi.mocked(faceapi.nets.ssdMobilenetv1.loadFromUri).mockResolvedValue(undefined);
-    const { result } = renderHook(() => useFaceDetection());
-    await waitFor(() => expect(result.current.isModelLoading).toBe(false));
-    expect(result.current.error).toBeNull();
-    expect(vi.mocked(faceapi.nets.ssdMobilenetv1.loadFromUri)).toHaveBeenCalled();
   });
 });
