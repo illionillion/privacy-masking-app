@@ -14,6 +14,9 @@ export interface MaskingCanvasProps {
   onRegionClick?: (id: string) => void;
 }
 
+/** Canvasの最大辺長（ブラウザのCanvas最大サイズ超過防止） */
+const MAX_CANVAS_DIMENSION = 4096;
+
 /**
  * マスキング領域の表示用Canvasコンポーネント
  *
@@ -22,6 +25,7 @@ export interface MaskingCanvasProps {
  */
 export function MaskingCanvas({ imageDataUrl, regions, onRegionClick }: MaskingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scaleRef = useRef(1);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -32,25 +36,32 @@ export function MaskingCanvas({ imageDataUrl, regions, onRegionClick }: MaskingC
 
     const img = new Image();
     img.onload = () => {
-      /** オリジナル解像度でCanvasを設定（表示スケーリングはCSSに委ねる） */
-      canvas.width = img.width;
-      canvas.height = img.height;
+      /** 元解像度を基本とし、最大辺が上限を超える場合のみ縮小してCanvas上限超過・メモリ逼迫を防ぐ */
+      const scale = Math.min(1, MAX_CANVAS_DIMENSION / Math.max(img.width, img.height));
+      scaleRef.current = scale;
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       /** マスキング領域を半透明で描画 */
       for (const region of regions) {
+        const x = region.x * scale;
+        const y = region.y * scale;
+        const w = region.width * scale;
+        const h = region.height * scale;
+
         if (region.isEnabled) {
           ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-          ctx.fillRect(region.x, region.y, region.width, region.height);
+          ctx.fillRect(x, y, w, h);
           ctx.strokeStyle = "#3b82f6";
           ctx.lineWidth = 2;
-          ctx.strokeRect(region.x, region.y, region.width, region.height);
+          ctx.strokeRect(x, y, w, h);
         } else {
           ctx.strokeStyle = "#94a3b8";
           ctx.lineWidth = 2;
           ctx.setLineDash([4, 4]);
-          ctx.strokeRect(region.x, region.y, region.width, region.height);
+          ctx.strokeRect(x, y, w, h);
           ctx.setLineDash([]);
         }
       }
@@ -69,16 +80,19 @@ export function MaskingCanvas({ imageDataUrl, regions, onRegionClick }: MaskingC
       if (!onRegionClick) return;
       const canvas = canvasRef.current;
       if (!canvas) return;
+      /** 画像読込前は canvas.width/height が 0 のため 0 除算を防ぐ */
+      if (canvas.width === 0 || canvas.height === 0) return;
       const rect = canvas.getBoundingClientRect();
+      const scale = scaleRef.current;
 
       /**
-       * CSSによる表示スケールを考慮してクリック位置を元画像の座標系に変換する。
+       * CSSによる表示スケールCanvas縮小率を考慮してクリック位置を元画像の座標系に変換する。
        * cssScaleX = canvas の CSS 表示幅 / canvas の実ピクセル幅
        */
       const cssScaleX = rect.width / canvas.width;
       const cssScaleY = rect.height / canvas.height;
-      const clickX = (e.clientX - rect.left) / cssScaleX;
-      const clickY = (e.clientY - rect.top) / cssScaleY;
+      const clickX = (e.clientX - rect.left) / cssScaleX / scale;
+      const clickY = (e.clientY - rect.top) / cssScaleY / scale;
 
       for (const region of regions) {
         if (
