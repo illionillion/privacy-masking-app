@@ -3,6 +3,7 @@
 import { useRef, useCallback, useEffect } from "react";
 import type { MouseEvent } from "react";
 import clsx from "clsx";
+import { MAX_CANVAS_DIMENSION } from "@/lib/canvas";
 import type { MaskRegion } from "../types";
 
 export interface MaskingCanvasProps {
@@ -13,9 +14,6 @@ export interface MaskingCanvasProps {
   /** 領域クリック時のコールバック（将来の編集UI用） */
   onRegionClick?: (id: string) => void;
 }
-
-/** Canvasの最大辺長（ブラウザのCanvas最大サイズ超過防止） */
-const MAX_CANVAS_DIMENSION = 4096;
 
 /**
  * マスキング領域の表示用Canvasコンポーネント
@@ -86,7 +84,7 @@ export function MaskingCanvas({ imageDataUrl, regions, onRegionClick }: MaskingC
       const scale = scaleRef.current;
 
       /**
-       * CSSによる表示スケールCanvas縮小率を考慮してクリック位置を元画像の座標系に変換する。
+       * CSSによる表示スケールとCanvas縮小率を考慮してクリック位置を元画像の座標系に変換する。
        * cssScaleX = canvas の CSS 表示幅 / canvas の実ピクセル幅
        */
       const cssScaleX = rect.width / canvas.width;

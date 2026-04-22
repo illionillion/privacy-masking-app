@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { MAX_CANVAS_DIMENSION } from "@/lib/canvas";
 import type { FaceDetectionResult } from "../types";
 
 /** OCR検出領域の最小構造型。features/ocr に依存せず最小限の位置情報のみ保持する */
@@ -30,9 +31,6 @@ const OCR_MASK_COLOR = "#000000";
 
 /** props 未指定時に使う空の OCR 領域配列（参照を安定させ不要な再描画を防ぐ） */
 const EMPTY_OCR_REGIONS: MaskRegion[] = [];
-
-/** Canvasの最大辺長（ブラウザのCanvas最大サイズ超過防止） */
-const MAX_CANVAS_DIMENSION = 4096;
 
 /** 公開URLのベースパス。サブパス配信時は `NEXT_PUBLIC_BASE_PATH` を設定する。 */
 const PUBLIC_BASE_PATH = (() => {
