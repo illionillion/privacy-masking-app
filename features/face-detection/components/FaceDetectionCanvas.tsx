@@ -117,9 +117,12 @@ export function FaceDetectionCanvas({
     img.onload = () => {
       if (isCancelled) return;
       /** 元解像度を基本とし、最大辺が上限を超える場合のみ縮小してCanvas上限超過・メモリ逼迫を防ぐ */
-      const scale = Math.min(1, MAX_CANVAS_DIMENSION / Math.max(img.width, img.height));
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
+      const requestedScale = Math.min(1, MAX_CANVAS_DIMENSION / Math.max(img.width, img.height));
+      canvas.width = Math.round(img.width * requestedScale);
+      canvas.height = Math.round(img.height * requestedScale);
+      /** Math.round後の実寸からスケールを再計算し丸め誤差による座標ズレを防ぐ */
+      const scaleX = canvas.width / img.width;
+      const scaleY = canvas.height / img.height;
 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
@@ -132,9 +135,9 @@ export function FaceDetectionCanvas({
           .map((r) => r.value);
 
         for (const det of detections) {
-          const centerX = (det.x + det.width / 2) * scale;
-          const centerY = (det.y + det.height / 2) * scale;
-          const stampSize = Math.max(det.width, det.height) * scale;
+          const centerX = (det.x + det.width / 2) * scaleX;
+          const centerY = (det.y + det.height / 2) * scaleY;
+          const stampSize = Math.max(det.width * scaleX, det.height * scaleY);
 
           if (availableStamps.length > 0) {
             const stamp = availableStamps[Math.floor(Math.random() * availableStamps.length)];
@@ -156,10 +159,10 @@ export function FaceDetectionCanvas({
         ctx.fillStyle = OCR_MASK_COLOR;
         for (const region of ocrRegions) {
           ctx.fillRect(
-            region.x * scale,
-            region.y * scale,
-            region.width * scale,
-            region.height * scale
+            region.x * scaleX,
+            region.y * scaleY,
+            region.width * scaleX,
+            region.height * scaleY
           );
         }
 

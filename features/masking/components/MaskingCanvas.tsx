@@ -23,7 +23,8 @@ export interface MaskingCanvasProps {
  */
 export function MaskingCanvas({ imageDataUrl, regions, onRegionClick }: MaskingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const scaleRef = useRef(1);
+  const scaleXRef = useRef(1);
+  const scaleYRef = useRef(1);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -35,19 +36,23 @@ export function MaskingCanvas({ imageDataUrl, regions, onRegionClick }: MaskingC
     const img = new Image();
     img.onload = () => {
       /** 元解像度を基本とし、最大辺が上限を超える場合のみ縮小してCanvas上限超過・メモリ逼迫を防ぐ */
-      const scale = Math.min(1, MAX_CANVAS_DIMENSION / Math.max(img.width, img.height));
-      scaleRef.current = scale;
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
+      const requestedScale = Math.min(1, MAX_CANVAS_DIMENSION / Math.max(img.width, img.height));
+      canvas.width = Math.round(img.width * requestedScale);
+      canvas.height = Math.round(img.height * requestedScale);
+      /** Math.round後の実寸からスケールを再計算し丸め誤差による座標ズレを防ぐ */
+      const scaleX = canvas.width / img.width;
+      const scaleY = canvas.height / img.height;
+      scaleXRef.current = scaleX;
+      scaleYRef.current = scaleY;
 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       /** マスキング領域を半透明で描画 */
       for (const region of regions) {
-        const x = region.x * scale;
-        const y = region.y * scale;
-        const w = region.width * scale;
-        const h = region.height * scale;
+        const x = region.x * scaleX;
+        const y = region.y * scaleY;
+        const w = region.width * scaleX;
+        const h = region.height * scaleY;
 
         if (region.isEnabled) {
           ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
@@ -81,7 +86,8 @@ export function MaskingCanvas({ imageDataUrl, regions, onRegionClick }: MaskingC
       /** 画像読込前は canvas.width/height が 0 のため 0 除算を防ぐ */
       if (canvas.width === 0 || canvas.height === 0) return;
       const rect = canvas.getBoundingClientRect();
-      const scale = scaleRef.current;
+      const scaleX = scaleXRef.current;
+      const scaleY = scaleYRef.current;
 
       /**
        * CSSによる表示スケールとCanvas縮小率を考慮してクリック位置を元画像の座標系に変換する。
@@ -89,8 +95,8 @@ export function MaskingCanvas({ imageDataUrl, regions, onRegionClick }: MaskingC
        */
       const cssScaleX = rect.width / canvas.width;
       const cssScaleY = rect.height / canvas.height;
-      const clickX = (e.clientX - rect.left) / cssScaleX / scale;
-      const clickY = (e.clientY - rect.top) / cssScaleY / scale;
+      const clickX = (e.clientX - rect.left) / cssScaleX / scaleX;
+      const clickY = (e.clientY - rect.top) / cssScaleY / scaleY;
 
       for (const region of regions) {
         if (
