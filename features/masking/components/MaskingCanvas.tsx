@@ -20,11 +20,7 @@ export interface MaskingCanvasProps {
  * 画像を描画し、マスキング領域を重ねて表示する。
  * 将来的な編集UI（ON/OFF切替・手動追加・削除）の受け口。
  */
-export function MaskingCanvas({
-  imageDataUrl,
-  regions,
-  onRegionClick,
-}: MaskingCanvasProps) {
+export function MaskingCanvas({ imageDataUrl, regions, onRegionClick }: MaskingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {

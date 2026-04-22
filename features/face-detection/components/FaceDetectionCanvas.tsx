@@ -136,7 +136,13 @@ export function FaceDetectionCanvas({
 
           if (availableStamps.length > 0) {
             const stamp = availableStamps[Math.floor(Math.random() * availableStamps.length)];
-            ctx.drawImage(stamp, centerX - stampSize / 2, centerY - stampSize / 2, stampSize, stampSize);
+            ctx.drawImage(
+              stamp,
+              centerX - stampSize / 2,
+              centerY - stampSize / 2,
+              stampSize,
+              stampSize
+            );
           } else {
             /** スタンプが全滅した場合のフォールバック: 半透明の黒矩形でマスキング */
             ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
