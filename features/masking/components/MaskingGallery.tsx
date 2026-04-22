@@ -286,7 +286,7 @@ export function MaskingGallery() {
 
       {images.length > 0 && (
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <p className="text-sm text-zinc-600">処理済み: {images.length} 枚</p>
             <div className="flex items-center gap-2">
               <button
