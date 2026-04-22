@@ -31,6 +31,9 @@ const OCR_MASK_COLOR = "#000000";
 /** props 未指定時に使う空の OCR 領域配列（参照を安定させ不要な再描画を防ぐ） */
 const EMPTY_OCR_REGIONS: MaskRegion[] = [];
 
+/** Canvasの最大辺長（ブラウザのCanvas最大サイズ超過防止） */
+const MAX_CANVAS_DIMENSION = 4096;
+
 /** 公開URLのベースパス。サブパス配信時は `NEXT_PUBLIC_BASE_PATH` を設定する。 */
 const PUBLIC_BASE_PATH = (() => {
   const raw = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -115,9 +118,10 @@ export function FaceDetectionCanvas({
     const img = new Image();
     img.onload = () => {
       if (isCancelled) return;
-      /** オリジナル解像度でCanvasを設定（表示スケーリングはCSSに委ねる） */
-      canvas.width = img.width;
-      canvas.height = img.height;
+      /** 元解像度を基本とし、最大辺が上限を超える場合のみ縮小してCanvas上限超過・メモリ逼迫を防ぐ */
+      const scale = Math.min(1, MAX_CANVAS_DIMENSION / Math.max(img.width, img.height));
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
@@ -130,9 +134,9 @@ export function FaceDetectionCanvas({
           .map((r) => r.value);
 
         for (const det of detections) {
-          const centerX = det.x + det.width / 2;
-          const centerY = det.y + det.height / 2;
-          const stampSize = Math.max(det.width, det.height);
+          const centerX = (det.x + det.width / 2) * scale;
+          const centerY = (det.y + det.height / 2) * scale;
+          const stampSize = Math.max(det.width, det.height) * scale;
 
           if (availableStamps.length > 0) {
             const stamp = availableStamps[Math.floor(Math.random() * availableStamps.length)];
@@ -153,7 +157,12 @@ export function FaceDetectionCanvas({
         /** OCR検出領域を黒塗りでマスキング */
         ctx.fillStyle = OCR_MASK_COLOR;
         for (const region of ocrRegions) {
-          ctx.fillRect(region.x, region.y, region.width, region.height);
+          ctx.fillRect(
+            region.x * scale,
+            region.y * scale,
+            region.width * scale,
+            region.height * scale
+          );
         }
 
         /** toDataURL の代わりに toBlob を使用してメインスレッドのブロックを回避 */
