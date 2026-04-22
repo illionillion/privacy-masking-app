@@ -18,8 +18,6 @@ interface FaceDetectionCanvasProps {
   detections: FaceDetectionResult[];
   /** OCRで検出された個人情報領域（黒塗りで描画） */
   ocrRegions?: MaskRegion[];
-  /** Canvasの最大表示幅 */
-  maxWidth?: number;
   /**
    * 描画完了時のBlob URL通知。
    * Blob URLの解放はこのコンポーネントが管理するため、呼び出し元での revokeObjectURL は不要。
@@ -95,7 +93,6 @@ export function FaceDetectionCanvas({
   imageDataUrl,
   detections,
   ocrRegions = EMPTY_OCR_REGIONS,
-  maxWidth = 800,
   onRendered,
 }: FaceDetectionCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -118,10 +115,9 @@ export function FaceDetectionCanvas({
     const img = new Image();
     img.onload = () => {
       if (isCancelled) return;
-      /** 表示スケールを計算 */
-      const scale = Math.min(1, maxWidth / img.width);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
+      /** オリジナル解像度でCanvasを設定（表示スケーリングはCSSに委ねる） */
+      canvas.width = img.width;
+      canvas.height = img.height;
 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
@@ -134,9 +130,9 @@ export function FaceDetectionCanvas({
           .map((r) => r.value);
 
         for (const det of detections) {
-          const cx = (det.x + det.width / 2) * scale;
-          const cy = (det.y + det.height / 2) * scale;
-          const size = Math.max(det.width, det.height) * scale;
+          const cx = det.x + det.width / 2;
+          const cy = det.y + det.height / 2;
+          const size = Math.max(det.width, det.height);
 
           if (availableStamps.length > 0) {
             const stamp = availableStamps[Math.floor(Math.random() * availableStamps.length)];
@@ -151,12 +147,7 @@ export function FaceDetectionCanvas({
         /** OCR検出領域を黒塗りでマスキング */
         ctx.fillStyle = OCR_MASK_COLOR;
         for (const region of ocrRegions) {
-          ctx.fillRect(
-            region.x * scale,
-            region.y * scale,
-            region.width * scale,
-            region.height * scale
-          );
+          ctx.fillRect(region.x, region.y, region.width, region.height);
         }
 
         /** toDataURL の代わりに toBlob を使用してメインスレッドのブロックを回避 */
@@ -183,7 +174,7 @@ export function FaceDetectionCanvas({
         blobUrlRef.current = null;
       }
     };
-  }, [imageDataUrl, detections, ocrRegions, maxWidth]);
+  }, [imageDataUrl, detections, ocrRegions]);
 
   return (
     <canvas

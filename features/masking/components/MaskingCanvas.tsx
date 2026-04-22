@@ -12,8 +12,6 @@ export interface MaskingCanvasProps {
   regions: MaskRegion[];
   /** 領域クリック時のコールバック（将来の編集UI用） */
   onRegionClick?: (id: string) => void;
-  /** Canvasの最大表示幅 */
-  maxWidth?: number;
 }
 
 /**
@@ -26,10 +24,8 @@ export function MaskingCanvas({
   imageDataUrl,
   regions,
   onRegionClick,
-  maxWidth = 800,
 }: MaskingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const scaleRef = useRef(1);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -40,19 +36,18 @@ export function MaskingCanvas({
 
     const img = new Image();
     img.onload = () => {
-      const scale = Math.min(1, maxWidth / img.width);
-      scaleRef.current = scale;
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
+      /** オリジナル解像度でCanvasを設定（表示スケーリングはCSSに委ねる） */
+      canvas.width = img.width;
+      canvas.height = img.height;
 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       /** マスキング領域を半透明で描画 */
       for (const region of regions) {
-        const x = region.x * scale;
-        const y = region.y * scale;
-        const w = region.width * scale;
-        const h = region.height * scale;
+        const x = region.x;
+        const y = region.y;
+        const w = region.width;
+        const h = region.height;
 
         if (region.isEnabled) {
           ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
@@ -75,7 +70,7 @@ export function MaskingCanvas({
       /** 再描画・アンマウント時に onload を無効化してstale描画を防止 */
       img.onload = null;
     };
-  }, [imageDataUrl, regions, maxWidth]);
+  }, [imageDataUrl, regions]);
 
   /** クリック位置から領域を特定してコールバックを呼ぶ */
   const handleCanvasClick = useCallback(
@@ -84,17 +79,15 @@ export function MaskingCanvas({
       const canvas = canvasRef.current;
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
-      const imageScale = scaleRef.current;
 
       /**
-       * CSSによる表示スケールと画像スケールの両方を考慮して
-       * クリック位置を元画像の座標系に変換する。
+       * CSSによる表示スケールを考慮してクリック位置を元画像の座標系に変換する。
        * cssScaleX = canvas の CSS 表示幅 / canvas の実ピクセル幅
        */
       const cssScaleX = rect.width / canvas.width;
       const cssScaleY = rect.height / canvas.height;
-      const clickX = (e.clientX - rect.left) / cssScaleX / imageScale;
-      const clickY = (e.clientY - rect.top) / cssScaleY / imageScale;
+      const clickX = (e.clientX - rect.left) / cssScaleX;
+      const clickY = (e.clientY - rect.top) / cssScaleY;
 
       for (const region of regions) {
         if (
