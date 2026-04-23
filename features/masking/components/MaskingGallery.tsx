@@ -286,9 +286,12 @@ export function MaskingGallery() {
     });
   }, [images]);
 
-  const isProcessing = isDetecting || isRecognizing;
+  const hasProcessingImage = images.some((image) => image.isProcessing);
+  const isProcessing = isDetecting || isRecognizing || hasProcessingImage;
   const loadingMessage = isModelLoading ? "顔検出モデルをロード中…" : null;
-  const downloadableImagesCount = images.filter((image) => image.maskedBlobUrl).length;
+  const downloadableImagesCount = images.filter(
+    (image) => image.maskedBlobUrl && !image.isProcessing
+  ).length;
 
   return (
     <div className="flex flex-col gap-6">

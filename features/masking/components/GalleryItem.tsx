@@ -93,7 +93,7 @@ export function GalleryItem({
       <div className="mt-3 flex items-center justify-between gap-3">
         <p className="text-xs text-zinc-400">{(image.size / 1024 / 1024).toFixed(2)} MB</p>
 
-        {image.maskedBlobUrl ? (
+        {image.maskedBlobUrl && !image.isProcessing ? (
           <a
             href={image.maskedBlobUrl}
             download={createDownloadFileName(image.name)}
@@ -103,7 +103,9 @@ export function GalleryItem({
             ダウンロード
           </a>
         ) : (
-          <span className="text-xs text-zinc-400">描画中…</span>
+          <span className="text-xs text-zinc-400">
+            {image.isProcessing ? "処理中…" : "描画中…"}
+          </span>
         )}
       </div>
       {/*
