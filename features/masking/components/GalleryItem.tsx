@@ -34,7 +34,7 @@ export function GalleryItem({
 
   return (
     <article
-      aria-selected={isActive}
+      aria-current={isActive ? "true" : undefined}
       className={clsx([
         "relative rounded-xl border bg-white p-4 transition-colors",
         "hover:border-blue-200",
