@@ -18,6 +18,12 @@ export interface DetectedFace {
 }
 
 /**
+ * OCR 検出領域の個人情報種別
+ * OcrPatternType と同一の union 型をローカル定義し features/ocr への依存を避ける
+ */
+export type DetectedTextPatternType = "email" | "phone" | "postal" | "url" | "apikey";
+
+/**
  * OCR 検出領域の最小構造型
  * OcrRegion と構造的互換性を持つ
  */
@@ -27,7 +33,7 @@ export interface DetectedTextRegion {
   width: number;
   height: number;
   text: string;
-  patternType: string;
+  patternType: DetectedTextPatternType;
 }
 
 /** マスキング対象領域の種別 */

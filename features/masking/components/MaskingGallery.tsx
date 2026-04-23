@@ -104,6 +104,7 @@ export function MaskingGallery() {
       );
 
       const blobFailedCount = blobResults.filter((r) => r.status === "rejected").length;
+      if (!isMountedRef.current) return;
       if (blobFailedCount > 0) {
         setUploadError(`${blobFailedCount} 件の画像の読み込みに失敗しました`);
       }
@@ -131,19 +132,23 @@ export function MaskingGallery() {
                 recognizeText(imageElement),
               ]);
 
-              setImages((prev) =>
-                prev.map((image) =>
-                  image.id === item.id
-                    ? { ...image, detections, ocrRegions, isProcessing: false }
-                    : image
-                )
-              );
+              if (isMountedRef.current) {
+                setImages((prev) =>
+                  prev.map((image) =>
+                    image.id === item.id
+                      ? { ...image, detections, ocrRegions, isProcessing: false }
+                      : image
+                  )
+                );
+              }
             } catch (err) {
-              setImages((prev) =>
-                prev.map((image) =>
-                  image.id === item.id ? { ...image, isProcessing: false } : image
-                )
-              );
+              if (isMountedRef.current) {
+                setImages((prev) =>
+                  prev.map((image) =>
+                    image.id === item.id ? { ...image, isProcessing: false } : image
+                  )
+                );
+              }
               throw err;
             }
           })
@@ -152,6 +157,7 @@ export function MaskingGallery() {
       }
 
       const failedCount = results.filter((r) => r.status === "rejected").length;
+      if (!isMountedRef.current) return;
       if (failedCount > 0) {
         setUploadError(`${failedCount} 件の画像の処理に失敗しました`);
       }
