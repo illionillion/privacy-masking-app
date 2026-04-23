@@ -10,7 +10,7 @@ interface GalleryItemProps {
   /** face-api モデルのロード中フラグ（ロード中は再検出を無効化する） */
   isModelLoading: boolean;
   onSelect: (id: string) => void;
-  onRedetect: (id: string) => void;
+  onRedetect: (id: string) => void | Promise<void>;
   onRendered: (id: string, blobUrl: string) => void;
 }
 
@@ -34,20 +34,27 @@ export function GalleryItem({
 
   return (
     <article
-      tabIndex={0}
-      onClick={() => onSelect(image.id)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect(image.id);
-        }
-      }}
+      aria-selected={isActive}
       className={clsx([
-        "cursor-pointer rounded-xl border bg-white p-4 transition-colors",
+        "relative rounded-xl border bg-white p-4 transition-colors",
         "hover:border-blue-200",
         isActive ? "border-blue-300" : "border-zinc-200",
       ])}
     >
+      {/*
+        カード全体をクリック可能にする見えないボタン。
+        ::after で全領域を覆い、再検出・ダウンロードなどのインタラクティブ要素は
+        relative + z-10 で前面に出すことで操作可能にする。
+      */}
+      <button
+        type="button"
+        aria-label={`${image.name} を選択`}
+        onClick={() => onSelect(image.id)}
+        className={clsx([
+          "absolute inset-0 rounded-xl",
+          'after:absolute after:inset-0 after:rounded-xl after:content-[""]',
+        ])}
+      />
       <div className="flex items-center justify-between gap-2">
         <p
           className={clsx([
@@ -62,11 +69,11 @@ export function GalleryItem({
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            onRedetect(image.id);
+            void onRedetect(image.id);
           }}
           disabled={isRedetectDisabled}
           className={clsx([
-            "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+            "relative z-10 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
             "bg-blue-600 text-white hover:bg-blue-700",
             isRedetectDisabled && "cursor-not-allowed opacity-50",
           ])}
@@ -105,7 +112,7 @@ export function GalleryItem({
             href={image.maskedBlobUrl}
             download={createDownloadFileName(image.name)}
             onClick={(e) => e.stopPropagation()}
-            className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
+            className="relative z-10 rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
           >
             ダウンロード
           </a>

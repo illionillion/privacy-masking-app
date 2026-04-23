@@ -4,9 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { zip } from "fflate";
 import { ImageUpload } from "@/components/ImageUpload";
-import { useFaceDetection } from "@/features/face-detection";
-import { useOcr } from "@/features/ocr";
-import { type MaskingImageItem, createDownloadFileName } from "../types";
+import { useFaceDetection, type FaceDetectionResult } from "@/features/face-detection";
+import { useOcr, type OcrRegion } from "@/features/ocr";
+import {
+  type MaskingImageItem,
+  type DetectedFace,
+  type DetectedTextRegion,
+  createDownloadFileName,
+} from "../types";
 import { GalleryItem } from "./GalleryItem";
 
 /**
@@ -32,6 +37,7 @@ const loadImageElement = (src: string): Promise<HTMLImageElement> => {
 export function MaskingGallery() {
   const [images, setImages] = useState<MaskingImageItem[]>([]);
   const imagesRef = useRef(images);
+  const isMountedRef = useRef(true);
   useEffect(() => {
     imagesRef.current = images;
   }, [images]);
@@ -40,9 +46,11 @@ export function MaskingGallery() {
   const { isModelLoading, isDetecting, error: detectionError, detectFaces } = useFaceDetection();
   const { isRecognizing, error: ocrError, recognizeText } = useOcr();
 
-  /** コンポーネント破棄時に imageUrl の Blob URL をすべて解放する */
+  /** コンポーネント破棄時に imageUrl の Blob URL をすべて解放し isMountedRef を false にする */
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       imagesRef.current.forEach((image) => URL.revokeObjectURL(image.imageUrl));
     };
   }, []);
@@ -74,12 +82,20 @@ export function MaskingGallery() {
       const blobResults = await Promise.allSettled(
         files.map(async (file, index) => {
           const buffer = await file.arrayBuffer();
+          /** アンマウント後は URL を生成せずに即解放して return */
+          if (!isMountedRef.current) return Promise.reject(new Error("unmounted"));
           const memoryBlob = new Blob([buffer], { type: file.type });
+          const imageUrl = URL.createObjectURL(memoryBlob);
+          /** アンマウントが arrayBuffer 完了後に発生した場合も即解放 */
+          if (!isMountedRef.current) {
+            URL.revokeObjectURL(imageUrl);
+            return Promise.reject(new Error("unmounted"));
+          }
           const item: MaskingImageItem = {
             id: `${file.name}-${file.lastModified}-${file.size}-${uploadedAt}-${index}`,
             name: file.name,
             size: file.size,
-            imageUrl: URL.createObjectURL(memoryBlob),
+            imageUrl,
             detections: [],
             ocrRegions: [],
             maskedBlobUrl: null,

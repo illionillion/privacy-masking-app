@@ -1,9 +1,34 @@
 /**
  * マスキング機能の型定義
+ *
+ * 他 feature への依存を避けるため、masking 側で必要な最小構造型をローカル定義する。
+ * 実際の型（FaceDetectionResult / OcrRegion）と構造的互換性があれば代入可能。
  */
 
-import type { FaceDetectionResult } from "@/features/face-detection";
-import type { OcrRegion } from "@/features/ocr";
+/**
+ * 顔検出結果の最小構造型
+ * FaceDetectionResult と構造的互換性を持つ
+ */
+export interface DetectedFace {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  score: number;
+}
+
+/**
+ * OCR 検出領域の最小構造型
+ * OcrRegion と構造的互換性を持つ
+ */
+export interface DetectedTextRegion {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  text: string;
+  patternType: string;
+}
 
 /** マスキング対象領域の種別 */
 export type MaskRegionType = "face" | "manual";
@@ -49,9 +74,9 @@ export interface MaskingImageItem {
   size: number;
   /** 表示・検出用 Blob URL（使用後は revokeObjectURL で解放する） */
   imageUrl: string;
-  detections: FaceDetectionResult[];
+  detections: DetectedFace[];
   /** OCRで検出された個人情報領域 */
-  ocrRegions: OcrRegion[];
+  ocrRegions: DetectedTextRegion[];
   /** マスキング済み画像の Blob URL（FaceDetectionCanvas の onRendered から渡される） */
   maskedBlobUrl: string | null;
   /** 顔検出・OCR 処理中フラグ */
