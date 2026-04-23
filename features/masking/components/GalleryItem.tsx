@@ -2,19 +2,7 @@
 
 import clsx from "clsx";
 import { FaceDetectionCanvas } from "@/features/face-detection";
-import type { FaceDetectionResult } from "@/features/face-detection";
-import type { OcrRegion } from "@/features/ocr";
-
-interface MaskingImageItem {
-  id: string;
-  name: string;
-  size: number;
-  imageUrl: string;
-  detections: FaceDetectionResult[];
-  ocrRegions: OcrRegion[];
-  maskedBlobUrl: string | null;
-  isProcessing: boolean;
-}
+import { type MaskingImageItem, createDownloadFileName } from "../types";
 
 interface GalleryItemProps {
   image: MaskingImageItem;
@@ -27,25 +15,12 @@ interface GalleryItemProps {
 }
 
 /**
- * ダウンロード時のファイル名を生成する
- *
- * @param originalName - 元ファイル名
- * @returns マスク済みファイル名
- */
-const createDownloadFileName = (originalName: string): string => {
-  const extensionIndex = originalName.lastIndexOf(".");
-  if (extensionIndex <= 0) {
-    return `${originalName}-masked.png`;
-  }
-  const basename = originalName.slice(0, extensionIndex);
-  return `${basename}-masked.png`;
-};
-
-/**
  * ギャラリーの個別画像カードコンポーネント
  *
  * isProcessing が true の間は再検出ボタンをこのカード単体で無効化し、
  * 他カードの操作には影響しない。
+ * 検出処理中も元画像を表示し（オーバーレイで処理中インジケータを表示）、
+ * 検出完了後にマスク結果のオーバーレイを描画する。
  */
 export function GalleryItem({
   image,
@@ -106,20 +81,19 @@ export function GalleryItem({
           : `顔: ${image.detections.length} 件 / テキスト: ${image.ocrRegions.length} 件`}
       </p>
 
-      <div className="mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-        {image.isProcessing ? (
-          <div className="flex h-40 w-full items-center justify-center text-sm text-zinc-400">
+      <div className="relative mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+        <FaceDetectionCanvas
+          imageDataUrl={image.imageUrl}
+          detections={image.detections}
+          ocrRegions={image.ocrRegions}
+          onRendered={(blobUrl) => {
+            onRendered(image.id, blobUrl);
+          }}
+        />
+        {image.isProcessing && (
+          <div className="absolute inset-3 flex items-center justify-center rounded-lg bg-white/60 text-sm text-zinc-500">
             処理中…
           </div>
-        ) : (
-          <FaceDetectionCanvas
-            imageDataUrl={image.imageUrl}
-            detections={image.detections}
-            ocrRegions={image.ocrRegions}
-            onRendered={(blobUrl) => {
-              onRendered(image.id, blobUrl);
-            }}
-          />
         )}
       </div>
 

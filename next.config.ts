@@ -11,9 +11,11 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: configDir,
   },
-  ...(process.env.NODE_ENV === "development" && {
-    allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "172.16.*.*"],
-  }),
+  ...(process.env.NODE_ENV === "development"
+    ? {
+        allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "172.16.*.*"],
+      }
+    : {}),
 };
 
 export default nextConfig;

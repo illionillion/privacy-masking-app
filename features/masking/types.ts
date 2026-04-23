@@ -2,6 +2,9 @@
  * マスキング機能の型定義
  */
 
+import type { FaceDetectionResult } from "@/features/face-detection";
+import type { OcrRegion } from "@/features/ocr";
+
 /** マスキング対象領域の種別 */
 export type MaskRegionType = "face" | "manual";
 
@@ -38,3 +41,34 @@ export interface UseMaskingRegionsReturn {
   /** すべての領域をリセットする */
   resetRegions: () => void;
 }
+
+/** ギャラリーの個別画像アイテム */
+export interface MaskingImageItem {
+  id: string;
+  name: string;
+  size: number;
+  /** 表示・検出用 Blob URL（使用後は revokeObjectURL で解放する） */
+  imageUrl: string;
+  detections: FaceDetectionResult[];
+  /** OCRで検出された個人情報領域 */
+  ocrRegions: OcrRegion[];
+  /** マスキング済み画像の Blob URL（FaceDetectionCanvas の onRendered から渡される） */
+  maskedBlobUrl: string | null;
+  /** 顔検出・OCR 処理中フラグ */
+  isProcessing: boolean;
+}
+
+/**
+ * ダウンロード時のファイル名を生成する
+ *
+ * @param originalName - 元ファイル名
+ * @returns マスク済みファイル名（拡張子を .png に変換）
+ */
+export const createDownloadFileName = (originalName: string): string => {
+  const extensionIndex = originalName.lastIndexOf(".");
+  if (extensionIndex <= 0) {
+    return `${originalName}-masked.png`;
+  }
+  const basename = originalName.slice(0, extensionIndex);
+  return `${basename}-masked.png`;
+};

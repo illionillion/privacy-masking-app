@@ -4,24 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { zip } from "fflate";
 import { ImageUpload } from "@/components/ImageUpload";
-import { useFaceDetection, type FaceDetectionResult } from "@/features/face-detection";
-import { useOcr, type OcrRegion } from "@/features/ocr";
+import { useFaceDetection } from "@/features/face-detection";
+import { useOcr } from "@/features/ocr";
+import { type MaskingImageItem, createDownloadFileName } from "../types";
 import { GalleryItem } from "./GalleryItem";
-
-interface MaskingImageItem {
-  id: string;
-  name: string;
-  size: number;
-  /** 表示・検出用 Blob URL（使用後は revokeObjectURL で解放する） */
-  imageUrl: string;
-  detections: FaceDetectionResult[];
-  /** OCRで検出された個人情報領域 */
-  ocrRegions: OcrRegion[];
-  /** マスキング済み画像の Blob URL（FaceDetectionCanvas の onRendered から渡される） */
-  maskedBlobUrl: string | null;
-  /** 顔検出・OCR 処理中フラグ */
-  isProcessing: boolean;
-}
 
 /**
  * 画像URLから HTMLImageElement を生成する
@@ -36,22 +22,6 @@ const loadImageElement = (src: string): Promise<HTMLImageElement> => {
     img.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
     img.src = src;
   });
-};
-
-/**
- * ダウンロード時のファイル名を生成する
- *
- * @param originalName - 元ファイル名
- * @returns マスク済みファイル名
- */
-const createDownloadFileName = (originalName: string): string => {
-  const extensionIndex = originalName.lastIndexOf(".");
-  if (extensionIndex <= 0) {
-    return `${originalName}-masked.png`;
-  }
-
-  const basename = originalName.slice(0, extensionIndex);
-  return `${basename}-masked.png`;
 };
 
 /**
@@ -93,17 +63,19 @@ export function MaskingGallery() {
       const uploadedAt = Date.now();
 
       /**
-       * Step 1: File データをメモリ上の Blob に変換してから Blob URL を生成し、即座に state に追加する。
+       * Step 1: ファイルを 1 枚ずつ ArrayBuffer 経由でメモリ上の Blob に変換し、
+       * 変換完了したものから順に state に追加して即時表示する。
        *
-       * File から直接 createObjectURL した URL は、モバイルブラウザ（Chrome for Android / iOS Safari）で
-       * 後から fetch した際に ERR_UPLOAD_FILE_CHANGED が発生することがある。
-       * ArrayBuffer 経由でメモリ上の Blob を作ることでファイルシステムへの依存をなくす。
+       * - File から直接 createObjectURL した URL はモバイルで ERR_UPLOAD_FILE_CHANGED が発生するため
+       *   ArrayBuffer 経由で生成する。
+       * - Promise.all で一括変換すると全件完了まで表示が遅れるため allSettled で 1 枚ずつ追加する。
        */
-      const initialItems: MaskingImageItem[] = await Promise.all(
+      const initialItems: MaskingImageItem[] = [];
+      const blobResults = await Promise.allSettled(
         files.map(async (file, index) => {
           const buffer = await file.arrayBuffer();
           const memoryBlob = new Blob([buffer], { type: file.type });
-          return {
+          const item: MaskingImageItem = {
             id: `${file.name}-${file.lastModified}-${file.size}-${uploadedAt}-${index}`,
             name: file.name,
             size: file.size,
@@ -113,11 +85,19 @@ export function MaskingGallery() {
             maskedBlobUrl: null,
             isProcessing: true,
           };
+          /** 変換完了したものから即座に state に追加して表示する */
+          setImages((prev) => [...prev, item]);
+          setActiveImageId((prev) => prev ?? item.id);
+          return item;
         })
       );
 
-      setImages((prev) => [...prev, ...initialItems]);
-      setActiveImageId((prev) => prev ?? initialItems[0]?.id ?? null);
+      const blobFailedCount = blobResults.filter((r) => r.status === "rejected").length;
+      if (blobFailedCount > 0) {
+        setUploadError(`${blobFailedCount} 件の画像の読み込みに失敗しました`);
+      }
+
+      initialItems.push(...blobResults.flatMap((r) => (r.status === "fulfilled" ? [r.value] : [])));
 
       /**
        * Step 2: 並行数を制限しながら各画像を処理し、完了したものから個別に state を更新する。
