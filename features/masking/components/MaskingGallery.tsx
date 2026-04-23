@@ -4,14 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { zip } from "fflate";
 import { ImageUpload } from "@/components/ImageUpload";
-import { useFaceDetection, type FaceDetectionResult } from "@/features/face-detection";
-import { useOcr, type OcrRegion } from "@/features/ocr";
-import {
-  type MaskingImageItem,
-  type DetectedFace,
-  type DetectedTextRegion,
-  createDownloadFileName,
-} from "../types";
+import { useFaceDetection } from "@/features/face-detection";
+import { useOcr } from "@/features/ocr";
+import { type MaskingImageItem, createDownloadFileName } from "../types";
 import { GalleryItem } from "./GalleryItem";
 
 /**
