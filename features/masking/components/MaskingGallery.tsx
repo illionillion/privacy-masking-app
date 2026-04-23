@@ -4,12 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { zip } from "fflate";
 import { ImageUpload } from "@/components/ImageUpload";
-import {
-  FaceDetectionCanvas,
-  useFaceDetection,
-  type FaceDetectionResult,
-} from "@/features/face-detection";
+import { useFaceDetection, type FaceDetectionResult } from "@/features/face-detection";
 import { useOcr, type OcrRegion } from "@/features/ocr";
+import { GalleryItem } from "./GalleryItem";
 
 interface MaskingImageItem {
   id: string;
@@ -22,6 +19,8 @@ interface MaskingImageItem {
   ocrRegions: OcrRegion[];
   /** マスキング済み画像の Blob URL（FaceDetectionCanvas の onRendered から渡される） */
   maskedBlobUrl: string | null;
+  /** 顔検出・OCR 処理中フラグ */
+  isProcessing: boolean;
 }
 
 /**
@@ -67,7 +66,6 @@ export function MaskingGallery() {
     imagesRef.current = images;
   }, [images]);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
-  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const { isModelLoading, isDetecting, error: detectionError, detectFaces } = useFaceDetection();
   const { isRecognizing, error: ocrError, recognizeText } = useOcr();
@@ -82,22 +80,59 @@ export function MaskingGallery() {
   /**
    * ファイルアップロード時の処理
    *
+   * 全画像を即座に state に追加して表示したあと、各画像を並行して処理し
+   * 完了したものから個別に state を更新する。
+   *
    * @param files - アップロードされた画像ファイル一覧
    */
   const handleUpload = useCallback(
     async (files: File[]) => {
       if (files.length === 0 || isModelLoading) return;
 
-      setIsBatchProcessing(true);
       setUploadError(null);
-      try {
-        const uploadedAt = Date.now();
+      const uploadedAt = Date.now();
 
-        const settledResults = await Promise.allSettled(
-          files.map(async (file, index): Promise<MaskingImageItem> => {
-            const imageUrl = URL.createObjectURL(file);
+      /**
+       * Step 1: File データをメモリ上の Blob に変換してから Blob URL を生成し、即座に state に追加する。
+       *
+       * File から直接 createObjectURL した URL は、モバイルブラウザ（Chrome for Android / iOS Safari）で
+       * 後から fetch した際に ERR_UPLOAD_FILE_CHANGED が発生することがある。
+       * ArrayBuffer 経由でメモリ上の Blob を作ることでファイルシステムへの依存をなくす。
+       */
+      const initialItems: MaskingImageItem[] = await Promise.all(
+        files.map(async (file, index) => {
+          const buffer = await file.arrayBuffer();
+          const memoryBlob = new Blob([buffer], { type: file.type });
+          return {
+            id: `${file.name}-${file.lastModified}-${file.size}-${uploadedAt}-${index}`,
+            name: file.name,
+            size: file.size,
+            imageUrl: URL.createObjectURL(memoryBlob),
+            detections: [],
+            ocrRegions: [],
+            maskedBlobUrl: null,
+            isProcessing: true,
+          };
+        })
+      );
+
+      setImages((prev) => [...prev, ...initialItems]);
+      setActiveImageId((prev) => prev ?? initialItems[0]?.id ?? null);
+
+      /**
+       * Step 2: 並行数を制限しながら各画像を処理し、完了したものから個別に state を更新する。
+       *
+       * 全画像を同時処理するとモバイルで CPU/メモリが競合して逆に遅くなるため、
+       * 同時実行数を CONCURRENCY に抑える。
+       */
+      const CONCURRENCY = 2;
+      const results: PromiseSettledResult<void>[] = [];
+      for (let i = 0; i < initialItems.length; i += CONCURRENCY) {
+        const chunk = initialItems.slice(i, i + CONCURRENCY);
+        const chunkResults = await Promise.allSettled(
+          chunk.map(async (item) => {
             try {
-              const imageElement = await loadImageElement(imageUrl);
+              const imageElement = await loadImageElement(item.imageUrl);
 
               /** 顔検出とOCRを並行して実行 */
               const [detections, ocrRegions] = await Promise.all([
@@ -105,37 +140,29 @@ export function MaskingGallery() {
                 recognizeText(imageElement),
               ]);
 
-              return {
-                id: `${file.name}-${file.lastModified}-${file.size}-${uploadedAt}-${index}`,
-                name: file.name,
-                size: file.size,
-                imageUrl,
-                detections,
-                ocrRegions,
-                maskedBlobUrl: null,
-              };
+              setImages((prev) =>
+                prev.map((image) =>
+                  image.id === item.id
+                    ? { ...image, detections, ocrRegions, isProcessing: false }
+                    : image
+                )
+              );
             } catch (err) {
-              URL.revokeObjectURL(imageUrl);
+              setImages((prev) =>
+                prev.map((image) =>
+                  image.id === item.id ? { ...image, isProcessing: false } : image
+                )
+              );
               throw err;
             }
           })
         );
+        results.push(...chunkResults);
+      }
 
-        const nextImages = settledResults.flatMap((result) =>
-          result.status === "fulfilled" ? [result.value] : []
-        );
-        const failedCount = settledResults.length - nextImages.length;
-
-        if (nextImages.length > 0) {
-          setImages((prev) => [...prev, ...nextImages]);
-          setActiveImageId((prev) => prev ?? nextImages[0]?.id ?? null);
-        }
-
-        if (failedCount > 0) {
-          setUploadError(`${failedCount} 件の画像の処理に失敗しました`);
-        }
-      } finally {
-        setIsBatchProcessing(false);
+      const failedCount = results.filter((r) => r.status === "rejected").length;
+      if (failedCount > 0) {
+        setUploadError(`${failedCount} 件の画像の処理に失敗しました`);
       }
     },
     [detectFaces, recognizeText, isModelLoading]
@@ -149,9 +176,14 @@ export function MaskingGallery() {
   const handleRedetect = useCallback(
     async (imageId: string) => {
       const target = images.find((image) => image.id === imageId);
-      if (!target || isModelLoading) return;
+      if (!target || isModelLoading || target.isProcessing) return;
 
       setUploadError(null);
+      setImages((prev) =>
+        prev.map((image) =>
+          image.id === imageId ? { ...image, isProcessing: true, maskedBlobUrl: null } : image
+        )
+      );
       try {
         const imageElement = await loadImageElement(target.imageUrl);
 
@@ -163,17 +195,13 @@ export function MaskingGallery() {
 
         setImages((prev) =>
           prev.map((image) =>
-            image.id === imageId
-              ? {
-                  ...image,
-                  detections,
-                  ocrRegions,
-                  maskedBlobUrl: null,
-                }
-              : image
+            image.id === imageId ? { ...image, detections, ocrRegions, isProcessing: false } : image
           )
         );
       } catch (err) {
+        setImages((prev) =>
+          prev.map((image) => (image.id === imageId ? { ...image, isProcessing: false } : image))
+        );
         const message = err instanceof Error ? err.message : "再検出に失敗しました";
         setUploadError(message);
       }
@@ -261,12 +289,8 @@ export function MaskingGallery() {
     });
   }, [images]);
 
-  const isProcessing = isBatchProcessing || isDetecting || isRecognizing;
-  const loadingMessage = isModelLoading
-    ? "顔検出モデルをロード中…"
-    : isBatchProcessing
-      ? "画像を処理中です。しばらくお待ちください…"
-      : null;
+  const isProcessing = isDetecting || isRecognizing;
+  const loadingMessage = isModelLoading ? "顔検出モデルをロード中…" : null;
   const downloadableImagesCount = images.filter((image) => image.maskedBlobUrl).length;
 
   return (
@@ -314,83 +338,15 @@ export function MaskingGallery() {
 
           <div className="grid gap-4 md:grid-cols-2">
             {images.map((image) => (
-              <article
+              <GalleryItem
                 key={image.id}
-                tabIndex={0}
-                onClick={() => setActiveImageId(image.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setActiveImageId(image.id);
-                  }
-                }}
-                className={clsx([
-                  "cursor-pointer rounded-xl border bg-white p-4 transition-colors",
-                  "hover:border-blue-200",
-                  image.id === activeImageId ? "border-blue-300" : "border-zinc-200",
-                ])}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p
-                    className={clsx([
-                      "min-w-0 flex-1 truncate text-sm font-medium",
-                      image.id === activeImageId ? "text-blue-700" : "text-zinc-700",
-                    ])}
-                    title={image.name}
-                  >
-                    {image.name}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleRedetect(image.id);
-                    }}
-                    disabled={isProcessing || isModelLoading}
-                    className={clsx([
-                      "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                      "bg-blue-600 text-white hover:bg-blue-700",
-                      (isProcessing || isModelLoading) && "cursor-not-allowed opacity-50",
-                    ])}
-                  >
-                    再検出
-                  </button>
-                </div>
-
-                <p className="mt-2 text-xs text-zinc-500">
-                  顔: {image.detections.length} 件 / テキスト: {image.ocrRegions.length} 件
-                </p>
-
-                <div className="mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-                  <FaceDetectionCanvas
-                    imageDataUrl={image.imageUrl}
-                    detections={image.detections}
-                    ocrRegions={image.ocrRegions}
-                    onRendered={(blobUrl) => {
-                      handleRendered(image.id, blobUrl);
-                    }}
-                  />
-                </div>
-
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <p className="text-xs text-zinc-400">
-                    {(image.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-
-                  {image.maskedBlobUrl ? (
-                    <a
-                      href={image.maskedBlobUrl}
-                      download={createDownloadFileName(image.name)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
-                    >
-                      ダウンロード
-                    </a>
-                  ) : (
-                    <span className="text-xs text-zinc-400">描画中…</span>
-                  )}
-                </div>
-              </article>
+                image={image}
+                isActive={image.id === activeImageId}
+                isModelLoading={isModelLoading}
+                onSelect={setActiveImageId}
+                onRedetect={handleRedetect}
+                onRendered={handleRendered}
+              />
             ))}
           </div>
         </div>
