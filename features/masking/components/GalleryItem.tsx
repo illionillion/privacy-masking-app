@@ -36,7 +36,7 @@ export function GalleryItem({
     <article
       aria-current={isActive ? "true" : undefined}
       className={clsx([
-        "relative rounded-xl border bg-white p-4 transition-colors",
+        "relative isolate rounded-xl border bg-white p-4 transition-colors",
         "hover:border-blue-200",
         isActive ? "border-blue-300" : "border-zinc-200",
       ])}
@@ -119,7 +119,7 @@ export function GalleryItem({
         type="button"
         aria-label={`${image.name} を選択`}
         onClick={() => onSelect(image.id)}
-        className="absolute inset-0 rounded-xl"
+        className="absolute inset-0 z-0 rounded-xl"
       />
     </article>
   );
