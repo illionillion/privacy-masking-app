@@ -41,20 +41,6 @@ export function GalleryItem({
         isActive ? "border-blue-300" : "border-zinc-200",
       ])}
     >
-      {/*
-        カード全体をクリック可能にする見えないボタン。
-        ::after で全領域を覆い、再検出・ダウンロードなどのインタラクティブ要素は
-        relative + z-10 で前面に出すことで操作可能にする。
-      */}
-      <button
-        type="button"
-        aria-label={`${image.name} を選択`}
-        onClick={() => onSelect(image.id)}
-        className={clsx([
-          "absolute inset-0 rounded-xl",
-          'after:absolute after:inset-0 after:rounded-xl after:content-[""]',
-        ])}
-      />
       <div className="flex items-center justify-between gap-2">
         <p
           className={clsx([
@@ -120,6 +106,19 @@ export function GalleryItem({
           <span className="text-xs text-zinc-400">描画中…</span>
         )}
       </div>
+      {/*
+        カード全体をクリック可能にする見えないボタン。
+        DOM の最後に置くことで自然なスタッキング順で最前面になり、
+        カード全域のクリックを受け取る。
+        再検出・ダウンロードなどのインタラクティブ要素は relative z-10 で
+        このボタンより前面に出して操作できるようにする。
+      */}
+      <button
+        type="button"
+        aria-label={`${image.name} を選択`}
+        onClick={() => onSelect(image.id)}
+        className="absolute inset-0 rounded-xl"
+      />
     </article>
   );
 }
