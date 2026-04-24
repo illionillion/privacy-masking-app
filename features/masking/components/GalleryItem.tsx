@@ -80,6 +80,7 @@ export function GalleryItem({
           detections={image.detections}
           ocrRegions={image.ocrRegions}
           onRendered={(blobUrl) => {
+            if (image.isProcessing) return;
             onRendered(image.id, blobUrl);
           }}
         />

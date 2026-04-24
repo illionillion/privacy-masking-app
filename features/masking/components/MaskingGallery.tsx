@@ -179,9 +179,7 @@ export function MaskingGallery() {
 
       setUploadError(null);
       setImages((prev) =>
-        prev.map((image) =>
-          image.id === imageId ? { ...image, isProcessing: true, maskedBlobUrl: null } : image
-        )
+        prev.map((image) => (image.id === imageId ? { ...image, isProcessing: true } : image))
       );
       try {
         const imageElement = await loadImageElement(target.imageUrl);
