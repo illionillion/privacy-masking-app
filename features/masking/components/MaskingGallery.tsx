@@ -244,7 +244,9 @@ export function MaskingGallery() {
 
   /** 描画済み画像をすべてZIPにまとめてダウンロードする */
   const handleDownloadAll = useCallback(() => {
-    const downloadableImages = images.filter((image) => image.maskedBlobUrl !== null);
+    const downloadableImages = images.filter(
+      (image) => image.maskedBlobUrl !== null && !image.isProcessing
+    );
     if (downloadableImages.length === 0) return;
 
     const fetchAll = downloadableImages.map(async (image) => {
