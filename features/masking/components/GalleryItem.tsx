@@ -71,7 +71,9 @@ export function GalleryItem({
       <p className="mt-2 text-xs text-zinc-500">
         {image.isProcessing
           ? "検出中…"
-          : `顔: ${image.detections.length} 件 / テキスト: ${image.ocrRegions.length} 件`}
+          : image.processingError
+            ? "検出に失敗しました"
+            : `顔: ${image.detections.length} 件 / テキスト: ${image.ocrRegions.length} 件`}
       </p>
 
       <div className="relative mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3">
@@ -82,6 +84,8 @@ export function GalleryItem({
             alt={image.name}
             className="max-h-full max-w-full rounded-lg object-contain"
           />
+        ) : image.processingError ? (
+          <p className="text-sm text-red-500">検出に失敗しました。再検出してください。</p>
         ) : (
           <FaceDetectionCanvas
             imageDataUrl={image.imageUrl}
@@ -102,7 +106,7 @@ export function GalleryItem({
       <div className="mt-3 flex items-center justify-between gap-3">
         <p className="text-xs text-zinc-400">{(image.size / 1024 / 1024).toFixed(2)} MB</p>
 
-        {image.maskedBlobUrl && !image.isProcessing ? (
+        {image.maskedBlobUrl && !image.isProcessing && !image.processingError ? (
           <a
             href={image.maskedBlobUrl}
             download={createDownloadFileName(image.name)}
@@ -112,8 +116,10 @@ export function GalleryItem({
             ダウンロード
           </a>
         ) : (
-          <span className="text-xs text-zinc-400">
-            {image.isProcessing ? "処理中…" : "描画中…"}
+          <span
+            className={clsx(["text-xs", image.processingError ? "text-red-500" : "text-zinc-400"])}
+          >
+            {image.isProcessing ? "処理中…" : image.processingError ? "検出失敗" : "描画中…"}
           </span>
         )}
       </div>

@@ -97,6 +97,7 @@ export function MaskingGallery() {
             ocrRegions: [],
             maskedBlobUrl: null,
             isProcessing: true,
+            processingError: false,
           };
           return item;
         })
@@ -163,7 +164,9 @@ export function MaskingGallery() {
               if (isMountedRef.current) {
                 setImages((prev) =>
                   prev.map((image) =>
-                    image.id === item.id ? { ...image, isProcessing: false } : image
+                    image.id === item.id
+                      ? { ...image, isProcessing: false, processingError: true }
+                      : image
                   )
                 );
               }
@@ -197,7 +200,14 @@ export function MaskingGallery() {
       setImages((prev) =>
         prev.map((image) =>
           image.id === imageId
-            ? { ...image, detections: [], ocrRegions: [], maskedBlobUrl: null, isProcessing: true }
+            ? {
+                ...image,
+                detections: [],
+                ocrRegions: [],
+                maskedBlobUrl: null,
+                isProcessing: true,
+                processingError: false,
+              }
             : image
         )
       );
@@ -222,7 +232,11 @@ export function MaskingGallery() {
       } catch (err) {
         if (isMountedRef.current) {
           setImages((prev) =>
-            prev.map((image) => (image.id === imageId ? { ...image, isProcessing: false } : image))
+            prev.map((image) =>
+              image.id === imageId
+                ? { ...image, isProcessing: false, processingError: true }
+                : image
+            )
           );
           const message = err instanceof Error ? err.message : "再検出に失敗しました";
           setUploadError(message);
@@ -241,7 +255,7 @@ export function MaskingGallery() {
   const handleRendered = useCallback((imageId: string, blobUrl: string) => {
     setImages((prev) =>
       prev.map((image) => {
-        if (image.id !== imageId || image.maskedBlobUrl === blobUrl) {
+        if (image.id !== imageId || image.maskedBlobUrl === blobUrl || image.processingError) {
           return image;
         }
 

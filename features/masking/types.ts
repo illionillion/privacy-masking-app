@@ -87,6 +87,12 @@ export interface MaskingImageItem {
   maskedBlobUrl: string | null;
   /** 顔検出・OCR 処理中フラグ */
   isProcessing: boolean;
+  /**
+   * 顔検出・OCR が失敗したフラグ。
+   * true の場合は FaceDetectionCanvas をマウントせず、ダウンロードも無効にする。
+   * 未マスクのまま "-masked.png" としてダウンロードされるのを防ぐ。
+   */
+  processingError: boolean;
 }
 
 /**
