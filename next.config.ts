@@ -11,6 +11,15 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: configDir,
   },
+  ...(process.env.NODE_ENV === "development"
+    ? {
+        allowedDevOrigins: [
+          "192.168.*.*",
+          "10.*.*.*",
+          ...Array.from({ length: 16 }, (_, i) => `172.${16 + i}.*.*`),
+        ],
+      }
+    : {}),
 };
 
 export default nextConfig;

@@ -1,0 +1,141 @@
+"use client";
+
+import clsx from "clsx";
+import { FaceDetectionCanvas } from "@/features/face-detection";
+import { type MaskingImageItem, createDownloadFileName } from "../types";
+
+interface GalleryItemProps {
+  image: MaskingImageItem;
+  isActive: boolean;
+  /** face-api モデルのロード中フラグ（ロード中は再検出を無効化する） */
+  isModelLoading: boolean;
+  onSelect: (id: string) => void;
+  onRedetect: (id: string) => void | Promise<void>;
+  onRendered: (id: string, blobUrl: string) => void;
+}
+
+/**
+ * ギャラリーの個別画像カードコンポーネント
+ *
+ * isProcessing が true の間は再検出ボタンをこのカード単体で無効化し、
+ * 他カードの操作には影響しない。
+ * 検出処理中も元画像を表示し（オーバーレイで処理中インジケータを表示）、
+ * 検出完了後にマスク結果のオーバーレイを描画する。
+ */
+export function GalleryItem({
+  image,
+  isActive,
+  isModelLoading,
+  onSelect,
+  onRedetect,
+  onRendered,
+}: GalleryItemProps) {
+  const isRedetectDisabled = image.isProcessing || isModelLoading;
+
+  return (
+    <article
+      aria-current={isActive ? "true" : undefined}
+      className={clsx([
+        "relative isolate rounded-xl border bg-white p-4 transition-colors",
+        "hover:border-blue-200",
+        isActive ? "border-blue-300" : "border-zinc-200",
+      ])}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p
+          className={clsx([
+            "min-w-0 flex-1 truncate text-sm font-medium",
+            isActive ? "text-blue-700" : "text-zinc-700",
+          ])}
+          title={image.name}
+        >
+          {image.name}
+        </p>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            void onRedetect(image.id);
+          }}
+          disabled={isRedetectDisabled}
+          className={clsx([
+            "relative z-10 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+            "bg-blue-600 text-white hover:bg-blue-700",
+            isRedetectDisabled && "cursor-not-allowed opacity-50",
+          ])}
+        >
+          再検出
+        </button>
+      </div>
+
+      <p className="mt-2 text-xs text-zinc-500">
+        {image.isProcessing
+          ? "検出中…"
+          : image.processingError
+            ? "検出に失敗しました"
+            : `顔: ${image.detections.length} 件 / テキスト: ${image.ocrRegions.length} 件`}
+      </p>
+
+      <div className="relative mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+        {image.isProcessing ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={image.imageUrl}
+            alt={image.name}
+            className="max-h-full max-w-full rounded-lg object-contain"
+          />
+        ) : image.processingError ? (
+          <p className="text-sm text-red-500">検出に失敗しました。再検出してください。</p>
+        ) : (
+          <FaceDetectionCanvas
+            imageDataUrl={image.imageUrl}
+            detections={image.detections}
+            ocrRegions={image.ocrRegions}
+            onRendered={(blobUrl) => {
+              onRendered(image.id, blobUrl);
+            }}
+          />
+        )}
+        {image.isProcessing && (
+          <div className="absolute inset-3 flex items-center justify-center rounded-lg bg-white/60 text-sm text-zinc-500">
+            処理中…
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <p className="text-xs text-zinc-400">{(image.size / 1024 / 1024).toFixed(2)} MB</p>
+
+        {image.maskedBlobUrl && !image.isProcessing && !image.processingError ? (
+          <a
+            href={image.maskedBlobUrl}
+            download={createDownloadFileName(image.name)}
+            onClick={(e) => e.stopPropagation()}
+            className="relative z-10 rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
+          >
+            ダウンロード
+          </a>
+        ) : (
+          <span
+            className={clsx(["text-xs", image.processingError ? "text-red-500" : "text-zinc-400"])}
+          >
+            {image.isProcessing ? "処理中…" : image.processingError ? "検出失敗" : "描画中…"}
+          </span>
+        )}
+      </div>
+      {/*
+        カード全体をクリック可能にする見えないボタン。
+        DOM の最後に配置しつつ z-0 を付けることで、カード全域のクリックを受け取る
+        ベースレイヤーとして扱う。
+        再検出・ダウンロードなどのインタラクティブ要素は relative z-10 で
+        このボタンより前面に出して操作できるようにする。
+      */}
+      <button
+        type="button"
+        aria-label={`${image.name} を選択`}
+        onClick={() => onSelect(image.id)}
+        className="absolute inset-0 z-0 rounded-xl"
+      />
+    </article>
+  );
+}

@@ -4,25 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { zip } from "fflate";
 import { ImageUpload } from "@/components/ImageUpload";
-import {
-  FaceDetectionCanvas,
-  useFaceDetection,
-  type FaceDetectionResult,
-} from "@/features/face-detection";
-import { useOcr, type OcrRegion } from "@/features/ocr";
-
-interface MaskingImageItem {
-  id: string;
-  name: string;
-  size: number;
-  /** 表示・検出用 Blob URL（使用後は revokeObjectURL で解放する） */
-  imageUrl: string;
-  detections: FaceDetectionResult[];
-  /** OCRで検出された個人情報領域 */
-  ocrRegions: OcrRegion[];
-  /** マスキング済み画像の Blob URL（FaceDetectionCanvas の onRendered から渡される） */
-  maskedBlobUrl: string | null;
-}
+import { useFaceDetection } from "@/features/face-detection";
+import { useOcr } from "@/features/ocr";
+import { type MaskingImageItem, createDownloadFileName } from "../types";
+import { GalleryItem } from "./GalleryItem";
 
 /**
  * 画像URLから HTMLImageElement を生成する
@@ -40,22 +25,6 @@ const loadImageElement = (src: string): Promise<HTMLImageElement> => {
 };
 
 /**
- * ダウンロード時のファイル名を生成する
- *
- * @param originalName - 元ファイル名
- * @returns マスク済みファイル名
- */
-const createDownloadFileName = (originalName: string): string => {
-  const extensionIndex = originalName.lastIndexOf(".");
-  if (extensionIndex <= 0) {
-    return `${originalName}-masked.png`;
-  }
-
-  const basename = originalName.slice(0, extensionIndex);
-  return `${basename}-masked.png`;
-};
-
-/**
  * メインマスキングギャラリーコンポーネント
  *
  * 画像アップロード、顔検出、Canvas表示を統合する。
@@ -63,18 +32,20 @@ const createDownloadFileName = (originalName: string): string => {
 export function MaskingGallery() {
   const [images, setImages] = useState<MaskingImageItem[]>([]);
   const imagesRef = useRef(images);
+  const isMountedRef = useRef(true);
   useEffect(() => {
     imagesRef.current = images;
   }, [images]);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
-  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const { isModelLoading, isDetecting, error: detectionError, detectFaces } = useFaceDetection();
   const { isRecognizing, error: ocrError, recognizeText } = useOcr();
 
-  /** コンポーネント破棄時に imageUrl の Blob URL をすべて解放する */
+  /** コンポーネント破棄時に imageUrl の Blob URL をすべて解放し isMountedRef を false にする */
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       imagesRef.current.forEach((image) => URL.revokeObjectURL(image.imageUrl));
     };
   }, []);
@@ -82,22 +53,97 @@ export function MaskingGallery() {
   /**
    * ファイルアップロード時の処理
    *
+   * 全画像を即座に state に追加して表示したあと、各画像を並行して処理し
+   * 完了したものから個別に state を更新する。
+   *
    * @param files - アップロードされた画像ファイル一覧
    */
   const handleUpload = useCallback(
     async (files: File[]) => {
       if (files.length === 0 || isModelLoading) return;
 
-      setIsBatchProcessing(true);
       setUploadError(null);
-      try {
-        const uploadedAt = Date.now();
+      const uploadedAt = Date.now();
 
-        const settledResults = await Promise.allSettled(
-          files.map(async (file, index): Promise<MaskingImageItem> => {
-            const imageUrl = URL.createObjectURL(file);
+      /**
+       * Step 1: 全ファイルを ArrayBuffer 経由でメモリ上の Blob に変換し、
+       * 変換完了したものから順に state に追加して即時表示する。
+       *
+       * - File から直接 createObjectURL した URL はモバイルで ERR_UPLOAD_FILE_CHANGED が発生するため
+       *   ArrayBuffer 経由で生成する。
+       * - allSettled で個別失敗を吸収しつつ、変換完了した画像から setImages して即時プレビューを表示する。
+       * - arrayBuffer() は全件同時に走るため、大容量ファイルを多数アップロードする場合は
+       *   Step 2 と同様の CONCURRENCY 制限の追加を検討すること。
+       */
+      const initialItems: MaskingImageItem[] = [];
+      const blobResults = await Promise.allSettled(
+        files.map(async (file, index) => {
+          const buffer = await file.arrayBuffer();
+          /** アンマウント後は URL を生成せずに即解放して return */
+          if (!isMountedRef.current) return Promise.reject(new Error("unmounted"));
+          const memoryBlob = new Blob([buffer], { type: file.type });
+          const imageUrl = URL.createObjectURL(memoryBlob);
+          /** アンマウントが arrayBuffer 完了後に発生した場合も即解放 */
+          if (!isMountedRef.current) {
+            URL.revokeObjectURL(imageUrl);
+            return Promise.reject(new Error("unmounted"));
+          }
+          const item: MaskingImageItem = {
+            id: `${file.name}-${file.lastModified}-${file.size}-${uploadedAt}-${index}`,
+            name: file.name,
+            size: file.size,
+            imageUrl,
+            detections: [],
+            ocrRegions: [],
+            maskedBlobUrl: null,
+            isProcessing: true,
+            processingError: false,
+          };
+          return item;
+        })
+      );
+
+      /**
+       * アップロード順を維持したまま一括 state 追加する。
+       * allSettled の結果は files の順序を保持するため、成功分をそのまま追加すれば
+       * arrayBuffer 完了順のランダム表示を防げる。
+       */
+      const succeededItems = blobResults.flatMap((r) =>
+        r.status === "fulfilled" ? [r.value] : []
+      );
+      if (!isMountedRef.current) return;
+      if (succeededItems.length > 0) {
+        setImages((prev) => {
+          const next = [...prev, ...succeededItems];
+          imagesRef.current = next;
+          return next;
+        });
+        setActiveImageId((prev) => prev ?? succeededItems[0].id);
+      }
+
+      const blobFailedCount = blobResults.filter((r) => r.status === "rejected").length;
+      if (!isMountedRef.current) return;
+      if (blobFailedCount > 0) {
+        setUploadError(`${blobFailedCount} 件の画像の読み込みに失敗しました`);
+      }
+
+      initialItems.push(...succeededItems);
+
+      /**
+       * Step 2: 並行数を制限しながら各画像を処理し、完了したものから個別に state を更新する。
+       *
+       * 全画像を同時処理するとモバイルで CPU/メモリが競合して逆に遅くなるため、
+       * 同時実行数を CONCURRENCY に抑える。
+       */
+      const CONCURRENCY = 2;
+      const results: PromiseSettledResult<void>[] = [];
+      for (let i = 0; i < initialItems.length; i += CONCURRENCY) {
+        if (!isMountedRef.current) break;
+        const chunk = initialItems.slice(i, i + CONCURRENCY);
+        const chunkResults = await Promise.allSettled(
+          chunk.map(async (item) => {
             try {
-              const imageElement = await loadImageElement(imageUrl);
+              const imageElement = await loadImageElement(item.imageUrl);
 
               /** 顔検出とOCRを並行して実行 */
               const [detections, ocrRegions] = await Promise.all([
@@ -105,37 +151,36 @@ export function MaskingGallery() {
                 recognizeText(imageElement),
               ]);
 
-              return {
-                id: `${file.name}-${file.lastModified}-${file.size}-${uploadedAt}-${index}`,
-                name: file.name,
-                size: file.size,
-                imageUrl,
-                detections,
-                ocrRegions,
-                maskedBlobUrl: null,
-              };
+              if (isMountedRef.current) {
+                setImages((prev) =>
+                  prev.map((image) =>
+                    image.id === item.id
+                      ? { ...image, detections, ocrRegions, isProcessing: false }
+                      : image
+                  )
+                );
+              }
             } catch (err) {
-              URL.revokeObjectURL(imageUrl);
+              if (isMountedRef.current) {
+                setImages((prev) =>
+                  prev.map((image) =>
+                    image.id === item.id
+                      ? { ...image, isProcessing: false, processingError: true }
+                      : image
+                  )
+                );
+              }
               throw err;
             }
           })
         );
+        results.push(...chunkResults);
+      }
 
-        const nextImages = settledResults.flatMap((result) =>
-          result.status === "fulfilled" ? [result.value] : []
-        );
-        const failedCount = settledResults.length - nextImages.length;
-
-        if (nextImages.length > 0) {
-          setImages((prev) => [...prev, ...nextImages]);
-          setActiveImageId((prev) => prev ?? nextImages[0]?.id ?? null);
-        }
-
-        if (failedCount > 0) {
-          setUploadError(`${failedCount} 件の画像の処理に失敗しました`);
-        }
-      } finally {
-        setIsBatchProcessing(false);
+      const failedCount = results.filter((r) => r.status === "rejected").length;
+      if (!isMountedRef.current) return;
+      if (failedCount > 0) {
+        setUploadError(`${failedCount} 件の画像の処理に失敗しました`);
       }
     },
     [detectFaces, recognizeText, isModelLoading]
@@ -149,9 +194,23 @@ export function MaskingGallery() {
   const handleRedetect = useCallback(
     async (imageId: string) => {
       const target = images.find((image) => image.id === imageId);
-      if (!target || isModelLoading) return;
+      if (!target || isModelLoading || target.isProcessing) return;
 
       setUploadError(null);
+      setImages((prev) =>
+        prev.map((image) =>
+          image.id === imageId
+            ? {
+                ...image,
+                detections: [],
+                ocrRegions: [],
+                maskedBlobUrl: null,
+                isProcessing: true,
+                processingError: false,
+              }
+            : image
+        )
+      );
       try {
         const imageElement = await loadImageElement(target.imageUrl);
 
@@ -161,21 +220,27 @@ export function MaskingGallery() {
           recognizeText(imageElement),
         ]);
 
-        setImages((prev) =>
-          prev.map((image) =>
-            image.id === imageId
-              ? {
-                  ...image,
-                  detections,
-                  ocrRegions,
-                  maskedBlobUrl: null,
-                }
-              : image
-          )
-        );
+        if (isMountedRef.current) {
+          setImages((prev) =>
+            prev.map((image) =>
+              image.id === imageId
+                ? { ...image, detections, ocrRegions, isProcessing: false }
+                : image
+            )
+          );
+        }
       } catch (err) {
-        const message = err instanceof Error ? err.message : "再検出に失敗しました";
-        setUploadError(message);
+        if (isMountedRef.current) {
+          setImages((prev) =>
+            prev.map((image) =>
+              image.id === imageId
+                ? { ...image, isProcessing: false, processingError: true }
+                : image
+            )
+          );
+          const message = err instanceof Error ? err.message : "再検出に失敗しました";
+          setUploadError(message);
+        }
       }
     },
     [images, detectFaces, recognizeText, isModelLoading]
@@ -190,7 +255,7 @@ export function MaskingGallery() {
   const handleRendered = useCallback((imageId: string, blobUrl: string) => {
     setImages((prev) =>
       prev.map((image) => {
-        if (image.id !== imageId || image.maskedBlobUrl === blobUrl) {
+        if (image.id !== imageId || image.maskedBlobUrl === blobUrl || image.processingError) {
           return image;
         }
 
@@ -211,7 +276,9 @@ export function MaskingGallery() {
 
   /** 描画済み画像をすべてZIPにまとめてダウンロードする */
   const handleDownloadAll = useCallback(() => {
-    const downloadableImages = images.filter((image) => image.maskedBlobUrl !== null);
+    const downloadableImages = images.filter(
+      (image) => image.maskedBlobUrl !== null && !image.isProcessing
+    );
     if (downloadableImages.length === 0) return;
 
     const fetchAll = downloadableImages.map(async (image) => {
@@ -245,7 +312,9 @@ export function MaskingGallery() {
       zip(fileMap, (err, data) => {
         if (err) {
           console.error("ZIPの生成に失敗しました", err);
-          setUploadError("ZIPの生成に失敗しました");
+          if (isMountedRef.current) {
+            setUploadError("ZIPの生成に失敗しました");
+          }
           return;
         }
         const blob = new Blob([data as Uint8Array<ArrayBuffer>], { type: "application/zip" });
@@ -261,13 +330,12 @@ export function MaskingGallery() {
     });
   }, [images]);
 
-  const isProcessing = isBatchProcessing || isDetecting || isRecognizing;
-  const loadingMessage = isModelLoading
-    ? "顔検出モデルをロード中…"
-    : isBatchProcessing
-      ? "画像を処理中です。しばらくお待ちください…"
-      : null;
-  const downloadableImagesCount = images.filter((image) => image.maskedBlobUrl).length;
+  const hasProcessingImage = images.some((image) => image.isProcessing);
+  const isProcessing = isDetecting || isRecognizing || hasProcessingImage;
+  const loadingMessage = isModelLoading ? "顔検出モデルをロード中…" : null;
+  const downloadableImagesCount = images.filter(
+    (image) => image.maskedBlobUrl && !image.isProcessing
+  ).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -314,83 +382,15 @@ export function MaskingGallery() {
 
           <div className="grid gap-4 md:grid-cols-2">
             {images.map((image) => (
-              <article
+              <GalleryItem
                 key={image.id}
-                tabIndex={0}
-                onClick={() => setActiveImageId(image.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setActiveImageId(image.id);
-                  }
-                }}
-                className={clsx([
-                  "cursor-pointer rounded-xl border bg-white p-4 transition-colors",
-                  "hover:border-blue-200",
-                  image.id === activeImageId ? "border-blue-300" : "border-zinc-200",
-                ])}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p
-                    className={clsx([
-                      "min-w-0 flex-1 truncate text-sm font-medium",
-                      image.id === activeImageId ? "text-blue-700" : "text-zinc-700",
-                    ])}
-                    title={image.name}
-                  >
-                    {image.name}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleRedetect(image.id);
-                    }}
-                    disabled={isProcessing || isModelLoading}
-                    className={clsx([
-                      "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                      "bg-blue-600 text-white hover:bg-blue-700",
-                      (isProcessing || isModelLoading) && "cursor-not-allowed opacity-50",
-                    ])}
-                  >
-                    再検出
-                  </button>
-                </div>
-
-                <p className="mt-2 text-xs text-zinc-500">
-                  顔: {image.detections.length} 件 / テキスト: {image.ocrRegions.length} 件
-                </p>
-
-                <div className="mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-                  <FaceDetectionCanvas
-                    imageDataUrl={image.imageUrl}
-                    detections={image.detections}
-                    ocrRegions={image.ocrRegions}
-                    onRendered={(blobUrl) => {
-                      handleRendered(image.id, blobUrl);
-                    }}
-                  />
-                </div>
-
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <p className="text-xs text-zinc-400">
-                    {(image.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-
-                  {image.maskedBlobUrl ? (
-                    <a
-                      href={image.maskedBlobUrl}
-                      download={createDownloadFileName(image.name)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
-                    >
-                      ダウンロード
-                    </a>
-                  ) : (
-                    <span className="text-xs text-zinc-400">描画中…</span>
-                  )}
-                </div>
-              </article>
+                image={image}
+                isActive={image.id === activeImageId}
+                isModelLoading={isModelLoading}
+                onSelect={setActiveImageId}
+                onRedetect={handleRedetect}
+                onRendered={handleRendered}
+              />
             ))}
           </div>
         </div>
