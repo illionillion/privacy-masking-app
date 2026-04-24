@@ -278,7 +278,9 @@ export function MaskingGallery() {
       zip(fileMap, (err, data) => {
         if (err) {
           console.error("ZIPの生成に失敗しました", err);
-          setUploadError("ZIPの生成に失敗しました");
+          if (isMountedRef.current) {
+            setUploadError("ZIPの生成に失敗しました");
+          }
           return;
         }
         const blob = new Blob([data as Uint8Array<ArrayBuffer>], { type: "application/zip" });

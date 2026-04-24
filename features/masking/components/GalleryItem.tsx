@@ -75,15 +75,23 @@ export function GalleryItem({
       </p>
 
       <div className="relative mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-        <FaceDetectionCanvas
-          imageDataUrl={image.imageUrl}
-          detections={image.detections}
-          ocrRegions={image.ocrRegions}
-          onRendered={(blobUrl) => {
-            if (image.isProcessing) return;
-            onRendered(image.id, blobUrl);
-          }}
-        />
+        {image.isProcessing ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={image.imageUrl}
+            alt={image.name}
+            className="max-h-full max-w-full rounded-lg object-contain"
+          />
+        ) : (
+          <FaceDetectionCanvas
+            imageDataUrl={image.imageUrl}
+            detections={image.detections}
+            ocrRegions={image.ocrRegions}
+            onRendered={(blobUrl) => {
+              onRendered(image.id, blobUrl);
+            }}
+          />
+        )}
         {image.isProcessing && (
           <div className="absolute inset-3 flex items-center justify-center rounded-lg bg-white/60 text-sm text-zinc-500">
             処理中…
