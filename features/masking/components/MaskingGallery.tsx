@@ -66,12 +66,14 @@ export function MaskingGallery() {
       const uploadedAt = Date.now();
 
       /**
-       * Step 1: ファイルを 1 枚ずつ ArrayBuffer 経由でメモリ上の Blob に変換し、
+       * Step 1: 全ファイルを ArrayBuffer 経由でメモリ上の Blob に変換し、
        * 変換完了したものから順に state に追加して即時表示する。
        *
        * - File から直接 createObjectURL した URL はモバイルで ERR_UPLOAD_FILE_CHANGED が発生するため
        *   ArrayBuffer 経由で生成する。
-       * - Promise.all で一括変換すると全件完了まで表示が遅れるため allSettled で 1 枚ずつ追加する。
+       * - allSettled で個別失敗を吸収しつつ、変換完了した画像から setImages して即時プレビューを表示する。
+       * - arrayBuffer() は全件同時に走るため、大容量ファイルを多数アップロードする場合は
+       *   Step 2 と同様の CONCURRENCY 制限の追加を検討すること。
        */
       const initialItems: MaskingImageItem[] = [];
       const blobResults = await Promise.allSettled(
@@ -190,17 +192,23 @@ export function MaskingGallery() {
           recognizeText(imageElement),
         ]);
 
-        setImages((prev) =>
-          prev.map((image) =>
-            image.id === imageId ? { ...image, detections, ocrRegions, isProcessing: false } : image
-          )
-        );
+        if (isMountedRef.current) {
+          setImages((prev) =>
+            prev.map((image) =>
+              image.id === imageId
+                ? { ...image, detections, ocrRegions, isProcessing: false }
+                : image
+            )
+          );
+        }
       } catch (err) {
-        setImages((prev) =>
-          prev.map((image) => (image.id === imageId ? { ...image, isProcessing: false } : image))
-        );
-        const message = err instanceof Error ? err.message : "再検出に失敗しました";
-        setUploadError(message);
+        if (isMountedRef.current) {
+          setImages((prev) =>
+            prev.map((image) => (image.id === imageId ? { ...image, isProcessing: false } : image))
+          );
+          const message = err instanceof Error ? err.message : "再検出に失敗しました";
+          setUploadError(message);
+        }
       }
     },
     [images, detectFaces, recognizeText, isModelLoading]
