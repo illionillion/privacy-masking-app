@@ -248,49 +248,68 @@ export function GalleryItem({
       <p className="mt-2 text-xs text-zinc-500">
         {image.isProcessing
           ? "検出中…"
-          : `顔: ${image.detections.length} 件 / テキスト: ${image.ocrRegions.length} 件`}
+          : image.processingError
+            ? "検出に失敗しました"
+            : `顔: ${image.detections.length} 件 / テキスト: ${image.ocrRegions.length} 件`}
       </p>
 
       {/* エディタUI */}
       <div className="relative mt-3 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
-        <div className="p-2">
-          <EditorToolbar
-            mode={editor.mode}
-            rectTarget={editor.rectTarget}
-            selectedStampType={editor.selectedStampType}
-            brushSize={editor.brushSize}
-            selectedId={editor.selectedId}
-            onModeChange={editor.setMode}
-            onRectTargetChange={editor.setRectTarget}
-            onStampTypeChange={editor.setSelectedStampType}
-            onBrushSizeChange={editor.setBrushSize}
-            onDeleteSelected={editor.removeSelectedItem}
-          />
-        </div>
-
-        <div className="px-2 pb-2">
-          {imageNaturalWidth > 0 && imageNaturalHeight > 0 && (
-            <EditorCanvas
-              imageUrl={image.imageUrl}
-              imageNaturalWidth={imageNaturalWidth}
-              imageNaturalHeight={imageNaturalHeight}
-              stampRegions={editor.stampRegions}
-              fillRegions={editor.fillRegions}
-              paintStrokes={editor.paintStrokes}
-              selectedId={editor.selectedId}
-              mode={editor.mode}
-              selectedStampType={editor.selectedStampType}
-              rectTarget={editor.rectTarget}
-              brushSize={editor.brushSize}
-              onSelectItem={editor.selectItem}
-              onAddStampRegion={editor.addStampRegion}
-              onAddFillRegion={editor.addFillRegion}
-              onAddPaintStroke={editor.addPaintStroke}
-              onUpdateStampRegion={editor.updateStampRegion}
-              onUpdateFillRegion={editor.updateFillRegion}
+        {image.isProcessing ? (
+          <div className="flex justify-center p-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={image.imageUrl}
+              alt={image.name}
+              className="max-h-full max-w-full rounded-lg object-contain"
             />
-          )}
-        </div>
+          </div>
+        ) : image.processingError ? (
+          <div className="flex justify-center p-3">
+            <p className="text-sm text-red-500">検出に失敗しました。再検出してください。</p>
+          </div>
+        ) : (
+          <>
+            <div className="p-2">
+              <EditorToolbar
+                mode={editor.mode}
+                rectTarget={editor.rectTarget}
+                selectedStampType={editor.selectedStampType}
+                brushSize={editor.brushSize}
+                selectedId={editor.selectedId}
+                onModeChange={editor.setMode}
+                onRectTargetChange={editor.setRectTarget}
+                onStampTypeChange={editor.setSelectedStampType}
+                onBrushSizeChange={editor.setBrushSize}
+                onDeleteSelected={editor.removeSelectedItem}
+              />
+            </div>
+
+            <div className="px-2 pb-2">
+              {imageNaturalWidth > 0 && imageNaturalHeight > 0 && (
+                <EditorCanvas
+                  imageUrl={image.imageUrl}
+                  imageNaturalWidth={imageNaturalWidth}
+                  imageNaturalHeight={imageNaturalHeight}
+                  stampRegions={editor.stampRegions}
+                  fillRegions={editor.fillRegions}
+                  paintStrokes={editor.paintStrokes}
+                  selectedId={editor.selectedId}
+                  mode={editor.mode}
+                  selectedStampType={editor.selectedStampType}
+                  rectTarget={editor.rectTarget}
+                  brushSize={editor.brushSize}
+                  onSelectItem={editor.selectItem}
+                  onAddStampRegion={editor.addStampRegion}
+                  onAddFillRegion={editor.addFillRegion}
+                  onAddPaintStroke={editor.addPaintStroke}
+                  onUpdateStampRegion={editor.updateStampRegion}
+                  onUpdateFillRegion={editor.updateFillRegion}
+                />
+              )}
+            </div>
+          </>
+        )}
 
         {image.isProcessing && (
           <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white/60 text-sm text-zinc-500">
@@ -309,17 +328,17 @@ export function GalleryItem({
               e.stopPropagation();
               handleExport();
             }}
-            disabled={!imageElement}
+            disabled={!imageElement || image.processingError}
             className={clsx([
               "relative z-10 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
               "bg-emerald-600 text-white hover:bg-emerald-700",
-              !imageElement && "cursor-not-allowed opacity-50",
+              (!imageElement || image.processingError) && "cursor-not-allowed opacity-50",
             ])}
           >
             エクスポート
           </button>
 
-          {image.maskedBlobUrl && !image.isProcessing ? (
+          {image.maskedBlobUrl && !image.isProcessing && !image.processingError ? (
             <a
               href={image.maskedBlobUrl}
               download={createDownloadFileName(image.name)}
@@ -329,16 +348,21 @@ export function GalleryItem({
               ダウンロード
             </a>
           ) : (
-            <span className="text-xs text-zinc-400">
-              {image.isProcessing ? "処理中…" : "描画中…"}
+            <span
+              className={clsx([
+                "text-xs",
+                image.processingError ? "text-red-500" : "text-zinc-400",
+              ])}
+            >
+              {image.isProcessing ? "処理中…" : image.processingError ? "検出失敗" : "描画中…"}
             </span>
           )}
         </div>
       </div>
       {/*
         カード全体をクリック可能にする見えないボタン。
-        DOM の最後に置くことで自然なスタッキング順で最前面になり、
-        カード全域のクリックを受け取る。
+        DOM の最後に配置しつつ z-0 を付けることで、カード全域のクリックを受け取る
+        ベースレイヤーとして扱う。
         再検出・ダウンロードなどのインタラクティブ要素は relative z-10 で
         このボタンより前面に出して操作できるようにする。
       */}
