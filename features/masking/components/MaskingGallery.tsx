@@ -98,16 +98,27 @@ export function MaskingGallery() {
             maskedBlobUrl: null,
             isProcessing: true,
           };
-          /** 変換完了したものから即座に state に追加して表示する */
-          setImages((prev) => {
-            const next = [...prev, item];
-            imagesRef.current = next;
-            return next;
-          });
-          setActiveImageId((prev) => prev ?? item.id);
           return item;
         })
       );
+
+      /**
+       * アップロード順を維持したまま一括 state 追加する。
+       * allSettled の結果は files の順序を保持するため、成功分をそのまま追加すれば
+       * arrayBuffer 完了順のランダム表示を防げる。
+       */
+      const succeededItems = blobResults.flatMap((r) =>
+        r.status === "fulfilled" ? [r.value] : []
+      );
+      if (!isMountedRef.current) return;
+      if (succeededItems.length > 0) {
+        setImages((prev) => {
+          const next = [...prev, ...succeededItems];
+          imagesRef.current = next;
+          return next;
+        });
+        setActiveImageId((prev) => prev ?? succeededItems[0].id);
+      }
 
       const blobFailedCount = blobResults.filter((r) => r.status === "rejected").length;
       if (!isMountedRef.current) return;
@@ -115,7 +126,7 @@ export function MaskingGallery() {
         setUploadError(`${blobFailedCount} 件の画像の読み込みに失敗しました`);
       }
 
-      initialItems.push(...blobResults.flatMap((r) => (r.status === "fulfilled" ? [r.value] : [])));
+      initialItems.push(...succeededItems);
 
       /**
        * Step 2: 並行数を制限しながら各画像を処理し、完了したものから個別に state を更新する。
@@ -126,6 +137,7 @@ export function MaskingGallery() {
       const CONCURRENCY = 2;
       const results: PromiseSettledResult<void>[] = [];
       for (let i = 0; i < initialItems.length; i += CONCURRENCY) {
+        if (!isMountedRef.current) break;
         const chunk = initialItems.slice(i, i + CONCURRENCY);
         const chunkResults = await Promise.allSettled(
           chunk.map(async (item) => {
@@ -183,7 +195,11 @@ export function MaskingGallery() {
 
       setUploadError(null);
       setImages((prev) =>
-        prev.map((image) => (image.id === imageId ? { ...image, isProcessing: true } : image))
+        prev.map((image) =>
+          image.id === imageId
+            ? { ...image, detections: [], ocrRegions: [], maskedBlobUrl: null, isProcessing: true }
+            : image
+        )
       );
       try {
         const imageElement = await loadImageElement(target.imageUrl);
