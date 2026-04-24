@@ -213,7 +213,7 @@ export function GalleryItem({
     <article
       aria-current={isActive ? "true" : undefined}
       className={clsx([
-        "relative rounded-xl border bg-white p-4 transition-colors",
+        "relative isolate rounded-xl border bg-white p-4 transition-colors",
         "hover:border-blue-200",
         isActive ? "border-blue-300" : "border-zinc-200",
       ])}
@@ -319,7 +319,7 @@ export function GalleryItem({
             エクスポート
           </button>
 
-          {image.maskedBlobUrl ? (
+          {image.maskedBlobUrl && !image.isProcessing ? (
             <a
               href={image.maskedBlobUrl}
               download={createDownloadFileName(image.name)}
@@ -329,7 +329,9 @@ export function GalleryItem({
               ダウンロード
             </a>
           ) : (
-            <span className="text-xs text-zinc-400">描画中…</span>
+            <span className="text-xs text-zinc-400">
+              {image.isProcessing ? "処理中…" : "描画中…"}
+            </span>
           )}
         </div>
       </div>
@@ -344,7 +346,7 @@ export function GalleryItem({
         type="button"
         aria-label={`${image.name} を選択`}
         onClick={() => onSelect(image.id)}
-        className="absolute inset-0 rounded-xl"
+        className="absolute inset-0 z-0 rounded-xl"
       />
     </article>
   );
