@@ -164,12 +164,9 @@ export function useEditorState(): UseEditorStateReturn {
    * @param id - 更新する領域のID
    * @param updates - 更新内容
    */
-  const updateStampRegion = useCallback(
-    (id: string, updates: Partial<Omit<StampRegion, "id">>) => {
-      setStampRegions((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
-    },
-    []
-  );
+  const updateStampRegion = useCallback((id: string, updates: Partial<Omit<StampRegion, "id">>) => {
+    setStampRegions((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
+  }, []);
 
   /**
    * 塗りつぶし領域を更新する
@@ -177,12 +174,9 @@ export function useEditorState(): UseEditorStateReturn {
    * @param id - 更新する領域のID
    * @param updates - 更新内容
    */
-  const updateFillRegion = useCallback(
-    (id: string, updates: Partial<Omit<FillRegion, "id">>) => {
-      setFillRegions((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
-    },
-    []
-  );
+  const updateFillRegion = useCallback((id: string, updates: Partial<Omit<FillRegion, "id">>) => {
+    setFillRegions((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
+  }, []);
 
   /**
    * 塗りつぶし領域の有効/無効を切り替える

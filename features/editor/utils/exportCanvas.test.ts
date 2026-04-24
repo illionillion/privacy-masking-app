@@ -21,9 +21,7 @@ function makeCtxMock() {
 
   const ctx = {
     drawImage: vi.fn(),
-    fillRect: vi.fn((...args: number[]) =>
-      fillRectCalls.push(args as FillRectCall)
-    ),
+    fillRect: vi.fn((...args: number[]) => fillRectCalls.push(args as FillRectCall)),
     beginPath: vi.fn(() => beginPathCalls.push(1)),
     moveTo: vi.fn((...args: number[]) => moveToCalls.push(args as [number, number])),
     lineTo: vi.fn((...args: number[]) => lineToCalls.push(args as [number, number])),
@@ -75,9 +73,7 @@ describe("exportEditorCanvas", () => {
       .spyOn(document, "createElement")
       .mockReturnValue(canvasMock as unknown as HTMLElement);
 
-    createObjectURLSpy = vi
-      .spyOn(URL, "createObjectURL")
-      .mockReturnValue("blob:mock-url");
+    createObjectURLSpy = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:mock-url");
   });
 
   afterEach(() => {
