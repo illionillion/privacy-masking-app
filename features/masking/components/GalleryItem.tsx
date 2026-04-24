@@ -74,7 +74,7 @@ export function GalleryItem({
           : `顔: ${image.detections.length} 件 / テキスト: ${image.ocrRegions.length} 件`}
       </p>
 
-      <div className="relative mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+      <div className="relative z-10 mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3">
         <FaceDetectionCanvas
           imageDataUrl={image.imageUrl}
           detections={image.detections}
@@ -111,10 +111,9 @@ export function GalleryItem({
       </div>
       {/*
         カード全体をクリック可能にする見えないボタン。
-        DOM の最後に置くことで自然なスタッキング順で最前面になり、
-        カード全域のクリックを受け取る。
-        再検出・ダウンロードなどのインタラクティブ要素は relative z-10 で
-        このボタンより前面に出して操作できるようにする。
+        DOM の最後に置くことで z-0 になり、relative z-10 を持つ
+        プレビュー領域・再検出ボタン・ダウンロードリンクの下に位置する。
+        これにより、プレビュー領域のスクロール等の操作はブロックされない。
       */}
       <button
         type="button"
