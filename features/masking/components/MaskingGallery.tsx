@@ -99,7 +99,11 @@ export function MaskingGallery() {
             isProcessing: true,
           };
           /** 変換完了したものから即座に state に追加して表示する */
-          setImages((prev) => [...prev, item]);
+          setImages((prev) => {
+            const next = [...prev, item];
+            imagesRef.current = next;
+            return next;
+          });
           setActiveImageId((prev) => prev ?? item.id);
           return item;
         })
