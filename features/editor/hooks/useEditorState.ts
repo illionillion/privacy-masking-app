@@ -81,8 +81,8 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
   const [fillRegions, setFillRegions] = useState<FillRegion[]>([]);
   const [paintStrokes, setPaintStrokes] = useState<PaintStroke[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedStampType, setSelectedStampType] = useState<StampType>("stamp-face");
-  const [selectedStampFileName, setSelectedStampFileName] = useState<string>(initialStampFileName);
+  const [selectedStampType, _setSelectedStampType] = useState<StampType>("stamp-face");
+  const [selectedStampFileName, _setSelectedStampFileName] = useState<string>(initialStampFileName);
   const [rectTarget, setRectTarget] = useState<RectAddTarget>("fill");
   const [brushSize, setBrushSize] = useState<number>(20);
 
@@ -91,9 +91,66 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
    *
    * @param id - 選択するアイテムのID（null で選択解除）
    */
-  const selectItem = useCallback((id: string | null) => {
-    setSelectedId(id);
-  }, []);
+  const selectItem = useCallback(
+    (id: string | null) => {
+      setSelectedId(id);
+      if (!id) return;
+      const stampRegion = stampRegions.find((region) => region.id === id);
+      if (!stampRegion) return;
+      _setSelectedStampType(stampRegion.stampType);
+      if (stampRegion.stampFileName) {
+        _setSelectedStampFileName(stampRegion.stampFileName);
+      }
+    },
+    [stampRegions]
+  );
+
+  /**
+   * スタンプ種別の選択を更新し、必要に応じて選択中のスタンプ領域にも反映する
+   *
+   * @param type - 新しく選択されたスタンプ種別
+   */
+  const setSelectedStampType = useCallback(
+    (type: StampType) => {
+      _setSelectedStampType(type);
+      if (!selectedId) return;
+      setStampRegions((prev) =>
+        prev.map((region) =>
+          region.id === selectedId
+            ? {
+                ...region,
+                stampType: type,
+              }
+            : region
+        )
+      );
+    },
+    [selectedId]
+  );
+
+  /**
+   * stamp-face 用のスタンプ画像ファイル名を更新し、
+   * 選択中のスタンプ領域にも反映する
+   *
+   * @param name - 新しく選択されたファイル名
+   */
+  const setSelectedStampFileName = useCallback(
+    (name: string) => {
+      _setSelectedStampFileName(name);
+      if (!selectedId) return;
+      setStampRegions((prev) =>
+        prev.map((region) =>
+          region.id === selectedId
+            ? {
+                ...region,
+                stampFileName: name,
+              }
+            : region
+        )
+      );
+    },
+    [selectedId]
+  );
 
   /**
    * 顔検出結果とOCR結果からStampRegion/FillRegionを初期化する

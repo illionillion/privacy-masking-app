@@ -2,10 +2,10 @@ import { MAX_CANVAS_DIMENSION } from "@/lib/canvas";
 import type { FillRegion, PaintStroke, StampRegion } from "../types";
 
 /** モザイクブロックの最小サイズ（px） */
-const MIN_MOSAIC_BLOCK_SIZE = 8;
+const MIN_MOSAIC_BLOCK_SIZE = 3;
 
 /** モザイクブロックサイズ算出用の除数（短辺に対する割合の逆数） */
-const MOSAIC_BLOCK_SIZE_DIVISOR = 10;
+const MOSAIC_BLOCK_SIZE_DIVISOR = 24;
 
 /** ぼかし半径の最小値（px） */
 const MIN_BLUR_RADIUS = 4;

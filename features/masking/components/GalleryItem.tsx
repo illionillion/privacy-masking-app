@@ -75,6 +75,7 @@ export function GalleryItem({
   const isRedetectDisabled = image.isProcessing || isModelLoading;
 
   const editor = useEditorState(STAMP_FILE_NAMES[0] ?? "");
+  const selectedStampRegion = editor.stampRegions.find((region) => region.id === editor.selectedId);
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
   const [imageNaturalWidth, setImageNaturalWidth] = useState(0);
   const [imageNaturalHeight, setImageNaturalHeight] = useState(0);
@@ -235,6 +236,7 @@ export function GalleryItem({
                 selectedStampType={editor.selectedStampType}
                 brushSize={editor.brushSize}
                 selectedId={editor.selectedId}
+                isStampSelected={selectedStampRegion !== undefined}
                 onModeChange={editor.setMode}
                 onRectTargetChange={editor.setRectTarget}
                 onStampTypeChange={editor.setSelectedStampType}

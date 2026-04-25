@@ -15,6 +15,7 @@ interface EditorToolbarProps {
   selectedStampFileName: string;
   brushSize: number;
   selectedId: string | null;
+  isStampSelected: boolean;
   onModeChange: (mode: EditorMode) => void;
   onRectTargetChange: (target: RectAddTarget) => void;
   onStampTypeChange: (type: StampType) => void;
@@ -56,6 +57,7 @@ export function EditorToolbar({
   selectedStampFileName,
   brushSize,
   selectedId,
+  isStampSelected,
   onModeChange,
   onRectTargetChange,
   onStampTypeChange,
@@ -63,6 +65,8 @@ export function EditorToolbar({
   onBrushSizeChange,
   onDeleteSelected,
 }: EditorToolbarProps) {
+  const showStampControls = (mode === "rect" && rectTarget === "stamp") || isStampSelected;
+
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1.5">
       {/* モード切替: ピルグループ */}
@@ -107,26 +111,26 @@ export function EditorToolbar({
               </button>
             ))}
           </div>
+        </>
+      )}
 
-          {/* スタンプ種別・画像選択 */}
-          {rectTarget === "stamp" && (
-            <>
-              <Divider />
-              <StampTypeSelector value={selectedStampType} onChange={onStampTypeChange} />
-              {selectedStampType === "stamp-face" && stampCatalog.length > 0 && (
-                <select
-                  value={selectedStampFileName}
-                  onChange={(e) => onStampFileNameChange(e.target.value)}
-                  className="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {stampCatalog.map(({ fileName, emoji, label }) => (
-                    <option key={fileName} value={fileName}>
-                      {emoji} {label}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </>
+      {/* スタンプ種別・画像選択（スタンプ追加時 / スタンプ選択時） */}
+      {showStampControls && (
+        <>
+          <Divider />
+          <StampTypeSelector value={selectedStampType} onChange={onStampTypeChange} />
+          {selectedStampType === "stamp-face" && stampCatalog.length > 0 && (
+            <select
+              value={selectedStampFileName}
+              onChange={(e) => onStampFileNameChange(e.target.value)}
+              className="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {stampCatalog.map(({ fileName, emoji, label }) => (
+                <option key={fileName} value={fileName}>
+                  {emoji} {label}
+                </option>
+              ))}
+            </select>
           )}
         </>
       )}

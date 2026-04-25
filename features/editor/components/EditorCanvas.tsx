@@ -2,7 +2,7 @@
 
 import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
   Circle,
   Group,
@@ -142,13 +142,22 @@ function pickStampImage(
 /** filters プロパティの要素型（Konva.Filter は v10 では直接エクスポートされないため NodeConfig から取得） */
 type KonvaFilter = NonNullable<Konva.NodeConfig["filters"]>[number];
 
+/** モザイクブロックの最小サイズ（px） */
+const MIN_MOSAIC_BLOCK_SIZE = 3;
+
+/** モザイクブロックサイズ算出用の除数（短辺に対する割合の逆数） */
+const MOSAIC_BLOCK_SIZE_DIVISOR = 24;
+
 /**
  * モザイク（ピクセレーション）プレビュー用 Konva カスタムフィルター
  *
- * ブロックサイズは領域短辺の 1/10（最小 8px）で自動算出する。
+ * ブロックサイズは領域短辺の 1/24（最小 3px）で自動算出する。
  */
 const pixelateFilter: KonvaFilter = function (imageData: ImageData) {
-  const size = Math.max(8, Math.round(Math.min(imageData.width, imageData.height) / 10));
+  const size = Math.max(
+    MIN_MOSAIC_BLOCK_SIZE,
+    Math.round(Math.min(imageData.width, imageData.height) / MOSAIC_BLOCK_SIZE_DIVISOR)
+  );
   for (let y = 0; y < imageData.height; y += size) {
     for (let x = 0; x < imageData.width; x += size) {
       const idx = (y * imageData.width + x) * 4;
@@ -209,7 +218,14 @@ function EffectPreviewGroup({
     if (kind === "blur") {
       group.setAttr("blurRadius", Math.max(4, Math.round(Math.min(w, h) / 8)));
     }
-    group.cache();
+    group.clearCache();
+    group.cache({
+      x: 0,
+      y: 0,
+      width: Math.max(1, w),
+      height: Math.max(1, h),
+      pixelRatio: 1,
+    });
     group.getLayer()?.batchDraw();
   }, [kind, bgImage, offsetX, offsetY, stageWidth, stageHeight, w, h]);
 
@@ -534,33 +550,15 @@ export function EditorCanvas({
             const h = region.height * scaleY;
             const stampImg =
               region.stampType === "stamp-face" ? pickStampImage(region, stampImages) : null;
+            const isEffectStamp =
+              (region.stampType === "blur" || region.stampType === "mosaic") && bgImage !== null;
             return (
-              <Group
-                key={region.id}
-                id={region.id}
-                x={rx}
-                y={ry}
-                draggable={isInteractive}
-                onClick={() => isInteractive && onSelectItem(region.id)}
-                onTap={() => isInteractive && onSelectItem(region.id)}
-                onDragEnd={(e) => handleDragEnd(region.id, "stamp", e.target)}
-                onTransformEnd={(e) => handleTransformEnd(region.id, "stamp", e.target)}
-              >
-                {stampImg ? (
-                  /* stamp-face: スタンプ画像を実際に表示 */
-                  <KonvaImage
-                    image={stampImg}
-                    width={w}
-                    height={h}
-                    opacity={region.isEnabled ? 1 : 0.4}
-                    stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
-                    strokeWidth={1}
-                  />
-                ) : (region.stampType === "blur" || region.stampType === "mosaic") && bgImage ? (
-                  /* blur / mosaic: 背景画像にフィルターを適用してリアルタイムプレビュー */
-                  <>
+              <Fragment key={region.id}>
+                {isEffectStamp && (
+                  /* blur / mosaic の見た目は操作ノードと分離し、Transformer の計算へ影響させない */
+                  <Group x={rx} y={ry} listening={false}>
                     <EffectPreviewGroup
-                      kind={region.stampType}
+                      kind={region.stampType as "blur" | "mosaic"}
                       bgImage={bgImage}
                       offsetX={-rx}
                       offsetY={-ry}
@@ -569,27 +567,52 @@ export function EditorCanvas({
                       w={w}
                       h={h}
                     />
+                  </Group>
+                )}
+
+                <Group
+                  id={region.id}
+                  x={rx}
+                  y={ry}
+                  draggable={isInteractive}
+                  onClick={() => isInteractive && onSelectItem(region.id)}
+                  onTap={() => isInteractive && onSelectItem(region.id)}
+                  onDragEnd={(e) => handleDragEnd(region.id, "stamp", e.target)}
+                  onTransformEnd={(e) => handleTransformEnd(region.id, "stamp", e.target)}
+                >
+                  {stampImg ? (
+                    /* stamp-face: スタンプ画像を実際に表示 */
+                    <KonvaImage
+                      image={stampImg}
+                      width={w}
+                      height={h}
+                      opacity={region.isEnabled ? 1 : 0.4}
+                      stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
+                      strokeWidth={1}
+                    />
+                  ) : isEffectStamp ? (
+                    /* blur / mosaic: クリック/変形用の矩形ハンドル */
                     <Rect
                       width={w}
                       height={h}
-                      fill="transparent"
+                      fill="rgba(0,0,0,0.001)"
                       stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
                       strokeWidth={1}
-                      listening={false}
+                      listening={true}
                     />
-                  </>
-                ) : (
-                  /* fill-black またはフォールバック: 不透明な塗りつぶし矩形 */
-                  <Rect
-                    width={w}
-                    height={h}
-                    fill={STAMP_TYPE_COLORS[region.stampType]}
-                    opacity={1}
-                    stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
-                    strokeWidth={1}
-                  />
-                )}
-              </Group>
+                  ) : (
+                    /* fill-black またはフォールバック: 不透明な塗りつぶし矩形 */
+                    <Rect
+                      width={w}
+                      height={h}
+                      fill={STAMP_TYPE_COLORS[region.stampType]}
+                      opacity={1}
+                      stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
+                      strokeWidth={1}
+                    />
+                  )}
+                </Group>
+              </Fragment>
             );
           })}
 
