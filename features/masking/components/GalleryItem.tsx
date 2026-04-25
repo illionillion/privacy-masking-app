@@ -268,6 +268,7 @@ export function GalleryItem({
                   onUpdateFillRegion={editor.updateFillRegion}
                   stampImages={stampImages}
                   selectedStampFileName={editor.selectedStampFileName}
+                  onDeleteSelected={editor.removeSelectedItem}
                 />
               )}
             </div>

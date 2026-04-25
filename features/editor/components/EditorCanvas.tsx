@@ -44,6 +44,8 @@ interface EditorCanvasProps {
   stampImages: Map<string, HTMLImageElement>;
   /** 現在選択中の stamp-face 画像のファイル名 */
   selectedStampFileName: string;
+  /** 選択中アイテムを削除するコールバック */
+  onDeleteSelected: () => void;
 }
 
 /** 描画中の矩形プレビュー用状態 */
@@ -137,6 +139,96 @@ function pickStampImage(
   return values[Math.abs(idHash) % values.length] ?? null;
 }
 
+/** filters プロパティの要素型（Konva.Filter は v10 では直接エクスポートされないため NodeConfig から取得） */
+type KonvaFilter = NonNullable<Konva.NodeConfig["filters"]>[number];
+
+/**
+ * モザイク（ピクセレーション）プレビュー用 Konva カスタムフィルター
+ *
+ * ブロックサイズは領域短辺の 1/10（最小 8px）で自動算出する。
+ */
+const pixelateFilter: KonvaFilter = function (imageData: ImageData) {
+  const size = Math.max(8, Math.round(Math.min(imageData.width, imageData.height) / 10));
+  for (let y = 0; y < imageData.height; y += size) {
+    for (let x = 0; x < imageData.width; x += size) {
+      const idx = (y * imageData.width + x) * 4;
+      const r = imageData.data[idx] ?? 0;
+      const g = imageData.data[idx + 1] ?? 0;
+      const b = imageData.data[idx + 2] ?? 0;
+      for (let dy = y; dy < Math.min(y + size, imageData.height); dy++) {
+        for (let dx = x; dx < Math.min(x + size, imageData.width); dx++) {
+          const i = (dy * imageData.width + dx) * 4;
+          imageData.data[i] = r;
+          imageData.data[i + 1] = g;
+          imageData.data[i + 2] = b;
+        }
+      }
+    }
+  }
+};
+
+/**
+ * ぼかし・モザイクのリアルタイムプレビューコンポーネント
+ *
+ * 背景画像を領域でクリップし Konva フィルターを適用してエディタ上でリアルタイムプレビューを表示する。
+ * cache() の呼び出しによりフィルターが有効になる。
+ *
+ * @param kind - エフェクト種別（"blur" | "mosaic"）
+ * @param bgImage - 背景画像
+ * @param offsetX - グループ内での画像 X オフセット（= -(領域X * scaleX)）
+ * @param offsetY - グループ内での画像 Y オフセット（= -(領域Y * scaleY)）
+ * @param stageWidth - ステージ幅（px）
+ * @param stageHeight - ステージ高さ（px）
+ * @param w - 領域の幅（px）
+ * @param h - 領域の高さ（px）
+ */
+function EffectPreviewGroup({
+  kind,
+  bgImage,
+  offsetX,
+  offsetY,
+  stageWidth,
+  stageHeight,
+  w,
+  h,
+}: {
+  kind: "blur" | "mosaic";
+  bgImage: HTMLImageElement;
+  offsetX: number;
+  offsetY: number;
+  stageWidth: number;
+  stageHeight: number;
+  w: number;
+  h: number;
+}) {
+  const groupRef = useRef<Konva.Group>(null);
+
+  useEffect(() => {
+    const group = groupRef.current;
+    if (!group) return;
+    if (kind === "blur") {
+      group.setAttr("blurRadius", Math.max(4, Math.round(Math.min(w, h) / 8)));
+    }
+    group.cache();
+    group.getLayer()?.batchDraw();
+  }, [kind, bgImage, offsetX, offsetY, stageWidth, stageHeight, w, h]);
+
+  const filters = kind === "blur" ? [Konva.Filters.Blur] : [pixelateFilter];
+
+  return (
+    <Group ref={groupRef} clipX={0} clipY={0} clipWidth={w} clipHeight={h} filters={filters}>
+      <KonvaImage
+        image={bgImage}
+        x={offsetX}
+        y={offsetY}
+        width={stageWidth}
+        height={stageHeight}
+        listening={false}
+      />
+    </Group>
+  );
+}
+
 export function EditorCanvas({
   imageUrl,
   imageNaturalWidth,
@@ -157,6 +249,7 @@ export function EditorCanvas({
   onUpdateFillRegion,
   stampImages,
   selectedStampFileName,
+  onDeleteSelected,
 }: EditorCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
@@ -171,6 +264,24 @@ export function EditorCanvas({
     imageNaturalWidth > 0 ? stageWidth * (imageNaturalHeight / imageNaturalWidth) : 400;
   const scaleX = imageNaturalWidth > 0 ? stageWidth / imageNaturalWidth : 1;
   const scaleY = imageNaturalHeight > 0 ? stageHeight / imageNaturalHeight : 1;
+
+  /**
+   * キーボードショートカット
+   *
+   * - Escape: 選択解除
+   * - Delete / Backspace: 選択中アイテムを削除
+   */
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        onSelectItem(null);
+      } else if ((e.key === "Delete" || e.key === "Backspace") && selectedId !== null) {
+        onDeleteSelected();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedId, onSelectItem, onDeleteSelected]);
 
   /** コンテナの幅変化を ResizeObserver で監視 */
   useEffect(() => {
@@ -417,6 +528,8 @@ export function EditorCanvas({
 
           {/* スタンプ領域 */}
           {stampRegions.map((region) => {
+            const rx = region.x * scaleX;
+            const ry = region.y * scaleY;
             const w = region.width * scaleX;
             const h = region.height * scaleY;
             const stampImg =
@@ -425,8 +538,8 @@ export function EditorCanvas({
               <Group
                 key={region.id}
                 id={region.id}
-                x={region.x * scaleX}
-                y={region.y * scaleY}
+                x={rx}
+                y={ry}
                 draggable={isInteractive}
                 onClick={() => isInteractive && onSelectItem(region.id)}
                 onTap={() => isInteractive && onSelectItem(region.id)}
@@ -443,13 +556,35 @@ export function EditorCanvas({
                     stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
                     strokeWidth={1}
                   />
+                ) : (region.stampType === "blur" || region.stampType === "mosaic") && bgImage ? (
+                  /* blur / mosaic: 背景画像にフィルターを適用してリアルタイムプレビュー */
+                  <>
+                    <EffectPreviewGroup
+                      kind={region.stampType}
+                      bgImage={bgImage}
+                      offsetX={-rx}
+                      offsetY={-ry}
+                      stageWidth={stageWidth}
+                      stageHeight={stageHeight}
+                      w={w}
+                      h={h}
+                    />
+                    <Rect
+                      width={w}
+                      height={h}
+                      fill="transparent"
+                      stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
+                      strokeWidth={1}
+                      listening={false}
+                    />
+                  </>
                 ) : (
-                  /* fill-black / mosaic / blur: プレビュー用の色付き矩形（ラベルなし） */
+                  /* fill-black またはフォールバック: 不透明な塗りつぶし矩形 */
                   <Rect
                     width={w}
                     height={h}
                     fill={STAMP_TYPE_COLORS[region.stampType]}
-                    opacity={0.7}
+                    opacity={1}
                     stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
                     strokeWidth={1}
                   />
