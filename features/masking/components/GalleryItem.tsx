@@ -199,7 +199,7 @@ export function GalleryItem({
     <article
       aria-current={isActive ? "true" : undefined}
       className={clsx([
-        "relative isolate rounded-xl border bg-white p-4 transition-colors",
+        "relative isolate min-w-0 rounded-xl border bg-white p-4 transition-colors",
         "hover:border-blue-200",
         isActive ? "border-blue-300" : "border-zinc-200",
       ])}
