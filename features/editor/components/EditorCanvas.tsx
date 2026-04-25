@@ -548,6 +548,9 @@ export function EditorCanvas({
             const ry = region.y * scaleY;
             const w = region.width * scaleX;
             const h = region.height * scaleY;
+            const squareStampSize = Math.max(w, h);
+            const squareStampX = (w - squareStampSize) / 2;
+            const squareStampY = (h - squareStampSize) / 2;
             const stampImg =
               region.stampType === "stamp-face" ? pickStampImage(region, stampImages) : null;
             const isEffectStamp =
@@ -581,11 +584,13 @@ export function EditorCanvas({
                   onTransformEnd={(e) => handleTransformEnd(region.id, "stamp", e.target)}
                 >
                   {stampImg ? (
-                    /* stamp-face: スタンプ画像を実際に表示 */
+                    /* stamp-face: 顔領域中心を基準に正方形スタンプを表示（旧仕様互換） */
                     <KonvaImage
                       image={stampImg}
-                      width={w}
-                      height={h}
+                      x={squareStampX}
+                      y={squareStampY}
+                      width={squareStampSize}
+                      height={squareStampSize}
                       opacity={region.isEnabled ? 1 : 0.4}
                       stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
                       strokeWidth={1}
