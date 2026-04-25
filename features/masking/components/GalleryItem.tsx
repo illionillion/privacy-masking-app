@@ -1,8 +1,19 @@
 "use client";
 
 import clsx from "clsx";
-import { FaceDetectionCanvas } from "@/features/face-detection";
+import dynamic from "next/dynamic";
+import { useEffect, useRef, useState } from "react";
+import { useEditorState } from "@/features/editor/hooks/useEditorState";
+import { EditorToolbar } from "@/features/editor/components/EditorToolbar";
+import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
+import { STAMP_CATALOG, STAMP_FILE_NAMES } from "@/features/editor/constants";
 import { type MaskingImageItem, createDownloadFileName } from "../types";
+
+/** Konva は window を module ロード時に参照するため SSR を無効化して動的インポートする */
+const EditorCanvas = dynamic(
+  () => import("@/features/editor/components/EditorCanvas").then((mod) => mod.EditorCanvas),
+  { ssr: false }
+);
 
 interface GalleryItemProps {
   image: MaskingImageItem;
@@ -12,6 +23,45 @@ interface GalleryItemProps {
   onSelect: (id: string) => void;
   onRedetect: (id: string) => void | Promise<void>;
   onRendered: (id: string, blobUrl: string) => void;
+}
+
+/** 公開URLのベースパス。サブパス配信時は `NEXT_PUBLIC_BASE_PATH` を設定する。 */
+const PUBLIC_BASE_PATH = (() => {
+  const raw = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+  if (raw === "/" || raw.length === 0) return "";
+  return `/${raw.replace(/^\/+|\/+$/g, "")}`;
+})();
+
+/**
+ * スタンプ画像を読み込み Map に格納する
+ *
+ * @returns ファイル名をキーにした HTMLImageElement の Map
+ */
+async function loadStampImages(): Promise<Map<string, HTMLImageElement>> {
+  const map = new Map<string, HTMLImageElement>();
+  await Promise.allSettled(
+    STAMP_FILE_NAMES.map(
+      (fileName) =>
+        new Promise<void>((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            map.set(fileName, img);
+            resolve();
+          };
+          img.onerror = () => resolve();
+          img.src = `${PUBLIC_BASE_PATH}/stamps/${fileName}`;
+        })
+    )
+  );
+  return map;
+}
+
+/** スタンプ画像読み込みの共有キャッシュ（カード間で使い回す） */
+let stampImagesPromise: Promise<Map<string, HTMLImageElement>> | null = null;
+
+function loadStampImagesCached(): Promise<Map<string, HTMLImageElement>> {
+  stampImagesPromise ??= loadStampImages();
+  return stampImagesPromise;
 }
 
 /**
@@ -32,11 +82,105 @@ export function GalleryItem({
 }: GalleryItemProps) {
   const isRedetectDisabled = image.isProcessing || isModelLoading;
 
+  const editor = useEditorState(STAMP_FILE_NAMES[0] ?? "");
+  const selectedStampRegion = editor.stampRegions.find((region) => region.id === editor.selectedId);
+  const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
+  const [imageNaturalWidth, setImageNaturalWidth] = useState(0);
+  const [imageNaturalHeight, setImageNaturalHeight] = useState(0);
+  const [stampImages, setStampImages] = useState<Map<string, HTMLImageElement>>(new Map());
+  const exportedBlobUrlRef = useRef<string | null>(null);
+  const onRenderedRef = useRef(onRendered);
+
+  useEffect(() => {
+    onRenderedRef.current = onRendered;
+  }, [onRendered]);
+
+  /** スタンプ画像を一度だけ読み込む */
+  useEffect(() => {
+    void loadStampImagesCached()
+      .then(setStampImages)
+      .catch((err: unknown) => {
+        console.error("スタンプ画像の読み込みに失敗しました", err);
+      });
+  }, []);
+
+  /** imageUrl が変わったら HTMLImageElement を再生成する */
+  useEffect(() => {
+    if (!image.imageUrl) return;
+    const img = new Image();
+    img.onload = () => {
+      setImageElement(img);
+      setImageNaturalWidth(img.naturalWidth);
+      setImageNaturalHeight(img.naturalHeight);
+    };
+    img.src = image.imageUrl;
+  }, [image.imageUrl]);
+
+  /** detections/ocrRegions が更新されたらエディタ状態を初期化する */
+  useEffect(() => {
+    if (image.isProcessing) return;
+    editor.initFromDetections(image.detections, image.ocrRegions);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [image.detections, image.ocrRegions, image.isProcessing]);
+
+  /**
+   * エディタ状態の変化に応じて自動エクスポートを行い onRendered に通知する
+   */
+  useEffect(() => {
+    if (!imageElement || image.isProcessing) return;
+    let cancelled = false;
+
+    void exportEditorCanvas(
+      imageElement,
+      editor.stampRegions,
+      editor.fillRegions,
+      editor.paintStrokes,
+      stampImages
+    )
+      .then((blobUrl) => {
+        if (cancelled) {
+          URL.revokeObjectURL(blobUrl);
+          return;
+        }
+        const prev = exportedBlobUrlRef.current;
+        exportedBlobUrlRef.current = blobUrl;
+        onRenderedRef.current(image.id, blobUrl);
+        if (prev) URL.revokeObjectURL(prev);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          console.error("エクスポートに失敗しました", err);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    imageElement,
+    image.id,
+    image.isProcessing,
+    editor.stampRegions,
+    editor.fillRegions,
+    editor.paintStrokes,
+    stampImages,
+  ]);
+
+  /** アンマウント時に Blob URL を解放する */
+  useEffect(() => {
+    return () => {
+      if (exportedBlobUrlRef.current) {
+        URL.revokeObjectURL(exportedBlobUrlRef.current);
+        exportedBlobUrlRef.current = null;
+      }
+    };
+  }, []);
+
   return (
     <article
       aria-current={isActive ? "true" : undefined}
       className={clsx([
-        "relative isolate rounded-xl border bg-white p-4 transition-colors",
+        "relative isolate min-w-0 rounded-xl border bg-white p-4 transition-colors",
         "hover:border-blue-200",
         isActive ? "border-blue-300" : "border-zinc-200",
       ])}
@@ -76,28 +220,73 @@ export function GalleryItem({
             : `顔: ${image.detections.length} 件 / テキスト: ${image.ocrRegions.length} 件`}
       </p>
 
-      <div className="relative mt-3 flex justify-center overflow-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+      {/* エディタUI */}
+      <div className="relative mt-3 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
         {image.isProcessing ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={image.imageUrl}
-            alt={image.name}
-            className="max-h-full max-w-full rounded-lg object-contain"
-          />
+          <div className="flex justify-center p-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={image.imageUrl}
+              alt={image.name}
+              className="max-h-full max-w-full rounded-lg object-contain"
+            />
+          </div>
         ) : image.processingError ? (
-          <p className="text-sm text-red-500">検出に失敗しました。再検出してください。</p>
+          <div className="flex justify-center p-3">
+            <p className="text-sm text-red-500">検出に失敗しました。再検出してください。</p>
+          </div>
         ) : (
-          <FaceDetectionCanvas
-            imageDataUrl={image.imageUrl}
-            detections={image.detections}
-            ocrRegions={image.ocrRegions}
-            onRendered={(blobUrl) => {
-              onRendered(image.id, blobUrl);
-            }}
-          />
+          <>
+            <div className="relative z-10 p-2">
+              <EditorToolbar
+                mode={editor.mode}
+                rectTarget={editor.rectTarget}
+                selectedStampType={editor.selectedStampType}
+                brushSize={editor.brushSize}
+                selectedId={editor.selectedId}
+                isStampSelected={selectedStampRegion !== undefined}
+                onModeChange={editor.setMode}
+                onRectTargetChange={editor.setRectTarget}
+                onStampTypeChange={editor.setSelectedStampType}
+                onStampFileNameChange={editor.setSelectedStampFileName}
+                onBrushSizeChange={editor.setBrushSize}
+                onDeleteSelected={editor.removeSelectedItem}
+                stampCatalog={STAMP_CATALOG}
+                selectedStampFileName={editor.selectedStampFileName}
+              />
+            </div>
+
+            <div className="relative z-10 px-2 pb-2">
+              {imageNaturalWidth > 0 && imageNaturalHeight > 0 && (
+                <EditorCanvas
+                  imageUrl={image.imageUrl}
+                  imageNaturalWidth={imageNaturalWidth}
+                  imageNaturalHeight={imageNaturalHeight}
+                  stampRegions={editor.stampRegions}
+                  fillRegions={editor.fillRegions}
+                  paintStrokes={editor.paintStrokes}
+                  selectedId={editor.selectedId}
+                  mode={editor.mode}
+                  selectedStampType={editor.selectedStampType}
+                  rectTarget={editor.rectTarget}
+                  brushSize={editor.brushSize}
+                  onSelectItem={editor.selectItem}
+                  onAddStampRegion={editor.addStampRegion}
+                  onAddFillRegion={editor.addFillRegion}
+                  onAddPaintStroke={editor.addPaintStroke}
+                  onUpdateStampRegion={editor.updateStampRegion}
+                  onUpdateFillRegion={editor.updateFillRegion}
+                  stampImages={stampImages}
+                  selectedStampFileName={editor.selectedStampFileName}
+                  onDeleteSelected={editor.removeSelectedItem}
+                />
+              )}
+            </div>
+          </>
         )}
+
         {image.isProcessing && (
-          <div className="absolute inset-3 flex items-center justify-center rounded-lg bg-white/60 text-sm text-zinc-500">
+          <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white/60 text-sm text-zinc-500">
             処理中…
           </div>
         )}
@@ -106,22 +295,27 @@ export function GalleryItem({
       <div className="mt-3 flex items-center justify-between gap-3">
         <p className="text-xs text-zinc-400">{(image.size / 1024 / 1024).toFixed(2)} MB</p>
 
-        {image.maskedBlobUrl && !image.isProcessing && !image.processingError ? (
-          <a
-            href={image.maskedBlobUrl}
-            download={createDownloadFileName(image.name)}
-            onClick={(e) => e.stopPropagation()}
-            className="relative z-10 rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
-          >
-            ダウンロード
-          </a>
-        ) : (
-          <span
-            className={clsx(["text-xs", image.processingError ? "text-red-500" : "text-zinc-400"])}
-          >
-            {image.isProcessing ? "処理中…" : image.processingError ? "検出失敗" : "描画中…"}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {image.maskedBlobUrl && !image.isProcessing && !image.processingError ? (
+            <a
+              href={image.maskedBlobUrl}
+              download={createDownloadFileName(image.name)}
+              onClick={(e) => e.stopPropagation()}
+              className="relative z-10 rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
+            >
+              ダウンロード
+            </a>
+          ) : (
+            <span
+              className={clsx([
+                "text-xs",
+                image.processingError ? "text-red-500" : "text-zinc-400",
+              ])}
+            >
+              {image.isProcessing ? "処理中…" : image.processingError ? "検出失敗" : "描画中…"}
+            </span>
+          )}
+        </div>
       </div>
       {/*
         カード全体をクリック可能にする見えないボタン。

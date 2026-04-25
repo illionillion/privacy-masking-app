@@ -14,7 +14,7 @@ export default function Home() {
           画像プライバシーマスキング
         </h1>
         <p className="mt-2 text-zinc-600">
-          画像をアップロードすると、顔を自動検出してスタンプでマスキングし、ダウンロードできます
+          画像をアップロードすると、顔・文字を検出してマスキングを編集し、ダウンロードできます
         </p>
       </div>
       <MaskingGallery />
