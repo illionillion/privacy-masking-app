@@ -14,6 +14,26 @@ const MIN_BLUR_RADIUS = 4;
 const BLUR_RADIUS_DIVISOR = 8;
 
 /**
+ * stamp-face 用の画像を選択する
+ *
+ * stampFileName が設定されている場合はそれを最優先し、
+ * 未設定時のみ region.id ハッシュで決定的に選択する。
+ */
+function pickExportStampImage(
+  region: StampRegion,
+  stampImages: Map<string, HTMLImageElement>
+): HTMLImageElement | null {
+  if (region.stampFileName) {
+    return stampImages.get(region.stampFileName) ?? null;
+  }
+  const stampImagesArray = Array.from(stampImages.values());
+  if (stampImagesArray.length === 0) return null;
+  const idHash = region.id.split("").reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) | 0, 0);
+  const stampIndex = Math.abs(idHash) % stampImagesArray.length;
+  return stampImagesArray[stampIndex] ?? null;
+}
+
+/**
  * モザイク処理を Canvas に適用する
  *
  * @param ctx - 2D コンテキスト
@@ -168,17 +188,8 @@ export async function exportEditorCanvas(
         break;
 
       case "stamp-face": {
-        const stampImagesArray = Array.from(stampImages.values());
-        if (stampImagesArray.length > 0) {
-          /**
-           * region.id のハッシュを使って決定的にスタンプを選択する。
-           * ランダム選択では毎エクスポートで結果が変わるため、IDベースのハッシュで固定する。
-           */
-          const idHash = region.id
-            .split("")
-            .reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) | 0, 0);
-          const stampIndex = Math.abs(idHash) % stampImagesArray.length;
-          const stamp = stampImagesArray[stampIndex];
+        const stamp = pickExportStampImage(region, stampImages);
+        if (stamp) {
           const centerX = sx + sw / 2;
           const centerY = sy + sh / 2;
           const stampSize = Math.max(sw, sh);

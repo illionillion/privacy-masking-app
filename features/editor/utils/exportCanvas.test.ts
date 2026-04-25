@@ -137,6 +137,34 @@ describe("exportEditorCanvas", () => {
     expect(ctxMock.saveRestoreCalls).toContain("restore");
   });
 
+  it("stamp-face は stampFileName で指定した画像を優先して描画する", async () => {
+    const img = makeImageElement(200, 200);
+    const stampA = { width: 64, height: 64 } as HTMLImageElement;
+    const stampB = { width: 64, height: 64 } as HTMLImageElement;
+    const stampRegions: StampRegion[] = [
+      {
+        id: "s4",
+        x: 20,
+        y: 20,
+        width: 40,
+        height: 30,
+        stampType: "stamp-face",
+        stampFileName: "b.png",
+        isEnabled: true,
+        source: "manual",
+      },
+    ];
+    const stampImages = new Map<string, HTMLImageElement>([
+      ["a.png", stampA],
+      ["b.png", stampB],
+    ]);
+
+    await exportEditorCanvas(img, stampRegions, [], [], stampImages);
+    const drawImageCalls = vi.mocked(ctxMock.ctx.drawImage).mock.calls;
+    // 1回目は背景画像描画、2回目がスタンプ描画
+    expect(drawImageCalls[1]?.[0]).toBe(stampB);
+  });
+
   it("無効な（isEnabled=false）領域はスキップされる", async () => {
     const img = makeImageElement(200, 200);
     const fillRegions: FillRegion[] = [
