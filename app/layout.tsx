@@ -15,8 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Privacy Masking Tool",
-  description: "画像内の顔・個人情報を検出し、公開前に安全にマスキングできるブラウザ完結型ツール",
+  title: "伏せ太郎 | Fusely",
+  description:
+    "伏せ太郎（Fusely）は、画像内の顔・文字情報を検出して黒塗り・モザイク・ぼかし編集ができるブラウザ完結型ツール",
 };
 
 export default function RootLayout({
