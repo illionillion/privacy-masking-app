@@ -135,6 +135,32 @@ describe("useEditorState", () => {
     expect(result.current.stampRegions[0].x).toBe(100);
   });
 
+  it("選択中領域を stamp-face に変更すると選択中ファイル名を引き継ぐ", () => {
+    vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("stamp-switch-uuid") });
+    const { result } = renderHook(() => useEditorState("selected-face.png"));
+    act(() => {
+      result.current.addStampRegion({
+        x: 0,
+        y: 0,
+        width: 50,
+        height: 50,
+        stampType: "mosaic",
+        isEnabled: true,
+        source: "manual",
+      });
+    });
+    act(() => {
+      result.current.selectItem("stamp-switch-uuid");
+    });
+    act(() => {
+      result.current.setSelectedStampType("stamp-face");
+    });
+    expect(result.current.stampRegions[0]).toMatchObject({
+      stampType: "stamp-face",
+      stampFileName: "selected-face.png",
+    });
+  });
+
   it("toggleFillRegion で isEnabled を切り替えられる", () => {
     vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("tog-uuid") });
     const { result } = renderHook(() => useEditorState());

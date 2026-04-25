@@ -56,6 +56,14 @@ async function loadStampImages(): Promise<Map<string, HTMLImageElement>> {
   return map;
 }
 
+/** スタンプ画像読み込みの共有キャッシュ（カード間で使い回す） */
+let stampImagesPromise: Promise<Map<string, HTMLImageElement>> | null = null;
+
+function loadStampImagesCached(): Promise<Map<string, HTMLImageElement>> {
+  stampImagesPromise ??= loadStampImages();
+  return stampImagesPromise;
+}
+
 /**
  * ギャラリーの個別画像カードコンポーネント
  *
@@ -89,7 +97,7 @@ export function GalleryItem({
 
   /** スタンプ画像を一度だけ読み込む */
   useEffect(() => {
-    void loadStampImages()
+    void loadStampImagesCached()
       .then(setStampImages)
       .catch((err: unknown) => {
         console.error("スタンプ画像の読み込みに失敗しました", err);

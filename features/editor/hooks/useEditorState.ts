@@ -120,12 +120,16 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
             ? {
                 ...region,
                 stampType: type,
+                stampFileName:
+                  type === "stamp-face"
+                    ? (region.stampFileName ?? selectedStampFileName)
+                    : undefined,
               }
             : region
         )
       );
     },
-    [selectedId]
+    [selectedId, selectedStampFileName]
   );
 
   /**
