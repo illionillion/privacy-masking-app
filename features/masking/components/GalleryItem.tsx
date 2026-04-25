@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useEditorState } from "@/features/editor/hooks/useEditorState";
 import { EditorToolbar } from "@/features/editor/components/EditorToolbar";
 import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
@@ -167,34 +167,6 @@ export function GalleryItem({
     };
   }, []);
 
-  /** 手動エクスポートボタンの処理 */
-  const handleExport = useCallback(() => {
-    if (!imageElement) return;
-    void exportEditorCanvas(
-      imageElement,
-      editor.stampRegions,
-      editor.fillRegions,
-      editor.paintStrokes,
-      stampImages
-    )
-      .then((blobUrl) => {
-        const prev = exportedBlobUrlRef.current;
-        exportedBlobUrlRef.current = blobUrl;
-        onRenderedRef.current(image.id, blobUrl);
-        if (prev) URL.revokeObjectURL(prev);
-      })
-      .catch((err: unknown) => {
-        console.error("エクスポートに失敗しました", err);
-      });
-  }, [
-    imageElement,
-    editor.stampRegions,
-    editor.fillRegions,
-    editor.paintStrokes,
-    stampImages,
-    image.id,
-  ]);
-
   return (
     <article
       aria-current={isActive ? "true" : undefined}
@@ -313,22 +285,6 @@ export function GalleryItem({
         <p className="text-xs text-zinc-400">{(image.size / 1024 / 1024).toFixed(2)} MB</p>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleExport();
-            }}
-            disabled={!imageElement || image.processingError}
-            className={clsx([
-              "relative z-10 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-              "bg-emerald-600 text-white hover:bg-emerald-700",
-              (!imageElement || image.processingError) && "cursor-not-allowed opacity-50",
-            ])}
-          >
-            エクスポート
-          </button>
-
           {image.maskedBlobUrl && !image.isProcessing && !image.processingError ? (
             <a
               href={image.maskedBlobUrl}
