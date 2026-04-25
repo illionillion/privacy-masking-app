@@ -17,7 +17,7 @@ describe("Home", () => {
     render(<Home />);
     expect(
       screen.getByText(
-        "画像をアップロードすると、顔を自動検出してスタンプでマスキングし、ダウンロードできます"
+        "画像をアップロードすると、顔・文字を検出してマスキングを編集し、ダウンロードできます"
       )
     ).toBeInTheDocument();
   });
