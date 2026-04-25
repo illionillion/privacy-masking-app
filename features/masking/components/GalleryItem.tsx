@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useEditorState } from "@/features/editor/hooks/useEditorState";
 import { EditorToolbar } from "@/features/editor/components/EditorToolbar";
 import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
+import { STAMP_CATALOG, STAMP_FILE_NAMES } from "@/features/editor/constants";
 import { type MaskingImageItem, createDownloadFileName } from "../types";
 
 /** Konva は window を module ロード時に参照するため SSR を無効化して動的インポートする */
@@ -30,21 +31,6 @@ const PUBLIC_BASE_PATH = (() => {
   if (raw === "/" || raw.length === 0) return "";
   return `/${raw.replace(/^\/+|\/+$/g, "")}`;
 })();
-
-/** スタンプ画像のファイル名一覧 */
-const STAMP_FILE_NAMES = [
-  "beaming_face_with_smiling_eyes-64.png",
-  "face_with_tears_of_joy-64.png",
-  "grinning_face-64.png",
-  "grinning_face_with_big_eyes-64.png",
-  "grinning_face_with_smiling_eyes-64.png",
-  "grinning_squinting_face-64.png",
-  "rolling_on_the_floor_laughing-64.png",
-  "smiling_face_with_halo-64.png",
-  "smiling_face_with_hearts-64.png",
-  "smiling_face_with_smiling_eyes-64.png",
-  "winking_face-64.png",
-];
 
 /**
  * スタンプ画像を読み込み Map に格納する
@@ -88,7 +74,7 @@ export function GalleryItem({
 }: GalleryItemProps) {
   const isRedetectDisabled = image.isProcessing || isModelLoading;
 
-  const editor = useEditorState();
+  const editor = useEditorState(STAMP_FILE_NAMES[0] ?? "");
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
   const [imageNaturalWidth, setImageNaturalWidth] = useState(0);
   const [imageNaturalHeight, setImageNaturalHeight] = useState(0);
@@ -270,7 +256,7 @@ export function GalleryItem({
           </div>
         ) : (
           <>
-            <div className="p-2">
+            <div className="relative z-10 p-2">
               <EditorToolbar
                 mode={editor.mode}
                 rectTarget={editor.rectTarget}
@@ -280,12 +266,15 @@ export function GalleryItem({
                 onModeChange={editor.setMode}
                 onRectTargetChange={editor.setRectTarget}
                 onStampTypeChange={editor.setSelectedStampType}
+                onStampFileNameChange={editor.setSelectedStampFileName}
                 onBrushSizeChange={editor.setBrushSize}
                 onDeleteSelected={editor.removeSelectedItem}
+                stampCatalog={STAMP_CATALOG}
+                selectedStampFileName={editor.selectedStampFileName}
               />
             </div>
 
-            <div className="px-2 pb-2">
+            <div className="relative z-10 px-2 pb-2">
               {imageNaturalWidth > 0 && imageNaturalHeight > 0 && (
                 <EditorCanvas
                   imageUrl={image.imageUrl}
@@ -305,6 +294,8 @@ export function GalleryItem({
                   onAddPaintStroke={editor.addPaintStroke}
                   onUpdateStampRegion={editor.updateStampRegion}
                   onUpdateFillRegion={editor.updateFillRegion}
+                  stampImages={stampImages}
+                  selectedStampFileName={editor.selectedStampFileName}
                 />
               )}
             </div>

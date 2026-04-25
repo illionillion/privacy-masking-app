@@ -43,10 +43,12 @@ export interface UseEditorStateReturn {
   paintStrokes: PaintStroke[];
   selectedId: string | null;
   selectedStampType: StampType;
+  selectedStampFileName: string;
   rectTarget: RectAddTarget;
   brushSize: number;
   setMode: (mode: EditorMode) => void;
   setSelectedStampType: (type: StampType) => void;
+  setSelectedStampFileName: (name: string) => void;
   setRectTarget: (target: RectAddTarget) => void;
   setBrushSize: (size: number) => void;
   selectItem: (id: string | null) => void;
@@ -70,15 +72,17 @@ export interface UseEditorStateReturn {
  * スタンプ領域・塗りつぶし領域・ペイントストロークの管理と
  * エディタモード・選択状態を提供する。
  *
+ * @param initialStampFileName - stamp-face 種別の初期選択ファイル名
  * @returns {UseEditorStateReturn} エディタ状態と操作関数
  */
-export function useEditorState(): UseEditorStateReturn {
+export function useEditorState(initialStampFileName = ""): UseEditorStateReturn {
   const [mode, setMode] = useState<EditorMode>("select");
   const [stampRegions, setStampRegions] = useState<StampRegion[]>([]);
   const [fillRegions, setFillRegions] = useState<FillRegion[]>([]);
   const [paintStrokes, setPaintStrokes] = useState<PaintStroke[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedStampType, setSelectedStampType] = useState<StampType>("stamp-face");
+  const [selectedStampFileName, setSelectedStampFileName] = useState<string>(initialStampFileName);
   const [rectTarget, setRectTarget] = useState<RectAddTarget>("fill");
   const [brushSize, setBrushSize] = useState<number>(20);
 
@@ -219,10 +223,12 @@ export function useEditorState(): UseEditorStateReturn {
     paintStrokes,
     selectedId,
     selectedStampType,
+    selectedStampFileName,
     rectTarget,
     brushSize,
     setMode,
     setSelectedStampType,
+    setSelectedStampFileName,
     setRectTarget,
     setBrushSize,
     selectItem,

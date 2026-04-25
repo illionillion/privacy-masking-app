@@ -11,7 +11,6 @@ import {
   Line,
   Rect,
   Stage,
-  Text,
   Transformer,
 } from "react-konva";
 import type {
@@ -41,6 +40,10 @@ interface EditorCanvasProps {
   onAddPaintStroke: (stroke: Omit<PaintStroke, "id">) => void;
   onUpdateStampRegion: (id: string, updates: Partial<Omit<StampRegion, "id">>) => void;
   onUpdateFillRegion: (id: string, updates: Partial<Omit<FillRegion, "id">>) => void;
+  /** stamp-face 種別用のスタンプ画像マップ（ファイル名をキーにした HTMLImageElement の Map） */
+  stampImages: Map<string, HTMLImageElement>;
+  /** 現在選択中の stamp-face 画像のファイル名 */
+  selectedStampFileName: string;
 }
 
 /** 描画中の矩形プレビュー用状態 */
@@ -62,14 +65,6 @@ const STAMP_TYPE_COLORS: Record<StampType, string> = {
   mosaic: "#6b7280",
   blur: "#93c5fd",
   "stamp-face": "#fb923c",
-};
-
-/** スタンプ種別ごとのラベル */
-const STAMP_TYPE_LABELS: Record<StampType, string> = {
-  "fill-black": "黒塗り",
-  mosaic: "モザイク",
-  blur: "ぼかし",
-  "stamp-face": "😊",
 };
 
 /** 矩形描画の最小サイズ閾値（px）。この値以下の矩形は追加しない */
@@ -119,6 +114,29 @@ function toImageSpace(
  * 選択・矩形追加・ペイントの 3 モードをサポートし、
  * 顔検出・OCR 結果からマスキング領域をインタラクティブに編集できる。
  */
+/**
+ * スタンプ画像マップから画像を選択する
+ *
+ * region.stampFileName が設定されている場合はそれを優先し、
+ * 未設定の場合は region.id ハッシュで決定的に選択する。
+ *
+ * @param region - StampRegion
+ * @param stampImages - ファイル名をキーにした HTMLImageElement の Map
+ * @returns 選択された HTMLImageElement、見つからない場合は null
+ */
+function pickStampImage(
+  region: StampRegion,
+  stampImages: Map<string, HTMLImageElement>
+): HTMLImageElement | null {
+  if (region.stampFileName) {
+    return stampImages.get(region.stampFileName) ?? null;
+  }
+  const values = Array.from(stampImages.values());
+  if (values.length === 0) return null;
+  const idHash = region.id.split("").reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) | 0, 0);
+  return values[Math.abs(idHash) % values.length] ?? null;
+}
+
 export function EditorCanvas({
   imageUrl,
   imageNaturalWidth,
@@ -137,6 +155,8 @@ export function EditorCanvas({
   onAddPaintStroke,
   onUpdateStampRegion,
   onUpdateFillRegion,
+  stampImages,
+  selectedStampFileName,
 }: EditorCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
@@ -175,7 +195,13 @@ export function EditorCanvas({
     img.src = imageUrl;
   }, [imageUrl]);
 
-  /** 選択変化時に Transformer を更新する */
+  /**
+   * 選択変化・領域サイズ変化時に Transformer を再アタッチする
+   *
+   * stampRegions / fillRegions を依存に含めることで、
+   * リサイズ後に React state が更新された際に Transformer が
+   * キャッシュ済みのバウンディングボックスを再計算する。
+   */
   useEffect(() => {
     const transformer = transformerRef.current;
     if (!transformer) return;
@@ -193,7 +219,7 @@ export function EditorCanvas({
     } else {
       transformer.nodes([]);
     }
-  }, [selectedId]);
+  }, [selectedId, stampRegions, fillRegions]);
 
   /**
    * ステージのマウスダウン/タッチスタートハンドラ
@@ -277,6 +303,7 @@ export function EditorCanvas({
             width: imgW,
             height: imgH,
             stampType: selectedStampType,
+            stampFileName: selectedStampType === "stamp-face" ? selectedStampFileName : undefined,
             isEnabled: true,
             source: "manual",
           });
@@ -322,15 +349,20 @@ export function EditorCanvas({
    * @param node - Konva ノード
    */
   function handleTransformEnd(id: string, kind: "stamp" | "fill", node: Konva.Node) {
-    const scaleNodeX = node.scaleX();
-    const scaleNodeY = node.scaleY();
+    // Group は width()/height() が常に 0 を返すため、スケールリセット前に
+    // getClientRect() でビジュアル上の実サイズ・位置を取得する
+    const parent = node.getParent();
+    const clientRect = parent
+      ? node.getClientRect({ relativeTo: parent, skipStroke: true })
+      : node.getClientRect({ skipStroke: true });
+
     node.scaleX(1);
     node.scaleY(1);
 
-    const newX = node.x() / scaleX;
-    const newY = node.y() / scaleY;
-    const newW = (node.width() * scaleNodeX) / scaleX;
-    const newH = (node.height() * scaleNodeY) / scaleY;
+    const newX = clientRect.x / scaleX;
+    const newY = clientRect.y / scaleY;
+    const newW = clientRect.width / scaleX;
+    const newH = clientRect.height / scaleY;
 
     if (kind === "stamp") {
       onUpdateStampRegion(id, { x: newX, y: newY, width: newW, height: newH });
@@ -384,37 +416,47 @@ export function EditorCanvas({
           ))}
 
           {/* スタンプ領域 */}
-          {stampRegions.map((region) => (
-            <Group
-              key={region.id}
-              id={region.id}
-              x={region.x * scaleX}
-              y={region.y * scaleY}
-              draggable={isInteractive}
-              onClick={() => isInteractive && onSelectItem(region.id)}
-              onTap={() => isInteractive && onSelectItem(region.id)}
-              onDragEnd={(e) => handleDragEnd(region.id, "stamp", e.target)}
-              onTransformEnd={(e) => handleTransformEnd(region.id, "stamp", e.target)}
-            >
-              <Rect
-                width={region.width * scaleX}
-                height={region.height * scaleY}
-                fill={STAMP_TYPE_COLORS[region.stampType]}
-                opacity={0.7}
-                stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
-                strokeWidth={1}
-              />
-              <Text
-                text={STAMP_TYPE_LABELS[region.stampType]}
-                width={region.width * scaleX}
-                height={region.height * scaleY}
-                align="center"
-                verticalAlign="middle"
-                fontSize={Math.max(10, Math.min(region.width * scaleX, region.height * scaleY) / 3)}
-                fill="#ffffff"
-              />
-            </Group>
-          ))}
+          {stampRegions.map((region) => {
+            const w = region.width * scaleX;
+            const h = region.height * scaleY;
+            const stampImg =
+              region.stampType === "stamp-face" ? pickStampImage(region, stampImages) : null;
+            return (
+              <Group
+                key={region.id}
+                id={region.id}
+                x={region.x * scaleX}
+                y={region.y * scaleY}
+                draggable={isInteractive}
+                onClick={() => isInteractive && onSelectItem(region.id)}
+                onTap={() => isInteractive && onSelectItem(region.id)}
+                onDragEnd={(e) => handleDragEnd(region.id, "stamp", e.target)}
+                onTransformEnd={(e) => handleTransformEnd(region.id, "stamp", e.target)}
+              >
+                {stampImg ? (
+                  /* stamp-face: スタンプ画像を実際に表示 */
+                  <KonvaImage
+                    image={stampImg}
+                    width={w}
+                    height={h}
+                    opacity={region.isEnabled ? 1 : 0.4}
+                    stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
+                    strokeWidth={1}
+                  />
+                ) : (
+                  /* fill-black / mosaic / blur: プレビュー用の色付き矩形（ラベルなし） */
+                  <Rect
+                    width={w}
+                    height={h}
+                    fill={STAMP_TYPE_COLORS[region.stampType]}
+                    opacity={0.7}
+                    stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
+                    strokeWidth={1}
+                  />
+                )}
+              </Group>
+            );
+          })}
 
           {/* ペイントストローク */}
           {paintStrokes.map((stroke) => (

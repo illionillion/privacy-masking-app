@@ -21,6 +21,8 @@ export interface StampRegion {
   height: number;
   /** マスキング種別 */
   stampType: StampType;
+  /** stamp-face 種別で使用するスタンプ画像のファイル名 */
+  stampFileName?: string;
   /** 有効/無効フラグ */
   isEnabled: boolean;
   /** 領域の発生源 */
