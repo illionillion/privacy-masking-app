@@ -11,9 +11,7 @@ export function Header() {
           <span className="text-2xl" aria-hidden="true">
             🛡️
           </span>
-          <span className="text-lg font-bold tracking-tight text-zinc-900">
-            Privacy Masking Tool
-          </span>
+          <span className="text-lg font-bold tracking-tight text-zinc-900">伏せ太郎</span>
         </div>
         <p className="hidden text-sm text-zinc-500 sm:block">
           画像内の顔・個人情報を安全にマスキング
