@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ImageUpload } from "@/components/ImageUpload";
 import { useFaceDetection } from "@/features/face-detection";
 import { useOcr } from "@/features/ocr";
+import { useConfirmStore } from "@/lib/confirmStore";
 import { type MaskingImageItem, createDownloadFileName } from "../types";
 import { GalleryItem } from "./GalleryItem";
 
@@ -273,11 +274,18 @@ export function MaskingGallery() {
     );
   }, []);
 
-  /** 全画像をクリアする（imageUrl の Blob URL を解放してから state をリセット） */
-  const handleClearAll = useCallback(() => {
-    imagesRef.current.forEach((image) => URL.revokeObjectURL(image.imageUrl));
-    setImages([]);
-    setActiveImageId(null);
+  /** 全画像をクリアする（確認ダイアログ表示後、OK の場合のみ Blob URL を解放して state をリセット） */
+  const handleClearAll = useCallback(async () => {
+    try {
+      const ok = await useConfirmStore.getState().open("すべての画像と編集内容をクリアしますか？");
+      if (!ok) return;
+      imagesRef.current.forEach((image) => URL.revokeObjectURL(image.imageUrl));
+      setImages([]);
+      setActiveImageId(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "クリアに失敗しました";
+      toast.error(message);
+    }
   }, []);
 
   /** 描画済み画像をすべてZIPにまとめてダウンロードする */
@@ -372,7 +380,7 @@ export function MaskingGallery() {
 
               <button
                 type="button"
-                onClick={handleClearAll}
+                onClick={() => void handleClearAll()}
                 className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
               >
                 すべてクリア
