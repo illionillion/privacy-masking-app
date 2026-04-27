@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import { Header } from "@/components/Header";
 import "./globals.css";
 
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col bg-zinc-50 text-zinc-900">
         <Header />
         <main className="flex flex-1 flex-col">{children}</main>
+        <Toaster richColors position="bottom-right" />
       </body>
     </html>
   );
