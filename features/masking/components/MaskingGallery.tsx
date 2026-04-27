@@ -148,11 +148,10 @@ export function MaskingGallery() {
        * 同時実行数を CONCURRENCY に抑える。
        */
       const CONCURRENCY = 2;
-      const results: PromiseSettledResult<void>[] = [];
       for (let i = 0; i < initialItems.length; i += CONCURRENCY) {
         if (!isMountedRef.current) break;
         const chunk = initialItems.slice(i, i + CONCURRENCY);
-        const chunkResults = await Promise.allSettled(
+        await Promise.allSettled(
           chunk.map(async (item) => {
             try {
               const imageElement = await loadImageElement(item.imageUrl);
@@ -171,6 +170,7 @@ export function MaskingGallery() {
                       : image
                   )
                 );
+                toast.success(`${item.name} の処理が完了しました`);
               }
             } catch (err) {
               if (isMountedRef.current) {
@@ -181,22 +181,12 @@ export function MaskingGallery() {
                       : image
                   )
                 );
+                toast.error(`${item.name} の処理に失敗しました`);
               }
               throw err;
             }
           })
         );
-        results.push(...chunkResults);
-      }
-
-      const failedCount = results.filter((r) => r.status === "rejected").length;
-      if (!isMountedRef.current) return;
-      if (failedCount > 0) {
-        toast.error(`${failedCount} 件の画像の処理に失敗しました`);
-      }
-      const succeededCount = results.filter((r) => r.status === "fulfilled").length;
-      if (succeededCount > 0) {
-        toast.success(`${succeededCount} 件の画像の処理が完了しました`);
       }
     },
     [detectFaces, recognizeText, isModelLoading]
