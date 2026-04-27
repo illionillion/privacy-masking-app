@@ -45,5 +45,5 @@ jobs:
         with:
           add: "docs"
           default_author: github_actions
-          message: "chore: ビルド成果物を更新 [skip ci]"
+          message: "chore: ビルド成果物を更新 [skip actions]"
           pull: "--rebase --autostash"
