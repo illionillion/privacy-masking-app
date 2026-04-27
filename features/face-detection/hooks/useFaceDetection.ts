@@ -49,8 +49,6 @@ async function getFaceApi() {
 export function useFaceDetection(): UseFaceDetectionReturn {
   const [isModelLoading, setIsModelLoading] = useState(true);
   const [isDetecting, setIsDetecting] = useState(false);
-  /** 最後に開始した検出呼び出しのID（古い結果の state 上書きを防ぐ） */
-  const detectRequestRef = useRef(0);
   /** 現在処理中の検出呼び出し数（1つでも走っている間は isDetecting を true に保つ） */
   const inFlightRef = useRef(0);
   /** アンマウント後の state 更新を防ぐフラグ */
@@ -86,10 +84,12 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   /**
    * 画像内の顔を検出する
    *
-   * 顔検出に失敗した場合はトーストでエラーを通知し、空配列を返す。
+   * 顔検出に失敗した場合は例外を再スローする。
+   * 呼び出し元（MaskingGallery 等）で catch して通知・状態管理を行うこと。
    *
    * @param imageElement - 検出対象の HTMLImageElement
-   * @returns 検出された顔領域の配列。エラー時は空配列
+   * @returns 検出された顔領域の配列
+   * @throws 顔検出に失敗した場合
    */
   const detectFaces = useCallback(
     async (imageElement: HTMLImageElement): Promise<FaceDetectionResult[]> => {
@@ -97,7 +97,6 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         return [];
       }
 
-      const callId = ++detectRequestRef.current;
       inFlightRef.current++;
 
       if (isMountedRef.current) {
@@ -118,11 +117,8 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         }));
         return mappedDetections;
       } catch (err) {
-        if (callId === detectRequestRef.current) {
-          const message = err instanceof Error ? err.message : "顔検出中にエラーが発生しました";
-          toast.error(`顔検出エラー: ${message}`);
-        }
-        return [];
+        /** 呼び出し元（MaskingGallery 等）で顔検出失敗を検知できるよう再スロー */
+        throw err;
       } finally {
         inFlightRef.current--;
         if (inFlightRef.current === 0) {
