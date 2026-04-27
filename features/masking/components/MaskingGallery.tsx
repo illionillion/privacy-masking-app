@@ -243,7 +243,7 @@ export function MaskingGallery() {
                 : image
             )
           );
-          toast.success("再検出が完了しました");
+          toast.success("1 件の画像の再検出が完了しました");
         }
       } catch (err) {
         if (isMountedRef.current) {
