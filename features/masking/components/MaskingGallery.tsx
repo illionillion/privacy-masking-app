@@ -38,15 +38,8 @@ export function MaskingGallery() {
     imagesRef.current = images;
   }, [images]);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
-  const { isModelLoading, isDetecting, error: detectionError, detectFaces } = useFaceDetection();
+  const { isModelLoading, isDetecting, detectFaces } = useFaceDetection();
   const { isRecognizing, recognizeText } = useOcr();
-
-  /** detectionError / ocrError をトースト通知に変換する */
-  useEffect(() => {
-    if (detectionError) {
-      toast.error(`顔検出エラー: ${detectionError}`);
-    }
-  }, [detectionError]);
 
   /** コンポーネント破棄時に imageUrl の Blob URL をすべて解放し isMountedRef を false にする */
   useEffect(() => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { toast } from "sonner";
 import type { FaceDetectionResult, UseFaceDetectionReturn } from "../types";
 
 /**
@@ -85,7 +86,10 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   /**
    * 画像内の顔を検出する
    *
+   * 顔検出に失敗した場合はトーストでエラーを通知し、空配列を返す。
+   *
    * @param imageElement - 検出対象の HTMLImageElement
+   * @returns 検出された顔領域の配列。エラー時は空配列
    */
   const detectFaces = useCallback(
     async (imageElement: HTMLImageElement): Promise<FaceDetectionResult[]> => {
@@ -116,10 +120,11 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         return mappedDetections;
       } catch (err) {
         if (callId === detectRequestRef.current) {
-          if (isMountedRef.current)
-            setError(err instanceof Error ? err.message : "顔検出中にエラーが発生しました");
+          const message = err instanceof Error ? err.message : "顔検出中にエラーが発生しました";
+          if (isMountedRef.current) setError(message);
+          toast.error(`顔検出エラー: ${message}`);
         }
-        throw err;
+        return [];
       } finally {
         inFlightRef.current--;
         if (inFlightRef.current === 0) {

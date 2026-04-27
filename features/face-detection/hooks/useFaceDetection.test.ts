@@ -12,6 +12,12 @@ vi.mock("@vladmandic/face-api", () => ({
   SsdMobilenetv1Options: vi.fn(),
 }));
 
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+  },
+}));
+
 describe("useFaceDetection", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -83,5 +89,25 @@ describe("useFaceDetection", () => {
 
     expect(first[0]).toMatchObject({ x: 10, y: 20 });
     expect(second[0]).toMatchObject({ x: 50, y: 60 });
+  });
+
+  it("face-api が reject した場合 detectFaces は空配列を返し error state と toast が設定される", async () => {
+    const faceapi = await import("@vladmandic/face-api");
+    const { toast } = await import("sonner");
+
+    vi.mocked(faceapi.detectAllFaces).mockRejectedValueOnce(new Error("検出エラー"));
+
+    const { result } = renderHook(() => useFaceDetection());
+    await waitFor(() => expect(result.current.isModelLoading).toBe(false));
+
+    const mockImage = document.createElement("img");
+    let detections: Awaited<ReturnType<typeof result.current.detectFaces>> = [];
+    await act(async () => {
+      detections = await result.current.detectFaces(mockImage);
+    });
+
+    expect(detections).toHaveLength(0);
+    expect(result.current.error).toBe("検出エラー");
+    expect(toast.error).toHaveBeenCalledWith("顔検出エラー: 検出エラー");
   });
 });
