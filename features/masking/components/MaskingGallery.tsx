@@ -120,6 +120,7 @@ export function MaskingGallery() {
         setActiveImageId((prev) => prev ?? succeededItems[0].id);
       }
 
+      if (!isMountedRef.current) return;
       blobResults.forEach((result, idx) => {
         if (result.status === "rejected") {
           toast.error(`${files[idx].name} の読み込みに失敗しました`);
