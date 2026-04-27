@@ -49,7 +49,6 @@ async function getFaceApi() {
 export function useFaceDetection(): UseFaceDetectionReturn {
   const [isModelLoading, setIsModelLoading] = useState(true);
   const [isDetecting, setIsDetecting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   /** 最後に開始した検出呼び出しのID（古い結果の state 上書きを防ぐ） */
   const detectRequestRef = useRef(0);
   /** 現在処理中の検出呼び出し数（1つでも走っている間は isDetecting を true に保つ） */
@@ -69,8 +68,9 @@ export function useFaceDetection(): UseFaceDetectionReturn {
           setIsModelLoading(false);
         }
       } catch (err) {
+        const message = err instanceof Error ? err.message : "モデルのロードに失敗しました";
+        toast.error(`モデルロードエラー: ${message}`);
         if (isMountedRef.current) {
-          setError(err instanceof Error ? err.message : "モデルのロードに失敗しました");
           setIsModelLoading(false);
         }
       }
@@ -102,7 +102,6 @@ export function useFaceDetection(): UseFaceDetectionReturn {
 
       if (isMountedRef.current) {
         setIsDetecting(true);
-        setError(null);
       }
       try {
         const faceapi = await getFaceApi();
@@ -121,7 +120,6 @@ export function useFaceDetection(): UseFaceDetectionReturn {
       } catch (err) {
         if (callId === detectRequestRef.current) {
           const message = err instanceof Error ? err.message : "顔検出中にエラーが発生しました";
-          if (isMountedRef.current) setError(message);
           toast.error(`顔検出エラー: ${message}`);
         }
         return [];
@@ -135,5 +133,5 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     []
   );
 
-  return { isModelLoading, isDetecting, error, detectFaces };
+  return { isModelLoading, isDetecting, detectFaces };
 }

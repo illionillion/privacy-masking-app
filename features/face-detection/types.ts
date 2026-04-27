@@ -22,8 +22,6 @@ export interface UseFaceDetectionReturn {
   isModelLoading: boolean;
   /** 顔検出処理中フラグ */
   isDetecting: boolean;
-  /** エラーメッセージ */
-  error: string | null;
   /** 顔検出を実行する関数 */
   detectFaces: (imageElement: HTMLImageElement) => Promise<FaceDetectionResult[]>;
 }

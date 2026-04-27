@@ -31,11 +31,11 @@ describe("useFaceDetection", () => {
     await waitFor(() => {
       expect(result.current.isModelLoading).toBe(false);
     });
-    expect(result.current.error).toBeNull();
   });
 
-  it("モデルのロード失敗で error が設定され isModelLoading が false になる", async () => {
+  it("モデルのロード失敗で toast.error が表示され isModelLoading が false になる", async () => {
     const faceapi = await import("@vladmandic/face-api");
+    const { toast } = await import("sonner");
     vi.mocked(faceapi.nets.ssdMobilenetv1.loadFromUri).mockRejectedValueOnce(
       new Error("モデルの取得に失敗")
     );
@@ -43,7 +43,7 @@ describe("useFaceDetection", () => {
     await waitFor(() => {
       expect(result.current.isModelLoading).toBe(false);
     });
-    expect(result.current.error).toBe("モデルの取得に失敗");
+    expect(toast.error).toHaveBeenCalledWith("モデルロードエラー: モデルの取得に失敗");
   });
 
   it("detectFaces が face-api の結果を FaceDetectionResult に正しくマップする", async () => {
@@ -107,7 +107,6 @@ describe("useFaceDetection", () => {
     });
 
     expect(detections).toHaveLength(0);
-    expect(result.current.error).toBe("検出エラー");
     expect(toast.error).toHaveBeenCalledWith("顔検出エラー: 検出エラー");
   });
 });
