@@ -67,8 +67,8 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : "モデルのロードに失敗しました";
-        toast.error(`モデルロードエラー: ${message}`);
         if (isMountedRef.current) {
+          toast.error(`モデルロードエラー: ${message}`);
           setIsModelLoading(false);
         }
       }
