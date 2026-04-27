@@ -186,7 +186,6 @@ function extractOcrRegions(page: TesseractPage): OcrRegion[] {
 export function useOcr(): UseOcrReturn {
   const [isRecognizing, setIsRecognizing] = useState(false);
   const [ocrRegions, setOcrRegions] = useState<OcrRegion[]>([]);
-  const [error, setError] = useState<string | null>(null);
   /** Tesseract Worker のキャッシュ（インスタンス内で再利用） */
   const workerRef = useRef<Promise<import("tesseract.js").Worker> | null>(null);
   /** 最後に開始した認識リクエストのID（古い結果の state 上書きを防ぐ） */
@@ -255,14 +254,11 @@ export function useOcr(): UseOcrReturn {
 
         if (requestId === recognizeRequestRef.current) {
           setOcrRegions(regions);
-          /** 成功時のみエラーをクリアする（開始時にクリアすると並列実行中の失敗が上書きされるため） */
-          setError(null);
         }
 
         return regions;
       } catch (err) {
         if (requestId === recognizeRequestRef.current) {
-          setError(err instanceof Error ? err.message : "OCR処理中にエラーが発生しました");
           setOcrRegions([]);
         }
         /** 呼び出し元（MaskingGallery 等）でOCR失敗を検知できるよう再スロー */
@@ -277,5 +273,5 @@ export function useOcr(): UseOcrReturn {
     [getWorker]
   );
 
-  return { isRecognizing, ocrRegions, error, recognizeText };
+  return { isRecognizing, ocrRegions, recognizeText };
 }
