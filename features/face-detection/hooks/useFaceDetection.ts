@@ -119,7 +119,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
           if (isMountedRef.current)
             setError(err instanceof Error ? err.message : "顔検出中にエラーが発生しました");
         }
-        return [];
+        throw err;
       } finally {
         inFlightRef.current--;
         if (inFlightRef.current === 0) {
