@@ -39,7 +39,7 @@ export function MaskingGallery() {
   }, [images]);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
   const { isModelLoading, isDetecting, error: detectionError, detectFaces } = useFaceDetection();
-  const { isRecognizing, error: ocrError, recognizeText } = useOcr();
+  const { isRecognizing, recognizeText } = useOcr();
 
   /** detectionError / ocrError をトースト通知に変換する */
   useEffect(() => {
@@ -47,12 +47,6 @@ export function MaskingGallery() {
       toast.error(`顔検出エラー: ${detectionError}`);
     }
   }, [detectionError]);
-
-  useEffect(() => {
-    if (ocrError) {
-      toast.error(`OCRエラー: ${ocrError}`);
-    }
-  }, [ocrError]);
 
   /** コンポーネント破棄時に imageUrl の Blob URL をすべて解放し isMountedRef を false にする */
   useEffect(() => {
@@ -133,6 +127,11 @@ export function MaskingGallery() {
         setActiveImageId((prev) => prev ?? succeededItems[0].id);
       }
 
+      blobResults.forEach((result, idx) => {
+        if (result.status === "rejected") {
+          toast.error(`${files[idx].name} の読み込みに失敗しました`);
+        }
+      });
       const blobFailedCount = blobResults.filter((r) => r.status === "rejected").length;
       if (!isMountedRef.current) return;
       if (blobFailedCount > 0) {
@@ -148,6 +147,8 @@ export function MaskingGallery() {
        * 同時実行数を CONCURRENCY に抑える。
        */
       const CONCURRENCY = 2;
+      let step2SucceededCount = 0;
+      let step2FailedCount = 0;
       for (let i = 0; i < initialItems.length; i += CONCURRENCY) {
         if (!isMountedRef.current) break;
         const chunk = initialItems.slice(i, i + CONCURRENCY);
@@ -171,6 +172,7 @@ export function MaskingGallery() {
                   )
                 );
                 toast.success(`${item.name} の処理が完了しました`);
+                step2SucceededCount++;
               }
             } catch (err) {
               if (isMountedRef.current) {
@@ -182,11 +184,19 @@ export function MaskingGallery() {
                   )
                 );
                 toast.error(`${item.name} の処理に失敗しました`);
+                step2FailedCount++;
               }
               throw err;
             }
           })
         );
+      }
+      if (!isMountedRef.current) return;
+      if (step2SucceededCount > 0) {
+        toast.success(`${step2SucceededCount} 件の処理が完了しました`);
+      }
+      if (step2FailedCount > 0) {
+        toast.error(`${step2FailedCount} 件の処理に失敗しました`);
       }
     },
     [detectFaces, recognizeText, isModelLoading]
@@ -233,7 +243,7 @@ export function MaskingGallery() {
                 : image
             )
           );
-          toast.success("1 件の画像の再検出が完了しました");
+          toast.success(`${target.name} の再検出が完了しました`);
         }
       } catch (err) {
         if (isMountedRef.current) {
