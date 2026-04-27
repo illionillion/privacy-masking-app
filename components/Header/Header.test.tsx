@@ -5,7 +5,7 @@ import { Header } from "./index";
 describe("Header", () => {
   it("アプリ名が表示される", () => {
     render(<Header />);
-    expect(screen.getByText("Privacy Masking Tool")).toBeInTheDocument();
+    expect(screen.getByText("伏せ太郎")).toBeInTheDocument();
   });
 
   it("サブタイトルが表示される", () => {

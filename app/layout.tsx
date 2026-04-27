@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   title: "伏せ太郎 | Fusely",
   description:
     "伏せ太郎（Fusely）は、画像内の顔・文字情報を検出して黒塗り・モザイク・ぼかし編集ができるブラウザ完結型ツール",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
