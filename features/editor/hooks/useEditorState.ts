@@ -46,7 +46,7 @@ export interface UseEditorStateReturn {
   selectedStampFileName: string;
   rectTarget: RectAddTarget;
   brushSize: number;
-  setMode: (mode: EditorMode) => void;
+  onChangeMode: (mode: EditorMode) => void;
   setSelectedStampType: (type: StampType) => void;
   setSelectedStampFileName: (name: string) => void;
   setRectTarget: (target: RectAddTarget) => void;
@@ -277,6 +277,14 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
     setSelectedId(null);
   }, [selectedId]);
 
+  const onChangeMode = useCallback(
+    (newMode: EditorMode) => {
+      setMode(newMode);
+      selectItem(null);
+    },
+    [selectItem]
+  );
+
   return {
     mode,
     stampRegions,
@@ -287,7 +295,7 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
     selectedStampFileName,
     rectTarget,
     brushSize,
-    setMode,
+    onChangeMode,
     setSelectedStampType,
     setSelectedStampFileName,
     setRectTarget,
