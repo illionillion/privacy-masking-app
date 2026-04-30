@@ -157,18 +157,20 @@ export function EditorToolbar({
       )}
 
       {/* 削除ボタン */}
-      <button
-        type="button"
-        onClick={onDeleteSelected}
-        disabled={selectedId === null}
-        className={clsx([
-          "ml-auto rounded-md px-3 py-1 text-sm font-medium transition-colors",
-          "bg-red-600 text-white hover:bg-red-700",
-          selectedId === null && "cursor-not-allowed opacity-50",
-        ])}
-      >
-        削除
-      </button>
+      {mode === "select" && (
+        <button
+          type="button"
+          onClick={onDeleteSelected}
+          disabled={selectedId === null}
+          className={clsx([
+            "ml-auto rounded-md px-3 py-1 text-sm font-medium transition-colors",
+            "bg-red-600 text-white hover:bg-red-700",
+            selectedId === null && "cursor-not-allowed opacity-50",
+          ])}
+        >
+          削除
+        </button>
+      )}
     </div>
   );
 }
