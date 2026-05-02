@@ -165,7 +165,7 @@ export function MaskingGallery() {
                       : image
                   )
                 );
-                toast.success(`${item.name} の処理が完了しました`);
+                toast.success(`${item.name} の検出が完了しました`);
                 step2SucceededCount++;
               }
             } catch (err) {
@@ -177,7 +177,7 @@ export function MaskingGallery() {
                       : image
                   )
                 );
-                toast.error(`${item.name} の処理に失敗しました`);
+                toast.error(`${item.name} の検出に失敗しました`);
                 step2FailedCount++;
               }
               throw err;
@@ -187,10 +187,10 @@ export function MaskingGallery() {
       }
       if (!isMountedRef.current) return;
       if (step2SucceededCount > 0) {
-        toast.success(`${step2SucceededCount} 件の処理が完了しました`);
+        toast.success(`${step2SucceededCount} 件の検出が完了しました`);
       }
       if (step2FailedCount > 0) {
-        toast.error(`${step2FailedCount} 件の処理に失敗しました`);
+        toast.error(`${step2FailedCount} 件の検出に失敗しました`);
       }
     },
     [detectFaces, recognizeText, isModelLoading]
