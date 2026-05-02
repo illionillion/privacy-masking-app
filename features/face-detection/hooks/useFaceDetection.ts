@@ -48,6 +48,7 @@ async function getFaceApi() {
  */
 export function useFaceDetection(): UseFaceDetectionReturn {
   const [isModelLoading, setIsModelLoading] = useState(true);
+  const [isModelError, setIsModelError] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   /** 現在処理中の検出呼び出し数（1つでも走っている間は isDetecting を true に保つ） */
   const inFlightRef = useRef(0);
@@ -69,6 +70,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         const message = err instanceof Error ? err.message : "モデルのロードに失敗しました";
         if (isMountedRef.current) {
           toast.error(`モデルロードエラー: ${message}`);
+          setIsModelError(true);
           setIsModelLoading(false);
         }
       }
@@ -129,5 +131,5 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     []
   );
 
-  return { isModelLoading, isDetecting, detectFaces };
+  return { isModelLoading, isModelError, isDetecting, detectFaces };
 }

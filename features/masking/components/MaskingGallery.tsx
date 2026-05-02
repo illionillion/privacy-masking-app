@@ -38,7 +38,7 @@ export function MaskingGallery() {
     imagesRef.current = images;
   }, [images]);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
-  const { isModelLoading, isDetecting, detectFaces } = useFaceDetection();
+  const { isModelLoading, isModelError, isDetecting, detectFaces } = useFaceDetection();
   const { isRecognizing, recognizeText } = useOcr();
 
   /** コンポーネント破棄時に imageUrl の Blob URL をすべて解放し isMountedRef を false にする */
@@ -60,7 +60,7 @@ export function MaskingGallery() {
    */
   const handleUpload = useCallback(
     async (files: File[]) => {
-      if (files.length === 0 || isModelLoading) return;
+      if (files.length === 0 || isModelLoading || isModelError) return;
 
       const uploadedAt = Date.now();
 
@@ -193,7 +193,7 @@ export function MaskingGallery() {
         toast.error(`${step2FailedCount} 件の検出に失敗しました`);
       }
     },
-    [detectFaces, recognizeText, isModelLoading]
+    [detectFaces, recognizeText, isModelLoading, isModelError]
   );
 
   /**
@@ -204,7 +204,7 @@ export function MaskingGallery() {
   const handleRedetect = useCallback(
     async (imageId: string) => {
       const target = images.find((image) => image.id === imageId);
-      if (!target || isModelLoading || target.isProcessing) return;
+      if (!target || isModelLoading || isModelError || target.isProcessing) return;
 
       setImages((prev) =>
         prev.map((image) =>
@@ -248,12 +248,11 @@ export function MaskingGallery() {
                 : image
             )
           );
-          const message = err instanceof Error ? err.message : "再検出に失敗しました";
-          toast.error(message);
+          toast.error(`${target.name} の再検出に失敗しました`);
         }
       }
     },
-    [images, detectFaces, recognizeText, isModelLoading]
+    [images, detectFaces, recognizeText, isModelLoading, isModelError]
   );
 
   /**
@@ -351,7 +350,7 @@ export function MaskingGallery() {
     <div className="flex flex-col gap-6">
       <ImageUpload
         onUpload={handleUpload}
-        disabled={isProcessing || isModelLoading}
+        disabled={isProcessing || isModelLoading || isModelError}
         multiple
         loadingMessage={loadingMessage}
       />
