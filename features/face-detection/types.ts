@@ -20,10 +20,10 @@ export interface FaceDetectionResult {
 export interface UseFaceDetectionReturn {
   /** モデルロード中フラグ */
   isModelLoading: boolean;
+  /** モデルロード失敗フラグ（true の場合、顔検出は使用不可） */
+  isModelError: boolean;
   /** 顔検出処理中フラグ */
   isDetecting: boolean;
-  /** エラーメッセージ */
-  error: string | null;
   /** 顔検出を実行する関数 */
   detectFaces: (imageElement: HTMLImageElement) => Promise<FaceDetectionResult[]>;
 }

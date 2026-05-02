@@ -39,21 +39,8 @@ export function MaskingGallery() {
     imagesRef.current = images;
   }, [images]);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
-  const { isModelLoading, isDetecting, error: detectionError, detectFaces } = useFaceDetection();
-  const { isRecognizing, error: ocrError, recognizeText } = useOcr();
-
-  /** detectionError / ocrError をトースト通知に変換する */
-  useEffect(() => {
-    if (detectionError) {
-      toast.error(`顔検出エラー: ${detectionError}`);
-    }
-  }, [detectionError]);
-
-  useEffect(() => {
-    if (ocrError) {
-      toast.error(`OCRエラー: ${ocrError}`);
-    }
-  }, [ocrError]);
+  const { isModelLoading, isModelError, isDetecting, detectFaces } = useFaceDetection();
+  const { isRecognizing, recognizeText } = useOcr();
 
   /** コンポーネント破棄時に imageUrl の Blob URL をすべて解放し isMountedRef を false にする */
   useEffect(() => {
@@ -74,7 +61,7 @@ export function MaskingGallery() {
    */
   const handleUpload = useCallback(
     async (files: File[]) => {
-      if (files.length === 0 || isModelLoading) return;
+      if (files.length === 0 || isModelLoading || isModelError) return;
 
       const uploadedAt = Date.now();
 
@@ -134,6 +121,12 @@ export function MaskingGallery() {
         setActiveImageId((prev) => prev ?? succeededItems[0].id);
       }
 
+      if (!isMountedRef.current) return;
+      blobResults.forEach((result, idx) => {
+        if (result.status === "rejected") {
+          toast.error(`${files[idx].name} の読み込みに失敗しました`);
+        }
+      });
       const blobFailedCount = blobResults.filter((r) => r.status === "rejected").length;
       if (!isMountedRef.current) return;
       if (blobFailedCount > 0) {
@@ -149,6 +142,8 @@ export function MaskingGallery() {
        * 同時実行数を CONCURRENCY に抑える。
        */
       const CONCURRENCY = 2;
+      let step2SucceededCount = 0;
+      let step2FailedCount = 0;
       for (let i = 0; i < initialItems.length; i += CONCURRENCY) {
         if (!isMountedRef.current) break;
         const chunk = initialItems.slice(i, i + CONCURRENCY);
@@ -171,7 +166,8 @@ export function MaskingGallery() {
                       : image
                   )
                 );
-                toast.success(`${item.name} の処理が完了しました`);
+                toast.success(`${item.name} の検出が完了しました`);
+                step2SucceededCount++;
               }
             } catch (err) {
               if (isMountedRef.current) {
@@ -182,15 +178,23 @@ export function MaskingGallery() {
                       : image
                   )
                 );
-                toast.error(`${item.name} の処理に失敗しました`);
+                toast.error(`${item.name} の検出に失敗しました`);
+                step2FailedCount++;
               }
               throw err;
             }
           })
         );
       }
+      if (!isMountedRef.current) return;
+      if (step2SucceededCount > 0) {
+        toast.success(`${step2SucceededCount} 件の検出が完了しました`);
+      }
+      if (step2FailedCount > 0) {
+        toast.error(`${step2FailedCount} 件の検出に失敗しました`);
+      }
     },
-    [detectFaces, recognizeText, isModelLoading]
+    [detectFaces, recognizeText, isModelLoading, isModelError]
   );
 
   /**
@@ -201,7 +205,7 @@ export function MaskingGallery() {
   const handleRedetect = useCallback(
     async (imageId: string) => {
       const target = images.find((image) => image.id === imageId);
-      if (!target || isModelLoading || target.isProcessing) return;
+      if (!target || isModelLoading || isModelError || target.isProcessing) return;
 
       setImages((prev) =>
         prev.map((image) =>
@@ -234,7 +238,7 @@ export function MaskingGallery() {
                 : image
             )
           );
-          toast.success("1 件の画像の再検出が完了しました");
+          toast.success(`${target.name} の再検出が完了しました`);
         }
       } catch (err) {
         if (isMountedRef.current) {
@@ -245,12 +249,12 @@ export function MaskingGallery() {
                 : image
             )
           );
-          const message = err instanceof Error ? err.message : "再検出に失敗しました";
-          toast.error(message);
+          const detail = err instanceof Error ? err.message : "不明なエラー";
+          toast.error(`${target.name} の再検出に失敗しました: ${detail}`);
         }
       }
     },
-    [images, detectFaces, recognizeText, isModelLoading]
+    [images, detectFaces, recognizeText, isModelLoading, isModelError]
   );
 
   /**
@@ -355,10 +359,15 @@ export function MaskingGallery() {
     <div className="flex flex-col gap-6">
       <ImageUpload
         onUpload={handleUpload}
-        disabled={isProcessing || isModelLoading}
+        disabled={isProcessing || isModelLoading || isModelError}
         multiple
         loadingMessage={loadingMessage}
       />
+      {isModelError && (
+        <p role="alert" className="text-center text-sm text-red-600">
+          顔検出モデルのロードに失敗しました。ページを再読み込みしてください。
+        </p>
+      )}
 
       {images.length > 0 && (
         <div className="flex flex-col gap-4">

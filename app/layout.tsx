@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Toaster } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Header } from "@/components/Header";
+import { ToasterProvider } from "@/components/ToasterProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,8 +35,8 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col bg-zinc-50 text-zinc-900">
         <Header />
         <main className="flex flex-1 flex-col">{children}</main>
-        <Toaster richColors position="bottom-right" />
         <ConfirmDialog />
+        <ToasterProvider />
       </body>
     </html>
   );

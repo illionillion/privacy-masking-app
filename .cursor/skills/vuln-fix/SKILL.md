@@ -1,7 +1,8 @@
 ---
 name: vuln-fix
-description: "npm/pnpm の脆弱性対応を行う時に使用するSkill。「脆弱性修正して」「pnpm audit対応して」「セキュリティ警告を直して」などの操作が対象。audit実行・バージョンアップ・overrides設定・パッチなし無視・PR作成までの一連フローを含む。"
-argument-hint: '例: "pnpm auditの脆弱性を修正" / "セキュリティ警告をまとめて対応してPR作成" / "依存関係の脆弱性チェックして修正"'
+description: >-
+  pnpm audit に基づく脆弱性トリアージ・バージョンアップ・pnpm.overrides・パッチなしの扱い・PR 作成までを案内する。「脆弱性修正」「pnpm audit 対応」「セキュリティ警告を直して」などの依頼時に使う。完了後は github-ops Skill で PR を作成する。
+disable-model-invocation: true
 ---
 
 # 脆弱性対応 Skill

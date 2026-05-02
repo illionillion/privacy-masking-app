@@ -12,6 +12,12 @@ vi.mock("@vladmandic/face-api", () => ({
   SsdMobilenetv1Options: vi.fn(),
 }));
 
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+  },
+}));
+
 describe("useFaceDetection", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -25,11 +31,11 @@ describe("useFaceDetection", () => {
     await waitFor(() => {
       expect(result.current.isModelLoading).toBe(false);
     });
-    expect(result.current.error).toBeNull();
   });
 
-  it("モデルのロード失敗で error が設定され isModelLoading が false になる", async () => {
+  it("モデルのロード失敗で toast.error が表示され isModelLoading が false になる", async () => {
     const faceapi = await import("@vladmandic/face-api");
+    const { toast } = await import("sonner");
     vi.mocked(faceapi.nets.ssdMobilenetv1.loadFromUri).mockRejectedValueOnce(
       new Error("モデルの取得に失敗")
     );
@@ -37,7 +43,18 @@ describe("useFaceDetection", () => {
     await waitFor(() => {
       expect(result.current.isModelLoading).toBe(false);
     });
-    expect(result.current.error).toBe("モデルの取得に失敗");
+    expect(toast.error).toHaveBeenCalledWith("モデルロードエラー: モデルの取得に失敗");
+  });
+
+  it("モデルのロード失敗で isModelError が true になる", async () => {
+    const faceapi = await import("@vladmandic/face-api");
+    vi.mocked(faceapi.nets.ssdMobilenetv1.loadFromUri).mockRejectedValueOnce(
+      new Error("モデルの取得に失敗")
+    );
+    const { result } = renderHook(() => useFaceDetection());
+    await waitFor(() => {
+      expect(result.current.isModelError).toBe(true);
+    });
   });
 
   it("detectFaces が face-api の結果を FaceDetectionResult に正しくマップする", async () => {
@@ -83,5 +100,19 @@ describe("useFaceDetection", () => {
 
     expect(first[0]).toMatchObject({ x: 10, y: 20 });
     expect(second[0]).toMatchObject({ x: 50, y: 60 });
+  });
+
+  it("face-api が reject した場合 detectFaces は例外を throw する", async () => {
+    const faceapi = await import("@vladmandic/face-api");
+
+    vi.mocked(faceapi.detectAllFaces).mockRejectedValueOnce(new Error("検出エラー"));
+
+    const { result } = renderHook(() => useFaceDetection());
+    await waitFor(() => expect(result.current.isModelLoading).toBe(false));
+
+    const mockImage = document.createElement("img");
+    await act(async () => {
+      await expect(result.current.detectFaces(mockImage)).rejects.toThrow("検出エラー");
+    });
   });
 });

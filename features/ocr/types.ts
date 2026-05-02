@@ -27,8 +27,6 @@ export interface UseOcrReturn {
   isRecognizing: boolean;
   /** 検出された個人情報領域の一覧 */
   ocrRegions: OcrRegion[];
-  /** エラーメッセージ */
-  error: string | null;
   /** OCRを実行して個人情報領域を返す関数 */
   recognizeText: (imageElement: HTMLImageElement) => Promise<OcrRegion[]>;
 }

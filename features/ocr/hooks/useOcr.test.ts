@@ -97,7 +97,6 @@ describe("useOcr", () => {
     const { result } = renderHook(() => useOcr());
     expect(result.current.isRecognizing).toBe(false);
     expect(result.current.ocrRegions).toHaveLength(0);
-    expect(result.current.error).toBeNull();
   });
 
   it("recognizeText 完了後は isRecognizing が false になる", async () => {
@@ -252,7 +251,7 @@ describe("useOcr", () => {
     });
   });
 
-  it("OCR処理失敗時に error が設定される", async () => {
+  it("OCR処理失敗時に例外が再スローされ isRecognizing が false になる", async () => {
     mockRecognize.mockRejectedValueOnce(new Error("OCR失敗"));
 
     const { result } = renderHook(() => useOcr());
@@ -262,9 +261,6 @@ describe("useOcr", () => {
       await expect(result.current.recognizeText(mockImage)).rejects.toThrow("OCR失敗");
     });
 
-    await waitFor(() => {
-      expect(result.current.error).toBe("OCR失敗");
-    });
     expect(result.current.isRecognizing).toBe(false);
   });
 
