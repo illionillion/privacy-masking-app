@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { toast } from "sonner";
 import type { FaceDetectionResult, UseFaceDetectionReturn } from "../types";
 
 /**
@@ -47,10 +48,8 @@ async function getFaceApi() {
  */
 export function useFaceDetection(): UseFaceDetectionReturn {
   const [isModelLoading, setIsModelLoading] = useState(true);
+  const [isModelError, setIsModelError] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  /** 最後に開始した検出呼び出しのID（古い結果の state 上書きを防ぐ） */
-  const detectRequestRef = useRef(0);
   /** 現在処理中の検出呼び出し数（1つでも走っている間は isDetecting を true に保つ） */
   const inFlightRef = useRef(0);
   /** アンマウント後の state 更新を防ぐフラグ */
@@ -68,8 +67,10 @@ export function useFaceDetection(): UseFaceDetectionReturn {
           setIsModelLoading(false);
         }
       } catch (err) {
+        const message = err instanceof Error ? err.message : "モデルのロードに失敗しました";
         if (isMountedRef.current) {
-          setError(err instanceof Error ? err.message : "モデルのロードに失敗しました");
+          toast.error(`モデルロードエラー: ${message}`);
+          setIsModelError(true);
           setIsModelLoading(false);
         }
       }
@@ -85,7 +86,12 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   /**
    * 画像内の顔を検出する
    *
+   * 顔検出に失敗した場合は例外を再スローする。
+   * 呼び出し元（MaskingGallery 等）で catch して通知・状態管理を行うこと。
+   *
    * @param imageElement - 検出対象の HTMLImageElement
+   * @returns 検出された顔領域の配列
+   * @throws 顔検出に失敗した場合
    */
   const detectFaces = useCallback(
     async (imageElement: HTMLImageElement): Promise<FaceDetectionResult[]> => {
@@ -93,12 +99,10 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         return [];
       }
 
-      const callId = ++detectRequestRef.current;
       inFlightRef.current++;
 
       if (isMountedRef.current) {
         setIsDetecting(true);
-        setError(null);
       }
       try {
         const faceapi = await getFaceApi();
@@ -115,11 +119,8 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         }));
         return mappedDetections;
       } catch (err) {
-        if (callId === detectRequestRef.current) {
-          if (isMountedRef.current)
-            setError(err instanceof Error ? err.message : "顔検出中にエラーが発生しました");
-        }
-        return [];
+        /** 呼び出し元（MaskingGallery 等）で顔検出失敗を検知できるよう再スロー */
+        throw err;
       } finally {
         inFlightRef.current--;
         if (inFlightRef.current === 0) {
@@ -130,5 +131,5 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     []
   );
 
-  return { isModelLoading, isDetecting, error, detectFaces };
+  return { isModelLoading, isModelError, isDetecting, detectFaces };
 }

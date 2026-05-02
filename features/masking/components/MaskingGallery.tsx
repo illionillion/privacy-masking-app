@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { zip } from "fflate";
+import { toast } from "sonner";
 import { ImageUpload } from "@/components/ImageUpload";
 import { useFaceDetection } from "@/features/face-detection";
 import { useOcr } from "@/features/ocr";
@@ -37,9 +38,8 @@ export function MaskingGallery() {
     imagesRef.current = images;
   }, [images]);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const { isModelLoading, isDetecting, error: detectionError, detectFaces } = useFaceDetection();
-  const { isRecognizing, error: ocrError, recognizeText } = useOcr();
+  const { isModelLoading, isModelError, isDetecting, detectFaces } = useFaceDetection();
+  const { isRecognizing, recognizeText } = useOcr();
 
   /** コンポーネント破棄時に imageUrl の Blob URL をすべて解放し isMountedRef を false にする */
   useEffect(() => {
@@ -60,9 +60,8 @@ export function MaskingGallery() {
    */
   const handleUpload = useCallback(
     async (files: File[]) => {
-      if (files.length === 0 || isModelLoading) return;
+      if (files.length === 0 || isModelLoading || isModelError) return;
 
-      setUploadError(null);
       const uploadedAt = Date.now();
 
       /**
@@ -121,10 +120,16 @@ export function MaskingGallery() {
         setActiveImageId((prev) => prev ?? succeededItems[0].id);
       }
 
+      if (!isMountedRef.current) return;
+      blobResults.forEach((result, idx) => {
+        if (result.status === "rejected") {
+          toast.error(`${files[idx].name} の読み込みに失敗しました`);
+        }
+      });
       const blobFailedCount = blobResults.filter((r) => r.status === "rejected").length;
       if (!isMountedRef.current) return;
       if (blobFailedCount > 0) {
-        setUploadError(`${blobFailedCount} 件の画像の読み込みに失敗しました`);
+        toast.error(`${blobFailedCount} 件の画像の読み込みに失敗しました`);
       }
 
       initialItems.push(...succeededItems);
@@ -136,11 +141,12 @@ export function MaskingGallery() {
        * 同時実行数を CONCURRENCY に抑える。
        */
       const CONCURRENCY = 2;
-      const results: PromiseSettledResult<void>[] = [];
+      let step2SucceededCount = 0;
+      let step2FailedCount = 0;
       for (let i = 0; i < initialItems.length; i += CONCURRENCY) {
         if (!isMountedRef.current) break;
         const chunk = initialItems.slice(i, i + CONCURRENCY);
-        const chunkResults = await Promise.allSettled(
+        await Promise.allSettled(
           chunk.map(async (item) => {
             try {
               const imageElement = await loadImageElement(item.imageUrl);
@@ -159,6 +165,8 @@ export function MaskingGallery() {
                       : image
                   )
                 );
+                toast.success(`${item.name} の検出が完了しました`);
+                step2SucceededCount++;
               }
             } catch (err) {
               if (isMountedRef.current) {
@@ -169,21 +177,23 @@ export function MaskingGallery() {
                       : image
                   )
                 );
+                toast.error(`${item.name} の検出に失敗しました`);
+                step2FailedCount++;
               }
               throw err;
             }
           })
         );
-        results.push(...chunkResults);
       }
-
-      const failedCount = results.filter((r) => r.status === "rejected").length;
       if (!isMountedRef.current) return;
-      if (failedCount > 0) {
-        setUploadError(`${failedCount} 件の画像の処理に失敗しました`);
+      if (step2SucceededCount > 0) {
+        toast.success(`${step2SucceededCount} 件の検出が完了しました`);
+      }
+      if (step2FailedCount > 0) {
+        toast.error(`${step2FailedCount} 件の検出に失敗しました`);
       }
     },
-    [detectFaces, recognizeText, isModelLoading]
+    [detectFaces, recognizeText, isModelLoading, isModelError]
   );
 
   /**
@@ -194,9 +204,8 @@ export function MaskingGallery() {
   const handleRedetect = useCallback(
     async (imageId: string) => {
       const target = images.find((image) => image.id === imageId);
-      if (!target || isModelLoading || target.isProcessing) return;
+      if (!target || isModelLoading || isModelError || target.isProcessing) return;
 
-      setUploadError(null);
       setImages((prev) =>
         prev.map((image) =>
           image.id === imageId
@@ -228,6 +237,7 @@ export function MaskingGallery() {
                 : image
             )
           );
+          toast.success(`${target.name} の再検出が完了しました`);
         }
       } catch (err) {
         if (isMountedRef.current) {
@@ -238,12 +248,12 @@ export function MaskingGallery() {
                 : image
             )
           );
-          const message = err instanceof Error ? err.message : "再検出に失敗しました";
-          setUploadError(message);
+          const detail = err instanceof Error ? err.message : "不明なエラー";
+          toast.error(`${target.name} の再検出に失敗しました: ${detail}`);
         }
       }
     },
-    [images, detectFaces, recognizeText, isModelLoading]
+    [images, detectFaces, recognizeText, isModelLoading, isModelError]
   );
 
   /**
@@ -313,7 +323,7 @@ export function MaskingGallery() {
         if (err) {
           console.error("ZIPの生成に失敗しました", err);
           if (isMountedRef.current) {
-            setUploadError("ZIPの生成に失敗しました");
+            toast.error("ZIPの生成に失敗しました");
           }
           return;
         }
@@ -341,14 +351,13 @@ export function MaskingGallery() {
     <div className="flex flex-col gap-6">
       <ImageUpload
         onUpload={handleUpload}
-        disabled={isProcessing || isModelLoading}
+        disabled={isProcessing || isModelLoading || isModelError}
         multiple
         loadingMessage={loadingMessage}
       />
-
-      {(detectionError ?? ocrError ?? uploadError) && (
-        <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-          エラー: {detectionError ?? ocrError ?? uploadError}
+      {isModelError && (
+        <p role="alert" className="text-center text-sm text-red-600">
+          顔検出モデルのロードに失敗しました。ページを再読み込みしてください。
         </p>
       )}
 
