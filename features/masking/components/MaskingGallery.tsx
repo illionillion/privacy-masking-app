@@ -239,7 +239,7 @@ export function MaskingGallery() {
           );
           toast.success(`${target.name} の再検出が完了しました`);
         }
-      } catch (err) {
+      } catch {
         if (isMountedRef.current) {
           setImages((prev) =>
             prev.map((image) =>
