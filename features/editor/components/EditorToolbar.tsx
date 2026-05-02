@@ -16,7 +16,7 @@ interface EditorToolbarProps {
   brushSize: number;
   selectedId: string | null;
   isStampSelected: boolean;
-  onModeChange: (mode: EditorMode) => void;
+  onChangeMode: (mode: EditorMode) => void;
   onRectTargetChange: (target: RectAddTarget) => void;
   onStampTypeChange: (type: StampType) => void;
   /** stamp-face 画像選択時のコールバック */
@@ -58,7 +58,7 @@ export function EditorToolbar({
   brushSize,
   selectedId,
   isStampSelected,
-  onModeChange,
+  onChangeMode,
   onRectTargetChange,
   onStampTypeChange,
   onStampFileNameChange,
@@ -75,7 +75,7 @@ export function EditorToolbar({
           <button
             key={m}
             type="button"
-            onClick={() => onModeChange(m)}
+            onClick={() => onChangeMode(m)}
             className={clsx([
               "px-3 py-1 text-sm font-medium transition-colors",
               i > 0 && "border-l border-zinc-300",
@@ -157,18 +157,20 @@ export function EditorToolbar({
       )}
 
       {/* 削除ボタン */}
-      <button
-        type="button"
-        onClick={onDeleteSelected}
-        disabled={selectedId === null}
-        className={clsx([
-          "ml-auto rounded-md px-3 py-1 text-sm font-medium transition-colors",
-          "bg-red-600 text-white hover:bg-red-700",
-          selectedId === null && "cursor-not-allowed opacity-50",
-        ])}
-      >
-        削除
-      </button>
+      {mode === "select" && (
+        <button
+          type="button"
+          onClick={onDeleteSelected}
+          disabled={selectedId === null}
+          className={clsx([
+            "ml-auto rounded-md px-3 py-1 text-sm font-medium transition-colors",
+            "bg-red-600 text-white hover:bg-red-700",
+            selectedId === null && "cursor-not-allowed opacity-50",
+          ])}
+        >
+          削除
+        </button>
+      )}
     </div>
   );
 }

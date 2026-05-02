@@ -245,7 +245,7 @@ export function GalleryItem({
                 brushSize={editor.brushSize}
                 selectedId={editor.selectedId}
                 isStampSelected={selectedStampRegion !== undefined}
-                onModeChange={editor.setMode}
+                onChangeMode={editor.onChangeMode}
                 onRectTargetChange={editor.setRectTarget}
                 onStampTypeChange={editor.setSelectedStampType}
                 onStampFileNameChange={editor.setSelectedStampFileName}
