@@ -1,6 +1,6 @@
 ---
 description: Frontend（TypeScript/React/Canvas/WebWorker）固有ルール — privacy-masking-app
-globs: "**/*.{ts,tsx,mjs}"
+globs: "**/*.{ts,tsx,mjs,js}"
 alwaysApply: false
 ---
 
