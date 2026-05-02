@@ -46,6 +46,17 @@ describe("useFaceDetection", () => {
     expect(toast.error).toHaveBeenCalledWith("モデルロードエラー: モデルの取得に失敗");
   });
 
+  it("モデルのロード失敗で isModelError が true になる", async () => {
+    const faceapi = await import("@vladmandic/face-api");
+    vi.mocked(faceapi.nets.ssdMobilenetv1.loadFromUri).mockRejectedValueOnce(
+      new Error("モデルの取得に失敗")
+    );
+    const { result } = renderHook(() => useFaceDetection());
+    await waitFor(() => {
+      expect(result.current.isModelError).toBe(true);
+    });
+  });
+
   it("detectFaces が face-api の結果を FaceDetectionResult に正しくマップする", async () => {
     const faceapi = await import("@vladmandic/face-api");
     vi.mocked(faceapi.detectAllFaces).mockResolvedValueOnce([

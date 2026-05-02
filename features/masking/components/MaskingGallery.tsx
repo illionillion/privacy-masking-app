@@ -239,7 +239,7 @@ export function MaskingGallery() {
           );
           toast.success(`${target.name} の再検出が完了しました`);
         }
-      } catch {
+      } catch (err) {
         if (isMountedRef.current) {
           setImages((prev) =>
             prev.map((image) =>
@@ -248,7 +248,8 @@ export function MaskingGallery() {
                 : image
             )
           );
-          toast.error(`${target.name} の再検出に失敗しました`);
+          const detail = err instanceof Error ? err.message : "不明なエラー";
+          toast.error(`${target.name} の再検出に失敗しました: ${detail}`);
         }
       }
     },
@@ -354,6 +355,11 @@ export function MaskingGallery() {
         multiple
         loadingMessage={loadingMessage}
       />
+      {isModelError && (
+        <p role="alert" className="text-center text-sm text-red-600">
+          顔検出モデルのロードに失敗しました。ページを再読み込みしてください。
+        </p>
+      )}
 
       {images.length > 0 && (
         <div className="flex flex-col gap-4">
