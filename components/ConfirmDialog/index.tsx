@@ -18,9 +18,13 @@ export function ConfirmDialog() {
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  /** ダイアログが開いたとき、最初のボタン（キャンセル）にフォーカスを移動する */
+  /**
+   * ダイアログが開いたとき、キャンセルボタンにフォーカスを移動する。
+   * 閉じたときは開く前にフォーカスしていた要素へフォーカスを戻す。
+   */
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
+    const prevFocusedElement = document.activeElement as HTMLElement | null;
     if (isOpen) {
       cancelButtonRef.current?.focus();
       document.body.style.overflow = "hidden";
@@ -28,6 +32,7 @@ export function ConfirmDialog() {
 
     return () => {
       document.body.style.overflow = prevOverflow;
+      prevFocusedElement?.focus();
     };
   }, [isOpen]);
 
