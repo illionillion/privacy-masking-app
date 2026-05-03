@@ -16,20 +16,18 @@ import { useConfirmStore } from "@/lib/confirmStore";
 export function ConfirmDialog() {
   const { isOpen, message, close } = useConfirmStore();
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
-  const okButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
   /** ダイアログが開いたとき、最初のボタン（キャンセル）にフォーカスを移動する */
   useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
     if (isOpen) {
       cancelButtonRef.current?.focus();
       document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
     }
 
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = prevOverflow;
     };
   }, [isOpen]);
 
@@ -114,7 +112,6 @@ export function ConfirmDialog() {
             キャンセル
           </button>
           <button
-            ref={okButtonRef}
             type="button"
             onClick={() => close(true)}
             className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"

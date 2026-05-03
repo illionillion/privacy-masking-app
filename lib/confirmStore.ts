@@ -1,3 +1,5 @@
+"use client";
+
 import { create } from "zustand";
 
 /** 確認ダイアログの状態 */
@@ -34,6 +36,10 @@ export const useConfirmStore = create<ConfirmState & ConfirmActions>((set, get) 
   resolve: null,
 
   open: (message: string): Promise<boolean> => {
+    const { resolve: prevResolve, isOpen } = get();
+    if (isOpen && prevResolve) {
+      prevResolve(false);
+    }
     return new Promise<boolean>((resolve) => {
       set({ isOpen: true, message, resolve });
     });

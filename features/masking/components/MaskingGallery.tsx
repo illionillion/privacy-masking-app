@@ -283,6 +283,7 @@ export function MaskingGallery() {
     try {
       const ok = await useConfirmStore.getState().open("すべての画像と編集内容をクリアしますか？");
       if (!ok) return;
+      if (!isMountedRef.current) return;
       imagesRef.current.forEach((image) => URL.revokeObjectURL(image.imageUrl));
       setImages([]);
       setActiveImageId(null);
