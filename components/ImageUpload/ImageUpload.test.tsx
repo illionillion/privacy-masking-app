@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { ImageUpload } from "./index";
 
@@ -83,5 +83,145 @@ describe("ImageUpload", () => {
     Object.defineProperty(input, "files", { value: [file1, file2] });
     fireEvent.change(input);
     expect(onUpload).toHaveBeenCalledWith([file1, file2]);
+  });
+});
+
+describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  /**
+   * Canvas プロトタイプと Image グローバルをモックして urlToFile が File を返すよう設定する
+   *
+   * document.createElement を差し替えると React 内部のレンダリングが壊れるため、
+   * HTMLCanvasElement.prototype の getContext/toBlob をスパイする。
+   * vi.fn().mockImplementation はアロー関数で class として使えないため class 構文を使う。
+   */
+  const setupSuccessMock = () => {
+    const mockBlob = new Blob(["fake-image"], { type: "image/png" });
+    const mockContext = { drawImage: vi.fn() };
+
+    (
+      vi.spyOn(HTMLCanvasElement.prototype, "getContext") as ReturnType<typeof vi.spyOn>
+    ).mockReturnValue(mockContext);
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation((cb: BlobCallback) =>
+      cb(mockBlob)
+    );
+
+    class MockImageSuccess {
+      crossOrigin = "";
+      naturalWidth = 100;
+      naturalHeight = 100;
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+
+      set src(_url: string) {
+        window.setTimeout(() => this.onload?.(), 0);
+      }
+    }
+
+    vi.stubGlobal("Image", MockImageSuccess);
+  };
+
+  /**
+   * Image の src セット時に onerror を呼ぶようにモックする
+   */
+  const setupErrorMock = () => {
+    class MockImageError {
+      crossOrigin = "";
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+
+      set src(_url: string) {
+        window.setTimeout(() => this.onerror?.(), 0);
+      }
+    }
+
+    vi.stubGlobal("Image", MockImageError);
+  };
+
+  it("text/uri-list の URL から画像ファイルが生成され onUpload が呼ばれる", async () => {
+    setupSuccessMock();
+    const onUpload = vi.fn();
+    render(<ImageUpload onUpload={onUpload} />);
+
+    const dropZone = screen.getByRole("button", {
+      name: "画像をアップロード。クリックまたはドラッグ＆ドロップ",
+    });
+
+    fireEvent.drop(dropZone, {
+      dataTransfer: {
+        files: [],
+        getData: (type: string) =>
+          type === "text/uri-list" ? "https://example.com/photo.jpg" : "",
+      },
+    });
+
+    await waitFor(() => {
+      expect(onUpload).toHaveBeenCalled();
+    });
+  });
+
+  it("text/html の <img src> から画像ファイルが生成され onUpload が呼ばれる", async () => {
+    setupSuccessMock();
+    const onUpload = vi.fn();
+    render(<ImageUpload onUpload={onUpload} />);
+
+    const dropZone = screen.getByRole("button", {
+      name: "画像をアップロード。クリックまたはドラッグ＆ドロップ",
+    });
+
+    fireEvent.drop(dropZone, {
+      dataTransfer: {
+        files: [],
+        getData: (type: string) =>
+          type === "text/html" ? '<img src="https://example.com/photo.png" />' : "",
+      },
+    });
+
+    await waitFor(() => {
+      expect(onUpload).toHaveBeenCalled();
+    });
+  });
+
+  it("画像 URL の読み込みに失敗した場合はエラーメッセージを表示する", async () => {
+    setupErrorMock();
+    render(<ImageUpload onUpload={vi.fn()} />);
+
+    const dropZone = screen.getByRole("button", {
+      name: "画像をアップロード。クリックまたはドラッグ＆ドロップ",
+    });
+
+    fireEvent.drop(dropZone, {
+      dataTransfer: {
+        files: [],
+        getData: (type: string) =>
+          type === "text/uri-list" ? "https://example.com/cors-blocked.jpg" : "",
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("この画像は読み込めませんでした");
+    });
+  });
+
+  it("files が空で URL もない場合は何もしない", () => {
+    const onUpload = vi.fn();
+    render(<ImageUpload onUpload={onUpload} />);
+
+    const dropZone = screen.getByRole("button", {
+      name: "画像をアップロード。クリックまたはドラッグ＆ドロップ",
+    });
+
+    fireEvent.drop(dropZone, {
+      dataTransfer: {
+        files: [],
+        getData: () => "",
+      },
+    });
+
+    expect(onUpload).not.toHaveBeenCalled();
   });
 });

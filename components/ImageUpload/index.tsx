@@ -11,6 +11,60 @@ const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 /** 最大ファイルサイズ (20MB) */
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
+/**
+ * `text/html` 文字列から最初の `<img>` タグの `src` 属性を抽出する
+ *
+ * @param html - ドロップされた HTML 文字列
+ * @returns 画像 URL、または null
+ */
+const extractImageUrlFromHtml = (html: string): string | null => {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const img = doc.querySelector("img");
+  return img?.src ?? null;
+};
+
+/**
+ * 画像 URL を `<img crossOrigin="anonymous">` + Canvas `toBlob` で File に変換する
+ *
+ * サーバーへの画像データ送信を避けるため fetch は使用しない。
+ * CORS エラーや形式不正の場合は reject される。
+ *
+ * @param url - 画像 URL（http/https/data: URI）
+ * @returns 変換した File オブジェクト
+ */
+const urlToFile = (url: string): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Canvas コンテキストの取得に失敗しました"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error("画像の変換に失敗しました"));
+          return;
+        }
+        const fileName = url.split("/").pop()?.split("?")[0] ?? "image.png";
+        resolve(new File([blob], fileName, { type: blob.type }));
+      }, "image/png");
+    };
+
+    img.onerror = () => {
+      reject(new Error("この画像は読み込めませんでした（CORSエラーの可能性があります）"));
+    };
+
+    img.src = url;
+  });
+};
+
 interface ImageUploadProps {
   /** ファイル選択時のコールバック */
   onUpload: (files: File[]) => void;
@@ -76,9 +130,29 @@ export function ImageUpload({
       e.preventDefault();
       setIsDragOver(false);
       if (disabled) return;
+
       const files = Array.from(e.dataTransfer.files);
-      if (files.length === 0) return;
-      handleFiles(multiple ? files : [files[0]]);
+      if (files.length > 0) {
+        handleFiles(multiple ? files : [files[0]]);
+        return;
+      }
+
+      /** files が空の場合は別タブ・外部アプリからの D&D として URL を取得する */
+      const uriList = e.dataTransfer.getData("text/uri-list");
+      const html = e.dataTransfer.getData("text/html");
+
+      const imageUrl = uriList.trim() || extractImageUrlFromHtml(html);
+      if (!imageUrl) return;
+
+      void (async () => {
+        try {
+          const file = await urlToFile(imageUrl);
+          handleFiles(multiple ? [file] : [file]);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "この画像は読み込めませんでした";
+          setError(message);
+        }
+      })();
     },
     [disabled, handleFiles, multiple]
   );
