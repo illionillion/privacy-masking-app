@@ -96,15 +96,19 @@ const urlToFile = (url: string): Promise<File> => {
           /** data: URI はパス分割でファイル名を取得できないため固定名にする */
           const fileName = url.startsWith("data:")
             ? `image.${blob.type.split("/")[1] ?? "png"}`
-            : (url.split("/").pop()?.split("?")[0] ?? "image.png");
+            : url.split("/").pop()?.split("?")[0] || "image.png";
           resolve(new File([blob], fileName, { type: blob.type }));
         }, "image/png");
       } catch (err) {
-        reject(
-          err instanceof Error
-            ? err
-            : new Error("この画像は読み込めませんでした（セキュリティエラーの可能性があります）")
-        );
+        /**
+         * Canvas が taint されている場合など、DOMException の SecurityError が来る可能性がある。
+         * 生の英語メッセージをユーザーに露出しないよう既知ケースをフレンドリー文言にマッピングする。
+         */
+        const friendlyMessage =
+          err instanceof DOMException && err.name === "SecurityError"
+            ? "この画像は読み込めませんでした（セキュリティエラーの可能性があります）"
+            : "この画像は読み込めませんでした";
+        reject(new Error(friendlyMessage));
       }
     };
 
@@ -207,6 +211,10 @@ export function ImageUpload({
           const file = await urlToFile(imageUrl);
           handleFiles(multiple ? [file] : [file]);
         } catch (err) {
+          /**
+           * urlToFile がスローするエラーは既にフレンドリー文言に変換済み。
+           * 想定外の型のエラーは共通文言に丸めてユーザーへ露出しない。
+           */
           const message = err instanceof Error ? err.message : "この画像は読み込めませんでした";
           setError(message);
         }
