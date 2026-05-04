@@ -64,7 +64,7 @@ describe("MaskingGallery - クリップボード貼り付け", () => {
     URL.revokeObjectURL = vi.fn();
   });
 
-  it("画像をペーストすると toast.info が呼ばれる", async () => {
+  it("有効な画像をペーストすると toast.info が呼ばれアップロード処理が開始される", async () => {
     render(<MaskingGallery />);
 
     const imageFile = new File(["data"], "screenshot.png", { type: "image/png" });
@@ -74,7 +74,42 @@ describe("MaskingGallery - クリップボード貼り付け", () => {
 
     await waitFor(() => {
       expect(toast.info).toHaveBeenCalledWith("画像を貼り付けました");
+      /** handleUpload → arrayBuffer → createObjectURL まで到達したことを確認 */
+      expect(URL.createObjectURL).toHaveBeenCalled();
     });
+  });
+
+  it("許可外の MIME 形式をペーストすると toast.error が呼ばれアップロードしない", async () => {
+    render(<MaskingGallery />);
+
+    const bmpFile = new File(["data"], "image.bmp", { type: "image/bmp" });
+    const items = [{ type: "image/bmp", getAsFile: () => bmpFile }];
+
+    fireEvent(window, createPasteEvent(items));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        "JPEG / PNG / WebP / GIF 形式の画像を選択してください"
+      );
+    });
+    expect(toast.info).not.toHaveBeenCalled();
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it("20MB 超のファイルをペーストすると toast.error が呼ばれアップロードしない", async () => {
+    render(<MaskingGallery />);
+
+    const largeFile = new File(["data"], "large.png", { type: "image/png" });
+    Object.defineProperty(largeFile, "size", { value: 21 * 1024 * 1024 });
+    const items = [{ type: "image/png", getAsFile: () => largeFile }];
+
+    fireEvent(window, createPasteEvent(items));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("ファイルサイズは20MB以下にしてください");
+    });
+    expect(toast.info).not.toHaveBeenCalled();
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
   });
 
   it("クリップボードに画像がない場合は何もしない", () => {

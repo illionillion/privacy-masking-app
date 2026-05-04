@@ -202,25 +202,50 @@ export function MaskingGallery() {
    *
    * - モデル未ロード・エラー時は何もしない
    * - クリップボードに画像がない場合も何もしない
+   * - ImageUpload と同じ基準（JPEG/PNG/WebP/GIF・20MB以下）でバリデーションを行う
    * - 貼り付け成功時にトースト通知を表示する
    */
   useEffect(() => {
+    /** 許可するファイル形式（ImageUpload と同じ基準） */
+    const PASTE_ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    /** 最大ファイルサイズ 20MB（ImageUpload と同じ基準） */
+    const PASTE_MAX_FILE_SIZE = 20 * 1024 * 1024;
+
     const handlePaste = (e: ClipboardEvent) => {
       if (isModelLoading || isModelError) return;
       const items = e.clipboardData?.items;
       if (!items) return;
 
-      const imageFiles: File[] = [];
+      const validFiles: File[] = [];
+      let hasInvalidType = false;
+      let hasOversized = false;
+
       for (const item of Array.from(items)) {
         if (!item.type.startsWith("image/")) continue;
         const file = item.getAsFile();
-        if (file) imageFiles.push(file);
+        if (!file) continue;
+
+        if (!PASTE_ACCEPTED_TYPES.includes(file.type)) {
+          hasInvalidType = true;
+          continue;
+        }
+        if (file.size > PASTE_MAX_FILE_SIZE) {
+          hasOversized = true;
+          continue;
+        }
+        validFiles.push(file);
       }
 
-      if (imageFiles.length === 0) return;
+      if (hasInvalidType) {
+        toast.error("JPEG / PNG / WebP / GIF 形式の画像を選択してください");
+      }
+      if (hasOversized) {
+        toast.error("ファイルサイズは20MB以下にしてください");
+      }
+      if (validFiles.length === 0) return;
 
       toast.info("画像を貼り付けました");
-      void handleUpload(imageFiles);
+      void handleUpload(validFiles);
     };
 
     window.addEventListener("paste", handlePaste);
