@@ -3,6 +3,7 @@
 import clsx from "clsx";
 import { MousePointer2, Pen, Plus } from "lucide-react";
 import type React from "react";
+import type { LucideProps } from "lucide-react";
 import type { StampCatalogEntry } from "../constants";
 import type { EditorMode, RectAddTarget, StampType } from "../types";
 import { StampTypeSelector } from "./StampTypeSelector";
@@ -28,10 +29,14 @@ interface EditorToolbarProps {
 }
 
 /** モードボタンの定義 */
-const MODE_BUTTONS: { mode: EditorMode; label: string; icon: React.ReactNode }[] = [
-  { mode: "select", label: "選択", icon: <MousePointer2 size={14} /> },
-  { mode: "rect", label: "追加", icon: <Plus size={14} /> },
-  { mode: "paint", label: "ペイント", icon: <Pen size={14} /> },
+const MODE_BUTTONS: {
+  mode: EditorMode;
+  label: string;
+  Icon: React.ComponentType<LucideProps>;
+}[] = [
+  { mode: "select", label: "選択", Icon: MousePointer2 },
+  { mode: "rect", label: "追加", Icon: Plus },
+  { mode: "paint", label: "ペイント", Icon: Pen },
 ];
 
 /** 矩形追加ターゲットボタンの定義 */
@@ -75,11 +80,13 @@ export function EditorToolbar({
       <div className="flex items-center gap-x-2">
         {/* モード切替: ピルグループ（アイコンのみ・title でツールチップ） */}
         <div className="flex overflow-hidden rounded-md border border-zinc-300 shadow-sm">
-          {MODE_BUTTONS.map(({ mode: m, label, icon }, i) => (
+          {MODE_BUTTONS.map(({ mode: m, label, Icon }, i) => (
             <button
               key={m}
               type="button"
               title={label}
+              aria-label={label}
+              aria-pressed={mode === m}
               onClick={() => onChangeMode(m)}
               className={clsx([
                 "flex items-center px-2.5 py-1.5 transition-colors",
@@ -87,7 +94,7 @@ export function EditorToolbar({
                 mode === m ? "bg-blue-600 text-white" : "bg-white text-zinc-700 hover:bg-zinc-50",
               ])}
             >
-              {icon}
+              <Icon size={14} aria-hidden="true" />
             </button>
           ))}
         </div>
