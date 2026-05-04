@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 /** ヒーローセクション */
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 px-4 py-24 text-center sm:py-32">
+    <section className="relative overflow-hidden bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 px-4 py-12 text-center sm:py-20">
       {/* 背景装飾 */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
         <div className="absolute -top-24 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-white/5 blur-3xl" />
@@ -39,7 +39,17 @@ function HeroSection() {
         </span>
 
         <h1 className="mt-4 text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
-          <span className="block text-indigo-300">伏せ太郎</span>
+          <span className="mb-2 flex items-center justify-center gap-2 text-indigo-300">
+            伏せ太郎
+            <Image
+              src="/fusely-icon.png"
+              alt="伏せ太郎のアイコン"
+              width={72}
+              height={72}
+              priority
+              className="drop-shadow-2xl"
+            />
+          </span>
           ブラウザだけで画像の
           <br className="hidden sm:block" />
           個人情報を安全に隠せる
