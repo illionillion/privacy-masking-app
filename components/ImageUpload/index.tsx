@@ -4,12 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import clsx from "clsx";
 import { ImageIcon, LoaderCircle } from "lucide-react";
-
-/** 許可するファイル形式 */
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-
-/** 最大ファイルサイズ (20MB) */
-const MAX_FILE_SIZE = 20 * 1024 * 1024;
+import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_FILE_SIZE } from "./constants";
 
 /**
  * `text/html` 文字列から最初の `<img>` タグの `src` 属性を抽出する
@@ -103,11 +98,11 @@ export function ImageUpload({
       let validationError: string | null = null;
 
       for (const file of files) {
-        if (!ACCEPTED_TYPES.includes(file.type)) {
+        if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
           validationError = "JPEG / PNG / WebP / GIF 形式の画像を選択してください";
           continue;
         }
-        if (file.size > MAX_FILE_SIZE) {
+        if (file.size > MAX_IMAGE_FILE_SIZE) {
           validationError = "ファイルサイズは20MB以下にしてください";
           continue;
         }
@@ -273,7 +268,7 @@ export function ImageUpload({
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPTED_TYPES.join(",")}
+        accept={ACCEPTED_IMAGE_TYPES.join(",")}
         multiple={multiple}
         className="hidden"
         onChange={handleChange}
