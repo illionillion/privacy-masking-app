@@ -1,5 +1,5 @@
 import { render, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { toast } from "sonner";
 import { MaskingGallery } from "./MaskingGallery";
 
@@ -58,10 +58,18 @@ const createPasteEvent = (items: Array<{ type: string; getAsFile: () => File | n
 };
 
 describe("MaskingGallery - クリップボード貼り付け", () => {
+  let createObjectURLSpy: ReturnType<typeof vi.spyOn>;
+  let revokeObjectURLSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
-    URL.createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
-    URL.revokeObjectURL = vi.fn();
+    createObjectURLSpy = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:mock-url");
+    revokeObjectURLSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    createObjectURLSpy.mockRestore();
+    revokeObjectURLSpy.mockRestore();
   });
 
   it("有効な画像をペーストすると toast.info が呼ばれアップロード処理が開始される", async () => {
@@ -75,7 +83,7 @@ describe("MaskingGallery - クリップボード貼り付け", () => {
     await waitFor(() => {
       expect(toast.info).toHaveBeenCalledWith("画像を貼り付けました");
       /** handleUpload → arrayBuffer → createObjectURL まで到達したことを確認 */
-      expect(URL.createObjectURL).toHaveBeenCalled();
+      expect(createObjectURLSpy).toHaveBeenCalled();
     });
   });
 
@@ -93,7 +101,7 @@ describe("MaskingGallery - クリップボード貼り付け", () => {
       );
     });
     expect(toast.info).not.toHaveBeenCalled();
-    expect(URL.createObjectURL).not.toHaveBeenCalled();
+    expect(createObjectURLSpy).not.toHaveBeenCalled();
   });
 
   it("20MB 超のファイルをペーストすると toast.error が呼ばれアップロードしない", async () => {
@@ -109,7 +117,7 @@ describe("MaskingGallery - クリップボード貼り付け", () => {
       expect(toast.error).toHaveBeenCalledWith("ファイルサイズは20MB以下にしてください");
     });
     expect(toast.info).not.toHaveBeenCalled();
-    expect(URL.createObjectURL).not.toHaveBeenCalled();
+    expect(createObjectURLSpy).not.toHaveBeenCalled();
   });
 
   it("クリップボードに画像がない場合は何もしない", () => {

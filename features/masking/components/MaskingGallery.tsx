@@ -5,6 +5,7 @@ import clsx from "clsx";
 import { zip } from "fflate";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ImageUpload";
+import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_FILE_SIZE } from "@/components/ImageUpload/constants";
 import { useFaceDetection } from "@/features/face-detection";
 import { useOcr } from "@/features/ocr";
 import { useConfirmStore } from "@/lib/confirmStore";
@@ -206,46 +207,40 @@ export function MaskingGallery() {
    * - 貼り付け成功時にトースト通知を表示する
    */
   useEffect(() => {
-    /** 許可するファイル形式（ImageUpload と同じ基準） */
-    const PASTE_ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    /** 最大ファイルサイズ 20MB（ImageUpload と同じ基準） */
-    const PASTE_MAX_FILE_SIZE = 20 * 1024 * 1024;
-
     const handlePaste = (e: ClipboardEvent) => {
       if (isModelLoading || isModelError) return;
       const items = e.clipboardData?.items;
       if (!items) return;
 
       const validFiles: File[] = [];
-      let hasInvalidType = false;
-      let hasOversized = false;
+      let validationError: string | null = null;
 
       for (const item of Array.from(items)) {
         if (!item.type.startsWith("image/")) continue;
         const file = item.getAsFile();
         if (!file) continue;
 
-        if (!PASTE_ACCEPTED_TYPES.includes(file.type)) {
-          hasInvalidType = true;
+        if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+          validationError = "JPEG / PNG / WebP / GIF 形式の画像を選択してください";
           continue;
         }
-        if (file.size > PASTE_MAX_FILE_SIZE) {
-          hasOversized = true;
+        if (file.size > MAX_IMAGE_FILE_SIZE) {
+          validationError = "ファイルサイズは20MB以下にしてください";
           continue;
         }
         validFiles.push(file);
       }
 
-      if (hasInvalidType) {
-        toast.error("JPEG / PNG / WebP / GIF 形式の画像を選択してください");
+      /** ImageUpload と同じ挙動: 有効ファイルがあればアップロードのみ、なければエラー表示 */
+      if (validFiles.length > 0) {
+        toast.info("画像を貼り付けました");
+        void handleUpload(validFiles);
+        return;
       }
-      if (hasOversized) {
-        toast.error("ファイルサイズは20MB以下にしてください");
-      }
-      if (validFiles.length === 0) return;
 
-      toast.info("画像を貼り付けました");
-      void handleUpload(validFiles);
+      if (validationError) {
+        toast.error(validationError);
+      }
     };
 
     window.addEventListener("paste", handlePaste);
