@@ -1,6 +1,9 @@
 "use client";
 
 import clsx from "clsx";
+import { MousePointer2, Pen, Plus } from "lucide-react";
+import type React from "react";
+import type { LucideProps } from "lucide-react";
 import type { StampCatalogEntry } from "../constants";
 import type { EditorMode, RectAddTarget, StampType } from "../types";
 import { StampTypeSelector } from "./StampTypeSelector";
@@ -26,10 +29,14 @@ interface EditorToolbarProps {
 }
 
 /** モードボタンの定義 */
-const MODE_BUTTONS: { mode: EditorMode; label: string }[] = [
-  { mode: "select", label: "選択" },
-  { mode: "rect", label: "矩形" },
-  { mode: "paint", label: "ペイント" },
+const MODE_BUTTONS: {
+  mode: EditorMode;
+  label: string;
+  Icon: React.ComponentType<LucideProps>;
+}[] = [
+  { mode: "select", label: "選択", Icon: MousePointer2 },
+  { mode: "rect", label: "追加", Icon: Plus },
+  { mode: "paint", label: "ペイント", Icon: Pen },
 ];
 
 /** 矩形追加ターゲットボタンの定義 */
@@ -46,8 +53,8 @@ function Divider() {
 /**
  * エディタ操作ツールバーコンポーネント
  *
- * モード切替・矩形追加ターゲット選択・スタンプ種別選択・ブラシサイズ調整・
- * 選択アイテム削除ボタンを提供する。
+ * 1行目: モード切替・矩形ターゲット・ペイントブラシ・削除ボタン（常に固定）
+ * 2行目: スタンプコントロール（スタンプ追加時 / スタンプ選択時のみ表示）
  */
 export function EditorToolbar({
   mode,
@@ -68,56 +75,96 @@ export function EditorToolbar({
   const showStampControls = (mode === "rect" && rectTarget === "stamp") || isStampSelected;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1.5">
-      {/* モード切替: ピルグループ */}
-      <div className="flex overflow-hidden rounded-md border border-zinc-300 shadow-sm">
-        {MODE_BUTTONS.map(({ mode: m, label }, i) => (
+    <div className="flex flex-col gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1.5">
+      {/* 1行目: 主要コントロール */}
+      <div className="flex items-center gap-x-2">
+        {/* モード切替: ピルグループ（アイコンのみ・title でツールチップ） */}
+        <div className="flex overflow-hidden rounded-md border border-zinc-300 shadow-sm">
+          {MODE_BUTTONS.map(({ mode: m, label, Icon }, i) => (
+            <button
+              key={m}
+              type="button"
+              title={label}
+              aria-label={label}
+              aria-pressed={mode === m}
+              onClick={() => onChangeMode(m)}
+              className={clsx([
+                "flex items-center px-2.5 py-1.5 transition-colors",
+                i > 0 && "border-l border-zinc-300",
+                mode === m ? "bg-blue-600 text-white" : "bg-white text-zinc-700 hover:bg-zinc-50",
+              ])}
+            >
+              <Icon size={14} aria-hidden="true" />
+            </button>
+          ))}
+        </div>
+
+        {/* 矩形ターゲット: ピルグループ */}
+        {mode === "rect" && (
+          <>
+            <Divider />
+            <div className="flex overflow-hidden rounded-md border border-zinc-300 shadow-sm">
+              {RECT_TARGET_BUTTONS.map(({ target, label }, i) => (
+                <button
+                  key={target}
+                  type="button"
+                  onClick={() => onRectTargetChange(target)}
+                  className={clsx([
+                    "shrink-0 whitespace-nowrap px-3 py-1 text-sm font-medium transition-colors",
+                    i > 0 && "border-l border-zinc-300",
+                    rectTarget === target
+                      ? "bg-emerald-600 text-white"
+                      : "bg-white text-zinc-700 hover:bg-zinc-50",
+                  ])}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* ペイントブラシサイズスライダー */}
+        {mode === "paint" && (
+          <>
+            <Divider />
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-zinc-600" htmlFor="brush-size-slider">
+                ブラシ: {brushSize}
+              </label>
+              <input
+                id="brush-size-slider"
+                type="range"
+                min={5}
+                max={50}
+                value={brushSize}
+                onChange={(e) => onBrushSizeChange(Number(e.target.value))}
+                className="w-24"
+              />
+            </div>
+          </>
+        )}
+
+        {/* 削除ボタン */}
+        {mode === "select" && (
           <button
-            key={m}
             type="button"
-            onClick={() => onChangeMode(m)}
+            onClick={onDeleteSelected}
+            disabled={selectedId === null}
             className={clsx([
-              "px-3 py-1 text-sm font-medium transition-colors",
-              i > 0 && "border-l border-zinc-300",
-              mode === m ? "bg-blue-600 text-white" : "bg-white text-zinc-700 hover:bg-zinc-50",
+              "ml-auto rounded-md px-3 py-1 text-sm font-medium transition-colors",
+              "bg-red-600 text-white hover:bg-red-700",
+              selectedId === null && "cursor-not-allowed opacity-50",
             ])}
           >
-            {label}
+            削除
           </button>
-        ))}
+        )}
       </div>
 
-      {/* 矩形モード時の追加オプション */}
-      {mode === "rect" && (
-        <>
-          <Divider />
-
-          {/* 矩形ターゲット: ピルグループ */}
-          <div className="flex overflow-hidden rounded-md border border-zinc-300 shadow-sm">
-            {RECT_TARGET_BUTTONS.map(({ target, label }, i) => (
-              <button
-                key={target}
-                type="button"
-                onClick={() => onRectTargetChange(target)}
-                className={clsx([
-                  "px-3 py-1 text-sm font-medium transition-colors",
-                  i > 0 && "border-l border-zinc-300",
-                  rectTarget === target
-                    ? "bg-emerald-600 text-white"
-                    : "bg-white text-zinc-700 hover:bg-zinc-50",
-                ])}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* スタンプ種別・画像選択（スタンプ追加時 / スタンプ選択時） */}
+      {/* 2行目: スタンプコントロール（スタンプ追加時 / スタンプ選択時） */}
       {showStampControls && (
-        <>
-          <Divider />
+        <div className="flex items-center gap-x-2 border-t border-zinc-200 pt-1.5">
           <StampTypeSelector value={selectedStampType} onChange={onStampTypeChange} />
           {selectedStampType === "stamp-face" && stampCatalog.length > 0 && (
             <select
@@ -132,44 +179,7 @@ export function EditorToolbar({
               ))}
             </select>
           )}
-        </>
-      )}
-
-      {/* ペイントモード時のブラシサイズスライダー */}
-      {mode === "paint" && (
-        <>
-          <Divider />
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-zinc-600" htmlFor="brush-size-slider">
-              ブラシ: {brushSize}
-            </label>
-            <input
-              id="brush-size-slider"
-              type="range"
-              min={5}
-              max={50}
-              value={brushSize}
-              onChange={(e) => onBrushSizeChange(Number(e.target.value))}
-              className="w-24"
-            />
-          </div>
-        </>
-      )}
-
-      {/* 削除ボタン */}
-      {mode === "select" && (
-        <button
-          type="button"
-          onClick={onDeleteSelected}
-          disabled={selectedId === null}
-          className={clsx([
-            "ml-auto rounded-md px-3 py-1 text-sm font-medium transition-colors",
-            "bg-red-600 text-white hover:bg-red-700",
-            selectedId === null && "cursor-not-allowed opacity-50",
-          ])}
-        >
-          削除
-        </button>
+        </div>
       )}
     </div>
   );
