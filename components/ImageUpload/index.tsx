@@ -70,6 +70,8 @@ const urlToFile = (url: string): Promise<File> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
+    /** Referer ヘッダーの送信を抑えてドロップ元への閲覧元URL漏洩を防ぐ */
+    img.referrerPolicy = "no-referrer";
 
     img.onload = () => {
       const canvas = document.createElement("canvas");
@@ -81,17 +83,29 @@ const urlToFile = (url: string): Promise<File> => {
         return;
       }
       ctx.drawImage(img, 0, 0);
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          reject(new Error("画像の変換に失敗しました"));
-          return;
-        }
-        /** data: URI はパス分割でファイル名を取得できないため固定名にする */
-        const fileName = url.startsWith("data:")
-          ? `image.${blob.type.split("/")[1] ?? "png"}`
-          : (url.split("/").pop()?.split("?")[0] ?? "image.png");
-        resolve(new File([blob], fileName, { type: blob.type }));
-      }, "image/png");
+      /**
+       * CORS ヘッダー不足等で Canvas が taint されている場合、
+       * toBlob() は SecurityError をスローするため try/catch で捕捉して reject する
+       */
+      try {
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error("画像の変換に失敗しました"));
+            return;
+          }
+          /** data: URI はパス分割でファイル名を取得できないため固定名にする */
+          const fileName = url.startsWith("data:")
+            ? `image.${blob.type.split("/")[1] ?? "png"}`
+            : (url.split("/").pop()?.split("?")[0] ?? "image.png");
+          resolve(new File([blob], fileName, { type: blob.type }));
+        }, "image/png");
+      } catch (err) {
+        reject(
+          err instanceof Error
+            ? err
+            : new Error("この画像は読み込めませんでした（セキュリティエラーの可能性があります）")
+        );
+      }
     };
 
     img.onerror = () => {
