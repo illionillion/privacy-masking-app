@@ -198,6 +198,38 @@ export function MaskingGallery() {
   );
 
   /**
+   * ページ全体の paste イベントをリッスンし、クリップボードの画像を handleUpload へ渡す
+   *
+   * - モデル未ロード・エラー時は何もしない
+   * - クリップボードに画像がない場合も何もしない
+   * - 貼り付け成功時にトースト通知を表示する
+   */
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      if (isModelLoading || isModelError) return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const imageFiles: File[] = [];
+      for (const item of Array.from(items)) {
+        if (!item.type.startsWith("image/")) continue;
+        const file = item.getAsFile();
+        if (file) imageFiles.push(file);
+      }
+
+      if (imageFiles.length === 0) return;
+
+      toast.info("画像を貼り付けました");
+      void handleUpload(imageFiles);
+    };
+
+    window.addEventListener("paste", handlePaste);
+    return () => {
+      window.removeEventListener("paste", handlePaste);
+    };
+  }, [handleUpload, isModelLoading, isModelError]);
+
+  /**
    * 個別画像を再検出する
    *
    * @param imageId - 再検出対象画像ID
