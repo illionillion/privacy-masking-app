@@ -228,7 +228,7 @@ function HowToSection() {
               className="relative flex flex-col rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
             >
               <div className="mb-4 flex items-center gap-3">
-                <span className="text-4xl font-extrabold text-zinc-100">{step}</span>
+                <span className="text-4xl font-extrabold text-zinc-300">{step}</span>
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-xl ${bg} ${ring} ring-2`}
                 >
