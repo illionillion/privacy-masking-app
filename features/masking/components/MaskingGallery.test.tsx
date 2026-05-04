@@ -120,6 +120,25 @@ describe("MaskingGallery - クリップボード貼り付け", () => {
     expect(createObjectURLSpy).not.toHaveBeenCalled();
   });
 
+  it("有効画像と無効画像が混在する場合は toast.info のみ呼ばれ toast.error は出ない", async () => {
+    render(<MaskingGallery />);
+
+    const validFile = new File(["data"], "valid.png", { type: "image/png" });
+    const invalidFile = new File(["data"], "invalid.bmp", { type: "image/bmp" });
+    const items = [
+      { type: "image/png", getAsFile: () => validFile },
+      { type: "image/bmp", getAsFile: () => invalidFile },
+    ];
+
+    fireEvent(window, createPasteEvent(items));
+
+    await waitFor(() => {
+      expect(toast.info).toHaveBeenCalledWith("画像を貼り付けました");
+      expect(createObjectURLSpy).toHaveBeenCalled();
+    });
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
   it("クリップボードに画像がない場合は何もしない", () => {
     render(<MaskingGallery />);
 
@@ -128,6 +147,8 @@ describe("MaskingGallery - クリップボード貼り付け", () => {
     fireEvent(window, createPasteEvent(items));
 
     expect(toast.info).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(createObjectURLSpy).not.toHaveBeenCalled();
   });
 
   it("clipboardData が null の場合は何もしない", () => {
@@ -136,6 +157,8 @@ describe("MaskingGallery - クリップボード貼り付け", () => {
     fireEvent(window, createPasteEvent(null));
 
     expect(toast.info).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(createObjectURLSpy).not.toHaveBeenCalled();
   });
 
   it("コンポーネントのアンマウント後は paste イベントを処理しない", () => {
@@ -148,5 +171,7 @@ describe("MaskingGallery - クリップボード貼り付け", () => {
     fireEvent(window, createPasteEvent(items));
 
     expect(toast.info).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(createObjectURLSpy).not.toHaveBeenCalled();
   });
 });
