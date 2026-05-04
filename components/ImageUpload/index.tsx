@@ -6,6 +6,25 @@ import clsx from "clsx";
 import { ImageIcon, LoaderCircle } from "lucide-react";
 import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_FILE_SIZE } from "./constants";
 
+/** D&D で許可する URL スキーム */
+const ALLOWED_URL_SCHEMES = ["http:", "https:", "data:"];
+
+/**
+ * `text/uri-list` 文字列から最初の有効な URL を抽出する
+ *
+ * RFC 2483 に従い、コメント行（`#` 始まり）と空行を除外して先頭 URL を返す。
+ *
+ * @param uriList - DataTransfer から取得した `text/uri-list` 文字列
+ * @returns 最初の有効 URL、または null
+ */
+const extractUrlFromUriList = (uriList: string): string | null => {
+  for (const line of uriList.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith("#")) return trimmed;
+  }
+  return null;
+};
+
 /**
  * `text/html` 文字列から最初の `<img>` タグの `src` 属性を抽出する
  *
@@ -19,10 +38,30 @@ const extractImageUrlFromHtml = (html: string): string | null => {
 };
 
 /**
+ * URL のスキームを検証し、許可外スキームの場合は null を返す
+ *
+ * `data:` は `new URL()` でパースできない環境もあるため個別に判定する。
+ * 許可スキーム: http / https / data
+ *
+ * @param url - 検証する URL 文字列
+ * @returns 有効な URL 文字列、または null
+ */
+const validateUrlScheme = (url: string): string | null => {
+  if (url.startsWith("data:")) return url;
+  try {
+    const parsed = new URL(url);
+    return ALLOWED_URL_SCHEMES.includes(parsed.protocol) ? url : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
  * 画像 URL を `<img crossOrigin="anonymous">` + Canvas `toBlob` で File に変換する
  *
  * サーバーへの画像データ送信を避けるため fetch は使用しない。
  * CORS エラーや形式不正の場合は reject される。
+ * `data:` URI の場合はファイル名をMIMEタイプから決定する。
  *
  * @param url - 画像 URL（http/https/data: URI）
  * @returns 変換した File オブジェクト
@@ -47,7 +86,10 @@ const urlToFile = (url: string): Promise<File> => {
           reject(new Error("画像の変換に失敗しました"));
           return;
         }
-        const fileName = url.split("/").pop()?.split("?")[0] ?? "image.png";
+        /** data: URI はパス分割でファイル名を取得できないため固定名にする */
+        const fileName = url.startsWith("data:")
+          ? `image.${blob.type.split("/")[1] ?? "png"}`
+          : (url.split("/").pop()?.split("?")[0] ?? "image.png");
         resolve(new File([blob], fileName, { type: blob.type }));
       }, "image/png");
     };
@@ -136,8 +178,15 @@ export function ImageUpload({
       const uriList = e.dataTransfer.getData("text/uri-list");
       const html = e.dataTransfer.getData("text/html");
 
-      const imageUrl = uriList.trim() || extractImageUrlFromHtml(html);
-      if (!imageUrl) return;
+      const rawUrl = extractUrlFromUriList(uriList) ?? extractImageUrlFromHtml(html);
+      if (!rawUrl) return;
+
+      /** 許可外スキーム（javascript: / file: 等）はエラーとして弾く */
+      const imageUrl = validateUrlScheme(rawUrl);
+      if (!imageUrl) {
+        setError("この画像は読み込めませんでした");
+        return;
+      }
 
       void (async () => {
         try {

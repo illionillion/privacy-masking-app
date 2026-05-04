@@ -92,6 +92,11 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
     vi.unstubAllGlobals();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   /**
    * Canvas プロトタイプと Image グローバルをモックして urlToFile が File を返すよう設定する
    *
