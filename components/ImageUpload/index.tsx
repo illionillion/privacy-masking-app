@@ -93,10 +93,14 @@ const urlToFile = (url: string): Promise<File> => {
             reject(new Error("画像の変換に失敗しました"));
             return;
           }
-          /** data: URI はパス分割でファイル名を取得できないため固定名にする */
+          /**
+           * data: URI はパス分割でファイル名を取得できないため固定名にする。
+           * http/https は new URL() で pathname の basename を取得し、
+           * search/hash を除外する。空文字の場合はフォールバック。
+           */
           const fileName = url.startsWith("data:")
             ? `image.${blob.type.split("/")[1] ?? "png"}`
-            : url.split("/").pop()?.split("?")[0] || "image.png";
+            : new URL(url).pathname.split("/").pop() || "image.png";
           resolve(new File([blob], fileName, { type: blob.type }));
         }, "image/png");
       } catch (err) {
