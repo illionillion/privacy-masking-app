@@ -312,6 +312,9 @@ export function ImageUpload({
       const rawUrl = extractUrlFromUriList(uriList) ?? extractImageUrlFromHtml(html);
       if (!rawUrl) return;
 
+      /** URL D&D 経路に入ったら以前のインラインエラーをクリアする */
+      setError(null);
+
       /** 許可外スキーム（javascript: / file: 等）はエラーとして弾く */
       const imageUrl = validateUrlScheme(rawUrl);
       if (!imageUrl) {

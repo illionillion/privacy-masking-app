@@ -372,6 +372,42 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
     expect(onUpload).not.toHaveBeenCalled();
   });
 
+  it("解像度が MAX_CANVAS_DIMENSION を超える画像はエラーを表示して onUpload は呼ばれない", async () => {
+    class MockImageOversized {
+      crossOrigin = "";
+      referrerPolicy = "";
+      naturalWidth = 9000;
+      naturalHeight = 9000;
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+
+      set src(_url: string) {
+        window.setTimeout(() => this.onload?.(), 0);
+      }
+    }
+
+    vi.stubGlobal("Image", MockImageOversized);
+
+    const onUpload = vi.fn();
+    render(<ImageUpload onUpload={onUpload} />);
+
+    const dropZone = screen.getByRole("button", {
+      name: "画像をアップロード。クリックまたはドラッグ＆ドロップ",
+    });
+
+    fireEvent.drop(dropZone, {
+      dataTransfer: {
+        files: [],
+        getData: (type: string) => (type === "text/uri-list" ? "https://example.com/huge.jpg" : ""),
+      },
+    });
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("解像度が大きすぎます"));
+    });
+    expect(onUpload).not.toHaveBeenCalled();
+  });
+
   it("files が空で URL もない場合は何もしない", () => {
     const onUpload = vi.fn();
     render(<ImageUpload onUpload={onUpload} />);
