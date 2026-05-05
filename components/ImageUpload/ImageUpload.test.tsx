@@ -258,7 +258,7 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(
-        "この画像は読み込めませんでした（CORSエラーの可能性があります）"
+        "この画像は読み込めませんでした（CORS・ネットワーク・URLの問題の可能性があります）"
       );
     });
   });

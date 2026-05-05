@@ -184,6 +184,8 @@ const urlToFile = (url: string): Promise<File> => {
       canvas.height = img.naturalHeight;
       const ctx = canvas.getContext("2d");
       if (!ctx) {
+        canvas.width = 0;
+        canvas.height = 0;
         img.onload = null;
         img.onerror = null;
         reject(new Error("Canvas コンテキストの取得に失敗しました"));
@@ -203,6 +205,7 @@ const urlToFile = (url: string): Promise<File> => {
           img.onerror = null;
 
           if (!blob) {
+            console.error("[urlToFile] toBlob returned null:", url);
             reject(new Error("画像の変換に失敗しました"));
             return;
           }
@@ -231,6 +234,7 @@ const urlToFile = (url: string): Promise<File> => {
          * Canvas が taint されている場合など、DOMException の SecurityError が来る可能性がある。
          * 生の英語メッセージをユーザーに露出しないよう既知ケースをフレンドリー文言にマッピングする。
          */
+        console.error("[urlToFile] toBlob threw:", err, "url:", url);
         const friendlyMessage =
           err instanceof DOMException && err.name === "SecurityError"
             ? "この画像は読み込めませんでした（セキュリティエラーの可能性があります）"
@@ -242,7 +246,12 @@ const urlToFile = (url: string): Promise<File> => {
     img.onerror = () => {
       img.onload = null;
       img.onerror = null;
-      reject(new Error("この画像は読み込めませんでした（CORSエラーの可能性があります）"));
+      console.error("[urlToFile] img load failed:", url);
+      reject(
+        new Error(
+          "この画像は読み込めませんでした（CORS・ネットワーク・URLの問題の可能性があります）"
+        )
+      );
     };
 
     img.src = url;
