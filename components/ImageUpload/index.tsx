@@ -56,6 +56,58 @@ const validateUrlScheme = (url: string): string | null => {
   }
 };
 
+/**
+ * 既知の画像拡張子から MIME タイプへのマッピング
+ *
+ * ACCEPTED_IMAGE_TYPES に含まれない形式（BMP / SVG 等）も列挙して明示的に弾けるようにする。
+ * このマップに存在しない拡張子（拡張子なし URL 等）は未知として変換を試みる。
+ */
+const IMAGE_EXT_TO_MIME: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+  bmp: "image/bmp",
+  svg: "image/svg+xml",
+  tiff: "image/tiff",
+  tif: "image/tiff",
+  ico: "image/x-icon",
+  avif: "image/avif",
+  heic: "image/heic",
+  heif: "image/heif",
+};
+
+/**
+ * URL または data: URI の画像形式が許可済み MIME タイプかどうかを変換前に検証する
+ *
+ * - `data:` URI: MIME を `ACCEPTED_IMAGE_TYPES` と照合する
+ * - http/https URL: 拡張子から MIME を推測し `ACCEPTED_IMAGE_TYPES` と照合する
+ * - 拡張子不明（マッピング外・拡張子なし）の URL は許可して変換を試みる
+ *
+ * @param url - 検証対象の URL または data: URI
+ * @returns エラーメッセージ、または null（問題なし）
+ */
+const validateImageTypeFromUrl = (url: string): string | null => {
+  const ACCEPTED_ERROR = "JPEG / PNG / WebP / GIF 形式の画像を選択してください";
+
+  if (url.startsWith("data:")) {
+    const mimeMatch = url.match(/^data:([^;,]+)/);
+    const mime = mimeMatch?.[1] ?? "";
+    return ACCEPTED_IMAGE_TYPES.includes(mime) ? null : ACCEPTED_ERROR;
+  }
+
+  try {
+    const ext = new URL(url).pathname.split(".").pop()?.toLowerCase() ?? "";
+    const mime = IMAGE_EXT_TO_MIME[ext];
+    /** 拡張子不明の場合は変換を試みる（拡張子なし URL 等） */
+    if (!mime) return null;
+    return ACCEPTED_IMAGE_TYPES.includes(mime) ? null : ACCEPTED_ERROR;
+  } catch {
+    return null;
+  }
+};
+
 /** canvas.toBlob でサポートされる出力 MIME タイプ */
 const CANVAS_SUPPORTED_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 type CanvasMimeType = (typeof CANVAS_SUPPORTED_TYPES)[number];
@@ -241,6 +293,13 @@ export function ImageUpload({
       const imageUrl = validateUrlScheme(rawUrl);
       if (!imageUrl) {
         setError("この画像は読み込めませんでした");
+        return;
+      }
+
+      /** 許可外 MIME タイプ（BMP / SVG 等）は変換前にエラーとして弾く */
+      const typeError = validateImageTypeFromUrl(imageUrl);
+      if (typeError) {
+        setError(typeError);
         return;
       }
 

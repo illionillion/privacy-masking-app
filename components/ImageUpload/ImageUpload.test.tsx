@@ -278,6 +278,49 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
     expect(onUpload).not.toHaveBeenCalled();
   });
 
+  it(".bmp など許可外形式の URL はエラーを表示して onUpload は呼ばれない", () => {
+    const onUpload = vi.fn();
+    render(<ImageUpload onUpload={onUpload} />);
+
+    const dropZone = screen.getByRole("button", {
+      name: "画像をアップロード。クリックまたはドラッグ＆ドロップ",
+    });
+
+    fireEvent.drop(dropZone, {
+      dataTransfer: {
+        files: [],
+        getData: (type: string) =>
+          type === "text/uri-list" ? "https://example.com/photo.bmp" : "",
+      },
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "JPEG / PNG / WebP / GIF 形式の画像を選択してください"
+    );
+    expect(onUpload).not.toHaveBeenCalled();
+  });
+
+  it(".svg など許可外形式の URL はエラーを表示して onUpload は呼ばれない", () => {
+    const onUpload = vi.fn();
+    render(<ImageUpload onUpload={onUpload} />);
+
+    const dropZone = screen.getByRole("button", {
+      name: "画像をアップロード。クリックまたはドラッグ＆ドロップ",
+    });
+
+    fireEvent.drop(dropZone, {
+      dataTransfer: {
+        files: [],
+        getData: (type: string) => (type === "text/uri-list" ? "https://example.com/icon.svg" : ""),
+      },
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "JPEG / PNG / WebP / GIF 形式の画像を選択してください"
+    );
+    expect(onUpload).not.toHaveBeenCalled();
+  });
+
   it("files が空で URL もない場合は何もしない", () => {
     const onUpload = vi.fn();
     render(<ImageUpload onUpload={onUpload} />);
