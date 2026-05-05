@@ -304,7 +304,7 @@ export function ImageUpload({
       void (async () => {
         try {
           const file = await urlToFile(imageUrl);
-          handleFiles(multiple ? [file] : [file]);
+          handleFiles([file]);
         } catch (err) {
           /**
            * urlToFile がスローするエラーは既にフレンドリー文言に変換済み。
