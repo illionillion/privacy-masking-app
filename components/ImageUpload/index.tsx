@@ -178,13 +178,19 @@ const urlToFile = (url: string): Promise<File> => {
             return;
           }
           /**
-           * data: URI はパス分割でファイル名を取得できないため固定名にする。
-           * http/https は new URL() で pathname の basename を取得し、
-           * search/hash を除外する。空文字の場合はフォールバック。
+           * 拡張子は blob.type から決定する。
+           * Canvas による再エンコード（例: GIF → PNG）で URL の拡張子と
+           * File.type が不一致になるのを防ぐため、URL 由来のパスは stem のみ採用する。
            */
+          const ext = blob.type.split("/")[1] ?? "png";
           const fileName = url.startsWith("data:")
-            ? `image.${blob.type.split("/")[1] ?? "png"}`
-            : new URL(url).pathname.split("/").pop() || "image.png";
+            ? `image.${ext}`
+            : `${
+                new URL(url).pathname
+                  .split("/")
+                  .pop()
+                  ?.replace(/\.[^.]*$/, "") || "image"
+              }.${ext}`;
           resolve(new File([blob], fileName, { type: blob.type }));
         }, detectOutputMimeType(url));
       } catch (err) {
