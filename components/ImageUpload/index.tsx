@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import clsx from "clsx";
 import { ImageIcon, LoaderCircle } from "lucide-react";
+import { toast } from "sonner";
 import {
   ACCEPTED_IMAGE_TYPES,
   ACCEPTED_IMAGE_TYPES_ERROR,
@@ -314,14 +315,14 @@ export function ImageUpload({
       /** 許可外スキーム（javascript: / file: 等）はエラーとして弾く */
       const imageUrl = validateUrlScheme(rawUrl);
       if (!imageUrl) {
-        setError("この画像は読み込めませんでした");
+        toast.error("この画像は読み込めませんでした");
         return;
       }
 
       /** 許可外 MIME タイプ（BMP / SVG 等）は変換前にエラーとして弾く */
       const typeError = validateImageTypeFromUrl(imageUrl);
       if (typeError) {
-        setError(typeError);
+        toast.error(typeError);
         return;
       }
 
@@ -335,7 +336,7 @@ export function ImageUpload({
            * 想定外の型のエラーは共通文言に丸めてユーザーへ露出しない。
            */
           const message = err instanceof Error ? err.message : "この画像は読み込めませんでした";
-          setError(message);
+          toast.error(message);
         }
       })();
     },

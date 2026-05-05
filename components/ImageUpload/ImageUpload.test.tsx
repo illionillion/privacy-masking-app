@@ -1,6 +1,9 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { toast } from "sonner";
 import { ImageUpload } from "./index";
+
+vi.mock("sonner", () => ({ toast: { error: vi.fn(), info: vi.fn() } }));
 
 describe("ImageUpload", () => {
   beforeEach(() => {
@@ -187,7 +190,7 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
       },
     });
 
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(toast.error).toHaveBeenCalledWith(
       "JPEG / PNG / WebP / GIF 形式の画像を選択してください"
     );
     expect(onUpload).not.toHaveBeenCalled();
@@ -254,7 +257,9 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("この画像は読み込めませんでした");
+      expect(toast.error).toHaveBeenCalledWith(
+        "この画像は読み込めませんでした（CORSエラーの可能性があります）"
+      );
     });
   });
 
@@ -301,7 +306,7 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
       },
     });
 
-    expect(screen.getByRole("alert")).toHaveTextContent("この画像は読み込めませんでした");
+    expect(toast.error).toHaveBeenCalledWith("この画像は読み込めませんでした");
     expect(onUpload).not.toHaveBeenCalled();
   });
 
@@ -320,7 +325,7 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
       },
     });
 
-    expect(screen.getByRole("alert")).toHaveTextContent("この画像は読み込めませんでした");
+    expect(toast.error).toHaveBeenCalledWith("この画像は読み込めませんでした");
     expect(onUpload).not.toHaveBeenCalled();
   });
 
@@ -340,7 +345,7 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
       },
     });
 
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(toast.error).toHaveBeenCalledWith(
       "JPEG / PNG / WebP / GIF 形式の画像を選択してください"
     );
     expect(onUpload).not.toHaveBeenCalled();
@@ -361,7 +366,7 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
       },
     });
 
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(toast.error).toHaveBeenCalledWith(
       "JPEG / PNG / WebP / GIF 形式の画像を選択してください"
     );
     expect(onUpload).not.toHaveBeenCalled();
