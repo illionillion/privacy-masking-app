@@ -212,6 +212,72 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
     });
   });
 
+  it("text/uri-list がコメント行・空行を含む複数行でも先頭 URL から onUpload が呼ばれる", async () => {
+    setupSuccessMock();
+    const onUpload = vi.fn();
+    render(<ImageUpload onUpload={onUpload} />);
+
+    const dropZone = screen.getByRole("button", {
+      name: "画像をアップロード。クリックまたはドラッグ＆ドロップ",
+    });
+
+    const multiLineUriList = [
+      "# comment line",
+      "",
+      "https://example.com/photo.jpg",
+      "https://example.com/other.jpg",
+    ].join("\n");
+
+    fireEvent.drop(dropZone, {
+      dataTransfer: {
+        files: [],
+        getData: (type: string) => (type === "text/uri-list" ? multiLineUriList : ""),
+      },
+    });
+
+    await waitFor(() => {
+      expect(onUpload).toHaveBeenCalled();
+    });
+  });
+
+  it("javascript: スキームの URL はエラーを表示して onUpload は呼ばれない", () => {
+    const onUpload = vi.fn();
+    render(<ImageUpload onUpload={onUpload} />);
+
+    const dropZone = screen.getByRole("button", {
+      name: "画像をアップロード。クリックまたはドラッグ＆ドロップ",
+    });
+
+    fireEvent.drop(dropZone, {
+      dataTransfer: {
+        files: [],
+        getData: (type: string) => (type === "text/uri-list" ? "javascript:alert(1)" : ""),
+      },
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent("この画像は読み込めませんでした");
+    expect(onUpload).not.toHaveBeenCalled();
+  });
+
+  it("file: スキームの URL はエラーを表示して onUpload は呼ばれない", () => {
+    const onUpload = vi.fn();
+    render(<ImageUpload onUpload={onUpload} />);
+
+    const dropZone = screen.getByRole("button", {
+      name: "画像をアップロード。クリックまたはドラッグ＆ドロップ",
+    });
+
+    fireEvent.drop(dropZone, {
+      dataTransfer: {
+        files: [],
+        getData: (type: string) => (type === "text/uri-list" ? "file:///etc/passwd" : ""),
+      },
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent("この画像は読み込めませんでした");
+    expect(onUpload).not.toHaveBeenCalled();
+  });
+
   it("files が空で URL もない場合は何もしない", () => {
     const onUpload = vi.fn();
     render(<ImageUpload onUpload={onUpload} />);

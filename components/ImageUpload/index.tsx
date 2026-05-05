@@ -56,6 +56,40 @@ const validateUrlScheme = (url: string): string | null => {
   }
 };
 
+/** canvas.toBlob でサポートされる出力 MIME タイプ */
+const CANVAS_SUPPORTED_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+type CanvasMimeType = (typeof CANVAS_SUPPORTED_TYPES)[number];
+
+/**
+ * URL または data: URI から canvas.toBlob に渡す出力 MIME タイプを決定する
+ *
+ * GIF など canvas でエンコードできない形式は image/png にフォールバックする。
+ *
+ * @param url - 画像 URL または data: URI
+ * @returns canvas.toBlob に渡す MIME タイプ
+ */
+const detectOutputMimeType = (url: string): CanvasMimeType => {
+  if (url.startsWith("data:")) {
+    const mimeMatch = url.match(/^data:([^;,]+)/);
+    const mime = mimeMatch?.[1] ?? "";
+    return (CANVAS_SUPPORTED_TYPES as readonly string[]).includes(mime)
+      ? (mime as CanvasMimeType)
+      : "image/png";
+  }
+  try {
+    const ext = new URL(url).pathname.split(".").pop()?.toLowerCase() ?? "";
+    const extToMime: Record<string, CanvasMimeType> = {
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      png: "image/png",
+      webp: "image/webp",
+    };
+    return extToMime[ext] ?? "image/png";
+  } catch {
+    return "image/png";
+  }
+};
+
 /**
  * 画像 URL を `<img crossOrigin="anonymous">` + Canvas `toBlob` で File に変換する
  *
@@ -102,7 +136,7 @@ const urlToFile = (url: string): Promise<File> => {
             ? `image.${blob.type.split("/")[1] ?? "png"}`
             : new URL(url).pathname.split("/").pop() || "image.png";
           resolve(new File([blob], fileName, { type: blob.type }));
-        }, "image/png");
+        }, detectOutputMimeType(url));
       } catch (err) {
         /**
          * Canvas が taint されている場合など、DOMException の SecurityError が来る可能性がある。
