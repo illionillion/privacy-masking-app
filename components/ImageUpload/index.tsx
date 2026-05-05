@@ -4,7 +4,12 @@ import { useCallback, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import clsx from "clsx";
 import { ImageIcon, LoaderCircle } from "lucide-react";
-import { ACCEPTED_IMAGE_TYPES, ACCEPTED_IMAGE_TYPES_ERROR, MAX_IMAGE_FILE_SIZE } from "./constants";
+import {
+  ACCEPTED_IMAGE_TYPES,
+  ACCEPTED_IMAGE_TYPES_ERROR,
+  MAX_CANVAS_DIMENSION,
+  MAX_IMAGE_FILE_SIZE,
+} from "./constants";
 
 /** D&D で許可する URL スキーム */
 const ALLOWED_URL_SCHEMES = ["http:", "https:", "data:"];
@@ -158,6 +163,19 @@ const urlToFile = (url: string): Promise<File> => {
     img.referrerPolicy = "no-referrer";
 
     img.onload = () => {
+      /**
+       * 巨大解像度画像は Canvas のメモリ確保でタブがフリーズ/クラッシュするため、
+       * MAX_IMAGE_FILE_SIZE チェックより先に解像度をガードする。
+       */
+      if (img.naturalWidth > MAX_CANVAS_DIMENSION || img.naturalHeight > MAX_CANVAS_DIMENSION) {
+        reject(
+          new Error(
+            `画像の解像度が大きすぎます（最大 ${MAX_CANVAS_DIMENSION}×${MAX_CANVAS_DIMENSION}px）`
+          )
+        );
+        return;
+      }
+
       const canvas = document.createElement("canvas");
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
