@@ -147,6 +147,52 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
     vi.stubGlobal("Image", MockImageError);
   };
 
+  it("text/uri-list に data:image/png URI を渡すと onUpload が呼ばれる", async () => {
+    setupSuccessMock();
+    const onUpload = vi.fn();
+    render(<ImageUpload onUpload={onUpload} />);
+
+    const dropZone = screen.getByRole("button", {
+      name: "画像をアップロード。クリックまたはドラッグ＆ドロップ",
+    });
+
+    /** 最小限の 1x1 PNG data: URI */
+    const pngDataUri =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
+    fireEvent.drop(dropZone, {
+      dataTransfer: {
+        files: [],
+        getData: (type: string) => (type === "text/uri-list" ? pngDataUri : ""),
+      },
+    });
+
+    await waitFor(() => {
+      expect(onUpload).toHaveBeenCalled();
+    });
+  });
+
+  it("text/uri-list に許可外 MIME の data: URI を渡すとエラーを表示して onUpload は呼ばれない", () => {
+    const onUpload = vi.fn();
+    render(<ImageUpload onUpload={onUpload} />);
+
+    const dropZone = screen.getByRole("button", {
+      name: "画像をアップロード。クリックまたはドラッグ＆ドロップ",
+    });
+
+    fireEvent.drop(dropZone, {
+      dataTransfer: {
+        files: [],
+        getData: (type: string) => (type === "text/uri-list" ? "data:image/bmp;base64,AAAA" : ""),
+      },
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "JPEG / PNG / WebP / GIF 形式の画像を選択してください"
+    );
+    expect(onUpload).not.toHaveBeenCalled();
+  });
+
   it("text/uri-list の URL から画像ファイルが生成され onUpload が呼ばれる", async () => {
     setupSuccessMock();
     const onUpload = vi.fn();

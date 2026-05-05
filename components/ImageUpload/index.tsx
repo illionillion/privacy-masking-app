@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import clsx from "clsx";
 import { ImageIcon, LoaderCircle } from "lucide-react";
-import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_FILE_SIZE } from "./constants";
+import { ACCEPTED_IMAGE_TYPES, ACCEPTED_IMAGE_TYPES_ERROR, MAX_IMAGE_FILE_SIZE } from "./constants";
 
 /** D&D で許可する URL スキーム */
 const ALLOWED_URL_SCHEMES = ["http:", "https:", "data:"];
@@ -89,12 +89,10 @@ const IMAGE_EXT_TO_MIME: Record<string, string> = {
  * @returns エラーメッセージ、または null（問題なし）
  */
 const validateImageTypeFromUrl = (url: string): string | null => {
-  const ACCEPTED_ERROR = "JPEG / PNG / WebP / GIF 形式の画像を選択してください";
-
   if (url.startsWith("data:")) {
     const mimeMatch = url.match(/^data:([^;,]+)/);
     const mime = mimeMatch?.[1] ?? "";
-    return ACCEPTED_IMAGE_TYPES.includes(mime) ? null : ACCEPTED_ERROR;
+    return ACCEPTED_IMAGE_TYPES.includes(mime) ? null : ACCEPTED_IMAGE_TYPES_ERROR;
   }
 
   try {
@@ -102,7 +100,7 @@ const validateImageTypeFromUrl = (url: string): string | null => {
     const mime = IMAGE_EXT_TO_MIME[ext];
     /** 拡張子不明の場合は変換を試みる（拡張子なし URL 等） */
     if (!mime) return null;
-    return ACCEPTED_IMAGE_TYPES.includes(mime) ? null : ACCEPTED_ERROR;
+    return ACCEPTED_IMAGE_TYPES.includes(mime) ? null : ACCEPTED_IMAGE_TYPES_ERROR;
   } catch {
     return null;
   }
@@ -249,7 +247,7 @@ export function ImageUpload({
 
       for (const file of files) {
         if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-          validationError = "JPEG / PNG / WebP / GIF 形式の画像を選択してください";
+          validationError = ACCEPTED_IMAGE_TYPES_ERROR;
           continue;
         }
         if (file.size > MAX_IMAGE_FILE_SIZE) {
