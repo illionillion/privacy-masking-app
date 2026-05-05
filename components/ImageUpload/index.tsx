@@ -169,6 +169,8 @@ const urlToFile = (url: string): Promise<File> => {
        * MAX_IMAGE_FILE_SIZE チェックより先に解像度をガードする。
        */
       if (img.naturalWidth > MAX_CANVAS_DIMENSION || img.naturalHeight > MAX_CANVAS_DIMENSION) {
+        img.onload = null;
+        img.onerror = null;
         reject(
           new Error(
             `画像の解像度が大きすぎます（最大 ${MAX_CANVAS_DIMENSION}×${MAX_CANVAS_DIMENSION}px）`
@@ -182,6 +184,8 @@ const urlToFile = (url: string): Promise<File> => {
       canvas.height = img.naturalHeight;
       const ctx = canvas.getContext("2d");
       if (!ctx) {
+        img.onload = null;
+        img.onerror = null;
         reject(new Error("Canvas コンテキストの取得に失敗しました"));
         return;
       }
@@ -192,6 +196,12 @@ const urlToFile = (url: string): Promise<File> => {
        */
       try {
         canvas.toBlob((blob) => {
+          /** GC を早めるため toBlob 完了後に canvas のピクセルバッファを解放する */
+          canvas.width = 0;
+          canvas.height = 0;
+          img.onload = null;
+          img.onerror = null;
+
           if (!blob) {
             reject(new Error("画像の変換に失敗しました"));
             return;
@@ -213,6 +223,10 @@ const urlToFile = (url: string): Promise<File> => {
           resolve(new File([blob], fileName, { type: blob.type }));
         }, detectOutputMimeType(url));
       } catch (err) {
+        canvas.width = 0;
+        canvas.height = 0;
+        img.onload = null;
+        img.onerror = null;
         /**
          * Canvas が taint されている場合など、DOMException の SecurityError が来る可能性がある。
          * 生の英語メッセージをユーザーに露出しないよう既知ケースをフレンドリー文言にマッピングする。
@@ -226,6 +240,8 @@ const urlToFile = (url: string): Promise<File> => {
     };
 
     img.onerror = () => {
+      img.onload = null;
+      img.onerror = null;
       reject(new Error("この画像は読み込めませんでした（CORSエラーの可能性があります）"));
     };
 
