@@ -25,7 +25,7 @@ export function HeroSection() {
             伏せ太郎
             <Image
               src="/fusely-icon.png"
-              alt="伏せ太郎のアイコン"
+              alt=""
               width={72}
               height={72}
               className="drop-shadow-2xl"
