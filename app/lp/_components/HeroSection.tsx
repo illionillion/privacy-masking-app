@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight, ShieldCheck, Star } from "lucide-react";
+
+const GITHUB_REPOSITORY_URL = "https://github.com/illionillion/privacy-masking-app";
 
 /** ヒーローセクション */
 export function HeroSection() {
@@ -49,6 +51,15 @@ export function HeroSection() {
           >
             今すぐ使う
             <ArrowRight className="h-5 w-5" aria-hidden="true" />
+          </Link>
+          <Link
+            href={GITHUB_REPOSITORY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-xl border border-indigo-200/40 bg-indigo-700/40 px-8 py-4 text-base font-bold text-white transition-all hover:bg-indigo-700/60"
+          >
+            GitHubでスター
+            <Star className="h-5 w-5" aria-hidden="true" />
           </Link>
         </div>
       </div>

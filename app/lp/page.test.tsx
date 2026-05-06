@@ -22,6 +22,17 @@ describe("LpPage", () => {
     });
   });
 
+  it("GitHubでスター導線が外部リンクになっている", () => {
+    render(<LpPage />);
+    const githubLink = screen.getByRole("link", { name: "GitHubでスター" });
+    expect(githubLink).toHaveAttribute(
+      "href",
+      "https://github.com/illionillion/privacy-masking-app"
+    );
+    expect(githubLink).toHaveAttribute("target", "_blank");
+    expect(githubLink).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
   it("デモセクションの見出しが表示される", () => {
     render(<LpPage />);
     expect(screen.getByText("こんな感じでマスキングできます")).toBeInTheDocument();

@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+const GITHUB_REPOSITORY_URL = "https://github.com/illionillion/privacy-masking-app";
+
 /**
  * アプリヘッダーコンポーネント
  *
@@ -20,6 +22,14 @@ export function Header() {
             className="text-sm font-medium text-indigo-600 underline-offset-4 transition-colors hover:text-indigo-800 hover:underline"
           >
             サービス紹介
+          </Link>
+          <Link
+            href={GITHUB_REPOSITORY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-zinc-700 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline"
+          >
+            GitHubでスター
           </Link>
           <p className="hidden text-sm text-zinc-500 sm:block">
             画像内の顔・個人情報を安全にマスキング
