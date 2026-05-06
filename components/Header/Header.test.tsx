@@ -23,4 +23,10 @@ describe("Header", () => {
     const link = screen.getByRole("link", { name: /伏せ太郎/ });
     expect(link).toHaveAttribute("href", "/");
   });
+
+  it("サービス紹介がLP(/lp)へのリンクになっている", () => {
+    render(<Header />);
+    const link = screen.getByRole("link", { name: "サービス紹介" });
+    expect(link).toHaveAttribute("href", "/lp");
+  });
 });
