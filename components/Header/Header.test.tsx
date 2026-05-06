@@ -30,9 +30,9 @@ describe("Header", () => {
     expect(link).toHaveAttribute("href", "/lp");
   });
 
-  it("GitHubでスターが外部リンクになっている", () => {
+  it("GitHubリポジトリがアイコンリンクで外部遷移できる", () => {
     render(<Header />);
-    const link = screen.getByRole("link", { name: "GitHubでスター" });
+    const link = screen.getByRole("link", { name: /GitHubでスター/ });
     expect(link).toHaveAttribute("href", "https://github.com/illionillion/privacy-masking-app");
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");

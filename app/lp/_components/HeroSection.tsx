@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Star } from "lucide-react";
-
-const GITHUB_REPOSITORY_URL = "https://github.com/illionillion/privacy-masking-app";
+import { GitHubMarkIcon } from "@/components/GitHubMarkIcon";
+import { GITHUB_REPOSITORY_URL } from "@/lib/githubRepositoryUrl";
 
 /** ヒーローセクション */
 export function HeroSection() {
@@ -56,10 +56,16 @@ export function HeroSection() {
             href={GITHUB_REPOSITORY_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-xl border border-indigo-200/40 bg-indigo-700/40 px-8 py-4 text-base font-bold text-white transition-all hover:bg-indigo-700/60"
+            className="group inline-flex items-center gap-2.5 rounded-xl border border-white/10 bg-[#24292f] px-8 py-4 text-base font-semibold text-white shadow-lg transition-all hover:border-white/15 hover:bg-[#1b1f23] hover:shadow-xl active:scale-[0.98]"
+            aria-label="GitHubでスター（新しいタブで開く）"
           >
-            GitHubでスター
-            <Star className="h-5 w-5" aria-hidden="true" />
+            <GitHubMarkIcon className="h-5 w-5 shrink-0" />
+            <span>GitHubでスター</span>
+            <Star
+              className="h-5 w-5 shrink-0 text-white transition-colors group-hover:fill-yellow-400 group-hover:text-yellow-400"
+              strokeWidth={1.75}
+              aria-hidden="true"
+            />
           </Link>
         </div>
       </div>

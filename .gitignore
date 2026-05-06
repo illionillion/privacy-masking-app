@@ -40,4 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.github/DRAFTS/*.md
+# PR/Issue 下書き（サブディレクトリ含めて無視）
+.github/DRAFTS/

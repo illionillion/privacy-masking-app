@@ -24,7 +24,7 @@ describe("LpPage", () => {
 
   it("GitHubでスター導線が外部リンクになっている", () => {
     render(<LpPage />);
-    const githubLink = screen.getByRole("link", { name: "GitHubでスター" });
+    const githubLink = screen.getByRole("link", { name: /GitHubでスター/ });
     expect(githubLink).toHaveAttribute(
       "href",
       "https://github.com/illionillion/privacy-masking-app"

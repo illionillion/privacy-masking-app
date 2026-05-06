@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-
-const GITHUB_REPOSITORY_URL = "https://github.com/illionillion/privacy-masking-app";
+import { GitHubMarkIcon } from "@/components/GitHubMarkIcon";
+import { GITHUB_REPOSITORY_URL } from "@/lib/githubRepositoryUrl";
 
 /**
  * アプリヘッダーコンポーネント
@@ -17,6 +17,9 @@ export function Header() {
           <span className="text-lg font-bold tracking-tight text-zinc-900">伏せ太郎</span>
         </Link>
         <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-4">
+          <p className="hidden text-sm text-zinc-500 sm:block">
+            画像内の顔・個人情報を安全にマスキング
+          </p>
           <Link
             href="/lp"
             className="text-sm font-medium text-indigo-600 underline-offset-4 transition-colors hover:text-indigo-800 hover:underline"
@@ -27,13 +30,11 @@ export function Header() {
             href={GITHUB_REPOSITORY_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-medium text-zinc-700 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline"
+            className="rounded-md p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+            aria-label="GitHubでスター（新しいタブで開く）"
           >
-            GitHubでスター
+            <GitHubMarkIcon className="h-5 w-5" />
           </Link>
-          <p className="hidden text-sm text-zinc-500 sm:block">
-            画像内の顔・個人情報を安全にマスキング
-          </p>
         </div>
       </div>
     </header>
