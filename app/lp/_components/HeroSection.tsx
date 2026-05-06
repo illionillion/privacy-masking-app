@@ -28,7 +28,6 @@ export function HeroSection() {
               alt="伏せ太郎のアイコン"
               width={72}
               height={72}
-              priority
               className="drop-shadow-2xl"
             />
           </span>
