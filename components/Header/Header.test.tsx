@@ -17,4 +17,10 @@ describe("Header", () => {
     render(<Header />);
     expect(screen.getByRole("banner")).toBeInTheDocument();
   });
+
+  it("ロゴがトップページ(/)へのリンクになっている", () => {
+    render(<Header />);
+    const link = screen.getByRole("link");
+    expect(link).toHaveAttribute("href", "/");
+  });
 });
