@@ -15,7 +15,7 @@ export function PrivacySection() {
       icon: Monitor,
       title: "すべてブラウザ内で処理",
       description:
-        "顔検出・OCR・マスキングはすべてデバイス上のJavaScriptで完結。インターネット接続すら不要です（初回モデル読み込み除く）。",
+        "顔検出・OCR・マスキングはすべてデバイス上のJavaScriptで完結します。画像データの処理はブラウザ内のみです（ページ表示や初回モデル取得など、通信が必要な場合を除く）。",
       color: "text-violet-600",
       bg: "bg-violet-50",
     },

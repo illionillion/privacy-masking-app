@@ -20,7 +20,7 @@ describe("Header", () => {
 
   it("ロゴがトップページ(/)へのリンクになっている", () => {
     render(<Header />);
-    const link = screen.getByRole("link");
+    const link = screen.getByRole("link", { name: /伏せ太郎/ });
     expect(link).toHaveAttribute("href", "/");
   });
 });
