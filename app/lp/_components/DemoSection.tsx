@@ -102,7 +102,7 @@ export function DemoSection() {
                       />
                       {/* 完了バッジ */}
                       <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-1 text-xs font-bold text-white shadow">
-                        <CheckCircle className="h-3 w-3" />
+                        <CheckCircle className="h-3 w-3" aria-hidden="true" />
                         マスク済み
                       </div>
                     </div>

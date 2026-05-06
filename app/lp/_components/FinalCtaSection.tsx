@@ -18,11 +18,11 @@ export function FinalCtaSection() {
             className="inline-flex items-center gap-2 rounded-xl bg-white px-10 py-4 text-base font-bold text-indigo-900 shadow-lg transition-all hover:bg-indigo-50 hover:shadow-xl active:scale-95"
           >
             今すぐ使う
-            <ArrowRight className="h-5 w-5" />
+            <ArrowRight className="h-5 w-5" aria-hidden="true" />
           </Link>
         </div>
         <p className="mt-6 text-sm text-indigo-300">
-          <ShieldCheck className="mr-1 inline h-4 w-4 text-emerald-400" />
+          <ShieldCheck className="mr-1 inline h-4 w-4 text-emerald-400" aria-hidden="true" />
           画像はサーバーに送信されません
         </p>
       </div>

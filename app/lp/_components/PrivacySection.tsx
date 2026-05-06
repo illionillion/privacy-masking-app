@@ -46,7 +46,7 @@ export function PrivacySection() {
               className="flex flex-col items-center rounded-2xl border border-zinc-100 bg-zinc-50 p-6 text-center shadow-sm"
             >
               <div className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl ${bg}`}>
-                <Icon className={`h-7 w-7 ${color}`} />
+                <Icon className={`h-7 w-7 ${color}`} aria-hidden="true" />
               </div>
               <h3 className="mb-2 text-base font-bold text-zinc-900">{title}</h3>
               <p className="text-sm leading-relaxed text-zinc-500">{description}</p>

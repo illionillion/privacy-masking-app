@@ -16,7 +16,7 @@ export function HeroSection() {
       <div className="relative mx-auto max-w-3xl">
         {/* バッジ */}
         <span className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-indigo-400/40 bg-indigo-400/10 px-4 py-1.5 text-sm font-medium text-indigo-200">
-          <ShieldCheck className="h-4 w-4 text-emerald-400" />
+          <ShieldCheck className="h-4 w-4 text-emerald-400" aria-hidden="true" />
           完全無料・ログイン不要・サーバー送信なし
         </span>
 
@@ -49,7 +49,7 @@ export function HeroSection() {
             className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 text-base font-bold text-indigo-900 shadow-lg transition-all hover:bg-indigo-50 hover:shadow-xl active:scale-95"
           >
             今すぐ使う
-            <ArrowRight className="h-5 w-5" />
+            <ArrowRight className="h-5 w-5" aria-hidden="true" />
           </Link>
         </div>
       </div>

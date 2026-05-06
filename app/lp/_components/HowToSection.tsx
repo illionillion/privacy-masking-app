@@ -54,7 +54,7 @@ export function HowToSection() {
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-xl ${bg} ${ring} ring-2`}
                 >
-                  <Icon className={`h-5 w-5 ${color}`} />
+                  <Icon className={`h-5 w-5 ${color}`} aria-hidden="true" />
                 </div>
               </div>
               <h3 className="mb-2 text-base font-bold text-zinc-900">{title}</h3>

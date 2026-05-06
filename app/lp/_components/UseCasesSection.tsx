@@ -47,7 +47,7 @@ export function UseCasesSection() {
             >
               <div className="mb-4 flex items-start justify-between">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100">
-                  <Icon className="h-6 w-6 text-zinc-600" />
+                  <Icon className="h-6 w-6 text-zinc-600" aria-hidden="true" />
                 </div>
                 <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${tagColor}`}>
                   {tag}
