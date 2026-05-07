@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { GITHUB_REPOSITORY_URL } from "@/lib/githubRepositoryUrl";
 import { Header } from "./index";
 
 describe("Header", () => {
@@ -28,5 +29,13 @@ describe("Header", () => {
     render(<Header />);
     const link = screen.getByRole("link", { name: "サービス紹介" });
     expect(link).toHaveAttribute("href", "/lp");
+  });
+
+  it("GitHubリポジトリがアイコンリンクで外部遷移できる", () => {
+    render(<Header />);
+    const link = screen.getByRole("link", { name: /GitHubでスター/ });
+    expect(link).toHaveAttribute("href", GITHUB_REPOSITORY_URL);
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 });

@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { GITHUB_REPOSITORY_URL } from "@/lib/githubRepositoryUrl";
 import LpPage from "./page";
 
 describe("LpPage", () => {
@@ -20,6 +21,14 @@ describe("LpPage", () => {
     ctaLinks.forEach((link) => {
       expect(link).toHaveAttribute("href", "/");
     });
+  });
+
+  it("GitHubでスター導線が外部リンクになっている", () => {
+    render(<LpPage />);
+    const githubLink = screen.getByRole("link", { name: /GitHubでスター/ });
+    expect(githubLink).toHaveAttribute("href", GITHUB_REPOSITORY_URL);
+    expect(githubLink).toHaveAttribute("target", "_blank");
+    expect(githubLink).toHaveAttribute("rel", "noopener noreferrer");
   });
 
   it("デモセクションの見出しが表示される", () => {
