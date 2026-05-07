@@ -19,7 +19,7 @@
 
 ### 前提
 
-- Node.js 20 以上
+- Node.js（バージョンはリポジトリの `.nvmrc` を参照、現状 `22.13.0` 以上）
 - pnpm
 
 ### セットアップ
@@ -38,11 +38,12 @@ pnpm dev
 
 ## デプロイ
 
-Cloudflare Pages での運用を想定しています。
+Cloudflare Pages で運用しています。具体的な仕組みは次のとおりです。
 
-- Next.js（App Router）をビルド
-- 静的アセットと必要な実行環境をPagesへデプロイ
-- 公開後は Google Search Console に登録し、インデックスを管理
+- `next.config.ts` で `output: "export"` を指定し、本番ビルド時は静的ファイルを `docs/` に出力します（`distDir`）
+- `main` への push をトリガーに GitHub Actions（`.github/workflows/cd.yml`）が `pnpm build` を実行し、生成された `docs/` をリポジトリへコミットします
+- Cloudflare Pages がリポジトリの `docs/` を公開ディレクトリとして配信します
+- 公開後は Google Search Console に登録し、インデックスを管理します
 
 ## 注意事項
 
