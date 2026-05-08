@@ -35,10 +35,6 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ja_JP",
-    title: "伏せ太郎 | Fusely",
-    description:
-      "伏せ太郎（Fusely）は、画像内の顔・文字情報を検出して黒塗り・モザイク・ぼかし編集ができるブラウザ完結型ツール",
-    url: "/",
     siteName: "伏せ太郎 | Fusely",
     images: [
       {
@@ -51,9 +47,6 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "伏せ太郎 | Fusely",
-    description:
-      "伏せ太郎（Fusely）は、画像内の顔・文字情報を検出して黒塗り・モザイク・ぼかし編集ができるブラウザ完結型ツール",
     images: ["/hero.png"],
   },
   icons: {

@@ -40,3 +40,16 @@ export function getSiteUrl(): string {
 export function getSiteUrlAsUrl(): URL {
   return new URL(getSiteUrl());
 }
+
+/**
+ * サイトURLを基準にパスを絶対URLへ解決する。
+ */
+export function resolveSiteUrl(path = ""): string {
+  const normalizedPath = path.replace(/^\/+/, "");
+  const baseUrl = getSiteUrl();
+  if (!normalizedPath) {
+    return baseUrl;
+  }
+
+  return `${baseUrl}/${normalizedPath}`;
+}
