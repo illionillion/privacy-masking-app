@@ -276,6 +276,7 @@ export function GalleryItem({
                   onAddPaintStroke={editor.addPaintStroke}
                   onUpdateStampRegion={editor.updateStampRegion}
                   onUpdateFillRegion={editor.updateFillRegion}
+                  onUpdatePaintStroke={editor.updatePaintStroke}
                   stampImages={stampImages}
                   selectedStampFileName={editor.selectedStampFileName}
                   onDeleteSelected={editor.removeSelectedItem}

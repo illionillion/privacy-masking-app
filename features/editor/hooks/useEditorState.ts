@@ -61,6 +61,7 @@ export interface UseEditorStateReturn {
   addPaintStroke: (stroke: Omit<PaintStroke, "id">) => void;
   updateStampRegion: (id: string, updates: Partial<Omit<StampRegion, "id">>) => void;
   updateFillRegion: (id: string, updates: Partial<Omit<FillRegion, "id">>) => void;
+  updatePaintStroke: (id: string, updates: Partial<Omit<PaintStroke, "id">>) => void;
   toggleFillRegion: (id: string) => void;
   removeItem: (id: string) => void;
   removeSelectedItem: () => void;
@@ -244,6 +245,16 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
   }, []);
 
   /**
+   * ペイントストロークを更新する
+   *
+   * @param id - 更新するストロークのID
+   * @param updates - 更新内容
+   */
+  const updatePaintStroke = useCallback((id: string, updates: Partial<Omit<PaintStroke, "id">>) => {
+    setPaintStrokes((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+  }, []);
+
+  /**
    * 塗りつぶし領域の有効/無効を切り替える
    *
    * @param id - 切り替える領域のID
@@ -307,6 +318,7 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
     addPaintStroke,
     updateStampRegion,
     updateFillRegion,
+    updatePaintStroke,
     toggleFillRegion,
     removeItem,
     removeSelectedItem,
