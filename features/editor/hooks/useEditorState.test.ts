@@ -161,6 +161,56 @@ describe("useEditorState", () => {
     });
   });
 
+  it("updatePaintStroke でペイントストロークの points と brushSize を更新できる", () => {
+    vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("stroke-update-uuid") });
+    const { result } = renderHook(() => useEditorState());
+    act(() => {
+      result.current.addPaintStroke({
+        points: [
+          { x: 0, y: 0 },
+          { x: 10, y: 10 },
+        ],
+        brushSize: 20,
+        isEnabled: true,
+      });
+    });
+    act(() => {
+      result.current.updatePaintStroke("stroke-update-uuid", {
+        points: [
+          { x: 100, y: 100 },
+          { x: 110, y: 110 },
+        ],
+        brushSize: 40,
+      });
+    });
+    expect(result.current.paintStrokes[0]).toMatchObject({
+      id: "stroke-update-uuid",
+      points: [
+        { x: 100, y: 100 },
+        { x: 110, y: 110 },
+      ],
+      brushSize: 40,
+      isEnabled: true,
+    });
+  });
+
+  it("updatePaintStroke は存在しないIDでは何も変更しない", () => {
+    vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("noop-uuid") });
+    const { result } = renderHook(() => useEditorState());
+    act(() => {
+      result.current.addPaintStroke({
+        points: [{ x: 0, y: 0 }],
+        brushSize: 10,
+        isEnabled: true,
+      });
+    });
+    act(() => {
+      result.current.updatePaintStroke("not-exist", { brushSize: 99 });
+    });
+    expect(result.current.paintStrokes).toHaveLength(1);
+    expect(result.current.paintStrokes[0].brushSize).toBe(10);
+  });
+
   it("toggleFillRegion で isEnabled を切り替えられる", () => {
     vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("tog-uuid") });
     const { result } = renderHook(() => useEditorState());
