@@ -6,6 +6,8 @@ import { Header } from "@/components/Header";
 import { ToasterProvider } from "@/components/ToasterProvider";
 import "./globals.css";
 
+const DEFAULT_SITE_URL = "https://privacy-masking-app.pages.dev";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -17,9 +19,38 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? DEFAULT_SITE_URL),
   title: "伏せ太郎 | Fusely",
   description:
     "伏せ太郎（Fusely）は、画像内の顔・文字情報を検出して黒塗り・モザイク・ぼかし編集ができるブラウザ完結型ツール",
+  keywords: [
+    "伏せ太郎",
+    "Fusely",
+    "画像 マスキング",
+    "顔隠し",
+    "個人情報 保護",
+    "AI 画像編集",
+    "モザイク",
+    "ぼかし",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "ja_JP",
+    title: "伏せ太郎 | Fusely",
+    description:
+      "伏せ太郎（Fusely）は、画像内の顔・文字情報を検出して黒塗り・モザイク・ぼかし編集ができるブラウザ完結型ツール",
+    url: "/",
+    siteName: "伏せ太郎 | Fusely",
+  },
+  twitter: {
+    card: "summary",
+    title: "伏せ太郎 | Fusely",
+    description:
+      "伏せ太郎（Fusely）は、画像内の顔・文字情報を検出して黒塗り・モザイク・ぼかし編集ができるブラウザ完結型ツール",
+  },
   icons: {
     icon: "/favicon.ico",
   },
