@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import { MaskingGallery } from "@/features/masking";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/",
+  },
+};
 
 /**
  * メインページ

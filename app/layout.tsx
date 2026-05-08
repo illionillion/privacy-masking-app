@@ -33,9 +33,6 @@ export const metadata: Metadata = {
     "モザイク",
     "ぼかし",
   ],
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     type: "website",
     locale: "ja_JP",

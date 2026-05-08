@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: "伏せ太郎 | Fusely - ブラウザだけで画像の個人情報を安全に隠せるツール",
   description:
     "顔・テキストをブラウザだけで自動検出してマスキング。画像はサーバーに送信しない完全プライベートツール。",
+  alternates: {
+    canonical: "/lp",
+  },
 };
 
 /**
