@@ -38,7 +38,7 @@ export function getSiteUrl(): string {
  * Metadata API で利用する URL オブジェクトを返す。
  */
 export function getSiteUrlAsUrl(): URL {
-  return new URL(getSiteUrl());
+  return new URL("./", `${getSiteUrl()}/`);
 }
 
 /**

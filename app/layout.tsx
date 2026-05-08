@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     siteName: "伏せ太郎 | Fusely",
     images: [
       {
-        url: "/hero.png",
+        url: "hero.png",
         width: 1024,
         height: 537,
         alt: "伏せ太郎 | Fusely",
@@ -47,10 +47,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    images: ["/hero.png"],
+    images: ["hero.png"],
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: "favicon.ico",
   },
   verification: {
     google: "h8_qALSr2HLxo3u0KCmFKOB-BfRPs6Wh_oPvaYGu1kU",
