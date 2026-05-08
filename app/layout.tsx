@@ -44,12 +44,21 @@ export const metadata: Metadata = {
       "伏せ太郎（Fusely）は、画像内の顔・文字情報を検出して黒塗り・モザイク・ぼかし編集ができるブラウザ完結型ツール",
     url: "/",
     siteName: "伏せ太郎 | Fusely",
+    images: [
+      {
+        url: "/hero.png",
+        width: 1024,
+        height: 537,
+        alt: "伏せ太郎 | Fusely",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "伏せ太郎 | Fusely",
     description:
       "伏せ太郎（Fusely）は、画像内の顔・文字情報を検出して黒塗り・モザイク・ぼかし編集ができるブラウザ完結型ツール",
+    images: ["/hero.png"],
   },
   icons: {
     icon: "/favicon.ico",
