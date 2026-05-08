@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BackToTopButton } from "./_components/BackToTopButton";
 import { DemoSection } from "./_components/DemoSection";
 import { FinalCtaSection } from "./_components/FinalCtaSection";
 import { HeroSection } from "./_components/HeroSection";
@@ -27,6 +28,7 @@ export default function LpPage() {
       <PrivacySection />
       <UseCasesSection />
       <FinalCtaSection />
+      <BackToTopButton />
     </div>
   );
 }
