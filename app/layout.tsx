@@ -4,9 +4,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Header } from "@/components/Header";
 import { ToasterProvider } from "@/components/ToasterProvider";
+import { getSiteUrlAsUrl } from "@/lib/siteUrl";
 import "./globals.css";
-
-const DEFAULT_SITE_URL = "https://privacy-masking-app.pages.dev";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? DEFAULT_SITE_URL),
+  metadataBase: getSiteUrlAsUrl(),
   title: "伏せ太郎 | Fusely",
   description:
     "伏せ太郎（Fusely）は、画像内の顔・文字情報を検出して黒塗り・モザイク・ぼかし編集ができるブラウザ完結型ツール",
