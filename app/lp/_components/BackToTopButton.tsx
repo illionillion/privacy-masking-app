@@ -9,7 +9,10 @@ export function BackToTopButton() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsVisible(window.scrollY > 320);
+      const nextIsVisible = window.scrollY > 320;
+      setIsVisible((prevIsVisible) =>
+        prevIsVisible === nextIsVisible ? prevIsVisible : nextIsVisible
+      );
     };
 
     handleScroll();
@@ -21,7 +24,8 @@ export function BackToTopButton() {
   }, []);
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? "auto" : "smooth" });
   };
 
   if (!isVisible) {
