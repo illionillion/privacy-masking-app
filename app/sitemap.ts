@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 const DEFAULT_SITE_URL = "https://privacy-masking-app.pages.dev";
+export const dynamic = "force-static";
 
 /**
  * Search Console 向けの sitemap.xml を生成する。

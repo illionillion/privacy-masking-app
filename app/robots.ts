@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 const DEFAULT_SITE_URL = "https://privacy-masking-app.pages.dev";
+export const dynamic = "force-static";
 
 /**
  * クローラー向けの robots.txt を生成する。
