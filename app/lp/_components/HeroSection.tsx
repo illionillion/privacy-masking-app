@@ -47,7 +47,7 @@ export function HeroSection() {
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 text-base font-bold text-indigo-900 shadow-lg transition-all hover:bg-indigo-50 hover:shadow-xl active:scale-95"
+            className="inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-8 py-4 text-base font-bold text-white shadow-lg transition-all hover:from-indigo-400 hover:to-violet-400 hover:shadow-xl active:scale-95 sm:w-auto sm:max-w-none"
           >
             今すぐ使う
             <ArrowRight className="h-5 w-5" aria-hidden="true" />
@@ -56,7 +56,7 @@ export function HeroSection() {
             href={GITHUB_REPOSITORY_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2.5 rounded-xl border border-white/10 bg-[#24292f] px-8 py-4 text-base font-semibold text-white shadow-lg transition-all hover:border-white/15 hover:bg-[#1b1f23] hover:shadow-xl active:scale-[0.98]"
+            className="group inline-flex w-full max-w-xs items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-[#24292f] px-8 py-4 text-base font-semibold text-white shadow-lg transition-all hover:border-white/15 hover:bg-[#1b1f23] hover:shadow-xl active:scale-[0.98] sm:w-auto sm:max-w-none"
             aria-label="GitHubでスター（新しいタブで開く）"
           >
             <GitHubMarkIcon className="h-5 w-5 shrink-0" />

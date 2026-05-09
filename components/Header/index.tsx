@@ -10,7 +10,7 @@ import { GITHUB_REPOSITORY_URL } from "@/lib/githubRepositoryUrl";
  */
 export function Header() {
   return (
-    <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white shadow-sm">
+    <header className="sticky top-0 z-10 border-b border-white/40 bg-white/75 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-white/60">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <Link className="flex items-center gap-2" href="/">
           <Image src="/fusely-icon.png" alt="" width={48} height={48} priority />
