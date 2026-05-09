@@ -22,11 +22,7 @@ export const metadata: Metadata = {
  */
 export default function NotFound() {
   return (
-    <div
-      className={clsx([
-        "mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center px-4 py-16 text-center",
-      ])}
-    >
+    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center px-4 py-16 text-center">
       <p
         className={clsx([
           "text-5xl font-bold tabular-nums tracking-tight text-indigo-600 sm:text-6xl",
