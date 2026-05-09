@@ -23,11 +23,7 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center px-4 py-16 text-center">
-      <p
-        className={clsx([
-          "text-5xl font-bold tabular-nums tracking-tight text-indigo-600 sm:text-6xl",
-        ])}
-      >
+      <p className="text-5xl font-bold tabular-nums tracking-tight text-indigo-600 sm:text-6xl">
         404
       </p>
       <h1 className="mt-4 text-2xl font-bold tracking-tight text-zinc-900 sm:mt-5 sm:text-3xl">
