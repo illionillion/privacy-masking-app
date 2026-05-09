@@ -1,4 +1,27 @@
+import type { Metadata } from "next";
 import { MaskingGallery } from "@/features/masking";
+import { resolveSiteUrl } from "@/lib/siteUrl";
+
+const HOME_TITLE = "伏せ太郎 | Fusely";
+const HOME_DESCRIPTION =
+  "伏せ太郎（Fusely）は、画像内の顔・文字情報を検出して黒塗り・モザイク・ぼかし編集ができるブラウザ完結型ツール";
+
+export const metadata: Metadata = {
+  title: HOME_TITLE,
+  description: HOME_DESCRIPTION,
+  alternates: {
+    canonical: "./",
+  },
+  openGraph: {
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+    url: resolveSiteUrl(),
+  },
+  twitter: {
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+  },
+};
 
 /**
  * メインページ
