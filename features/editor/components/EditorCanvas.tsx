@@ -40,6 +40,7 @@ interface EditorCanvasProps {
   onAddPaintStroke: (stroke: Omit<PaintStroke, "id">) => void;
   onUpdateStampRegion: (id: string, updates: Partial<Omit<StampRegion, "id">>) => void;
   onUpdateFillRegion: (id: string, updates: Partial<Omit<FillRegion, "id">>) => void;
+  onUpdatePaintStroke: (id: string, updates: Partial<Omit<PaintStroke, "id">>) => void;
   /** stamp-face 種別用のスタンプ画像マップ（ファイル名をキーにした HTMLImageElement の Map） */
   stampImages: Map<string, HTMLImageElement>;
   /** 現在選択中の stamp-face 画像のファイル名 */
@@ -263,6 +264,7 @@ export function EditorCanvas({
   onAddPaintStroke,
   onUpdateStampRegion,
   onUpdateFillRegion,
+  onUpdatePaintStroke,
   stampImages,
   selectedStampFileName,
   onDeleteSelected,
@@ -325,7 +327,7 @@ export function EditorCanvas({
   /**
    * 選択変化・領域サイズ変化時に Transformer を再アタッチする
    *
-   * stampRegions / fillRegions を依存に含めることで、
+   * stampRegions / fillRegions / paintStrokes を依存に含めることで、
    * リサイズ後に React state が更新された際に Transformer が
    * キャッシュ済みのバウンディングボックスを再計算する。
    */
@@ -346,7 +348,7 @@ export function EditorCanvas({
     } else {
       transformer.nodes([]);
     }
-  }, [selectedId, stampRegions, fillRegions]);
+  }, [selectedId, stampRegions, fillRegions, paintStrokes]);
 
   /**
    * ステージのマウスダウン/タッチスタートハンドラ
@@ -466,6 +468,76 @@ export function EditorCanvas({
     } else {
       onUpdateFillRegion(id, { x: newX, y: newY });
     }
+  }
+
+  /**
+   * ペイントストロークのドラッグ終了時に、ノードの x/y オフセットを points 配列に
+   * 焼き込んで state を更新する。
+   *
+   * Konva.Line は points が node のローカル座標で保持されるため、
+   * ドラッグ後の x/y を points に加算してからノードの x/y をリセットする。
+   *
+   * @param id - ストロークのID
+   * @param node - Konva.Line ノード
+   */
+  function handlePaintStrokeDragEnd(id: string, node: Konva.Line) {
+    const dx = node.x();
+    const dy = node.y();
+    if (dx === 0 && dy === 0) return;
+
+    const localPoints = node.points();
+    const newImagePoints: { x: number; y: number }[] = [];
+    for (let i = 0; i < localPoints.length; i += 2) {
+      newImagePoints.push({
+        x: ((localPoints[i] ?? 0) + dx) / scaleX,
+        y: ((localPoints[i + 1] ?? 0) + dy) / scaleY,
+      });
+    }
+
+    node.x(0);
+    node.y(0);
+    node.points(newImagePoints.flatMap((p) => [p.x * scaleX, p.y * scaleY]));
+
+    onUpdatePaintStroke(id, { points: newImagePoints });
+  }
+
+  /**
+   * ペイントストロークのトランスフォーム終了時に、回転・拡縮・移動を points と
+   * brushSize に焼き込んで state を更新する。
+   *
+   * brushSize は scaleX/scaleY の絶対値の平均で再計算する（非一様スケール時の近似）。
+   *
+   * @param id - ストロークのID
+   * @param stroke - 元のストローク
+   * @param node - Konva.Line ノード
+   */
+  function handlePaintStrokeTransformEnd(id: string, stroke: PaintStroke, node: Konva.Line) {
+    const transform = node.getTransform();
+    const localPoints = node.points();
+    const scaleAbsX = Math.abs(node.scaleX());
+    const scaleAbsY = Math.abs(node.scaleY());
+
+    const newImagePoints: { x: number; y: number }[] = [];
+    for (let i = 0; i < localPoints.length; i += 2) {
+      const worldPoint = transform.point({
+        x: localPoints[i] ?? 0,
+        y: localPoints[i + 1] ?? 0,
+      });
+      newImagePoints.push({
+        x: worldPoint.x / scaleX,
+        y: worldPoint.y / scaleY,
+      });
+    }
+
+    node.x(0);
+    node.y(0);
+    node.scaleX(1);
+    node.scaleY(1);
+    node.rotation(0);
+    node.points(newImagePoints.flatMap((p) => [p.x * scaleX, p.y * scaleY]));
+
+    const newBrushSize = stroke.brushSize * ((scaleAbsX + scaleAbsY) / 2);
+    onUpdatePaintStroke(id, { points: newImagePoints, brushSize: newBrushSize });
   }
 
   /**
@@ -632,8 +704,14 @@ export function EditorCanvas({
               lineCap="round"
               lineJoin="round"
               opacity={stroke.isEnabled ? 1 : 0.3}
+              hitStrokeWidth={Math.max(stroke.brushSize * scaleX, 12)}
+              draggable={isInteractive}
               onClick={() => isInteractive && onSelectItem(stroke.id)}
               onTap={() => isInteractive && onSelectItem(stroke.id)}
+              onDragEnd={(e) => handlePaintStrokeDragEnd(stroke.id, e.target as Konva.Line)}
+              onTransformEnd={(e) =>
+                handlePaintStrokeTransformEnd(stroke.id, stroke, e.target as Konva.Line)
+              }
             />
           ))}
 

@@ -57,11 +57,13 @@ export function DemoSection() {
           {demos.map(({ label, description, beforeSrc, afterSrc, beforeAlt, afterAlt }) => (
             <div key={label}>
               {/* ラベル・説明 */}
-              <div className="mb-4">
-                <span className="mr-2 inline-block rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
+              <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <span className="inline-block w-fit rounded-full bg-indigo-600 px-3.5 py-1.5 text-sm font-bold text-white shadow-sm">
                   {label}
                 </span>
-                <span className="text-sm text-zinc-500">{description}</span>
+                <span className="text-sm font-medium text-zinc-700 sm:text-base">
+                  {description}
+                </span>
               </div>
 
               {/* Before/After グリッド */}
