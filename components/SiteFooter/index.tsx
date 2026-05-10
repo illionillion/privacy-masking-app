@@ -22,8 +22,15 @@ const externalLinkClass = clsx([footerLinkClass, "inline-flex", "items-center", 
  */
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t border-zinc-200 bg-white/80">
-      <div className="mx-auto max-w-5xl px-4 py-8">
+    <footer
+      className={clsx([
+        "mt-auto",
+        "border-t border-zinc-200/90",
+        "bg-gradient-to-b from-zinc-100 to-zinc-100/95",
+        "shadow-[inset_0_1px_0_0_rgb(255_255_255_/_.45)]",
+      ])}
+    >
+      <div className="mx-auto max-w-5xl px-4 pb-8 pt-10">
         <nav aria-label="フッターナビゲーション">
           <ul className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
             <li>
