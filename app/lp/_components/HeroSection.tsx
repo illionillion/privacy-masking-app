@@ -47,7 +47,7 @@ export function HeroSection() {
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Link
             href="/"
-            className="inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-8 py-4 text-base font-bold text-white shadow-lg transition-all hover:from-indigo-400 hover:to-violet-400 hover:shadow-xl active:scale-95 sm:w-auto sm:max-w-none"
+            className="inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-xl bg-white px-10 py-4 text-base font-bold text-indigo-900 shadow-lg transition-all hover:bg-indigo-50 hover:shadow-xl active:scale-95 sm:w-auto sm:max-w-none"
           >
             今すぐ使う
             <ArrowRight className="h-5 w-5" aria-hidden="true" />
