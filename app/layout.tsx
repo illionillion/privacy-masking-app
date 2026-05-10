@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ToasterProvider } from "@/components/ToasterProvider";
+import { ADSENSE_CLIENT_ID } from "@/lib/adsenseClientId";
 import { getSiteUrlAsUrl } from "@/lib/siteUrl";
 import "./globals.css";
 
@@ -66,6 +68,14 @@ export default function RootLayout({
   return (
     <html lang="ja" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-zinc-50 text-zinc-900">
+        {/* AdSense / サイト所有権確認: beforeInteractive で document head 側に載せる */}
+        <Script
+          id="adsense-loader"
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(ADSENSE_CLIENT_ID)}`}
+          crossOrigin="anonymous"
+          strategy="beforeInteractive"
+        />
         <Header />
         <main className="flex flex-1 flex-col">{children}</main>
         <SiteFooter />
