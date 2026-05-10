@@ -58,6 +58,10 @@ export const metadata: Metadata = {
   verification: {
     google: "h8_qALSr2HLxo3u0KCmFKOB-BfRPs6Wh_oPvaYGu1kU",
   },
+  // AdSense のサイト／アカウント関連付け用。広告表示には adsbygoogle スクリプトも必要。
+  other: {
+    "google-adsense-account": ADSENSE_CLIENT_ID,
+  },
 };
 
 export default function RootLayout({
