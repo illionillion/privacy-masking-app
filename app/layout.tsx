@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Header } from "@/components/Header";
+import { SiteFooter } from "@/components/SiteFooter";
 import { ToasterProvider } from "@/components/ToasterProvider";
 import { getSiteUrlAsUrl } from "@/lib/siteUrl";
 import "./globals.css";
@@ -67,6 +68,7 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col bg-zinc-50 text-zinc-900">
         <Header />
         <main className="flex flex-1 flex-col">{children}</main>
+        <SiteFooter />
         <ConfirmDialog />
         <ToasterProvider />
       </body>
