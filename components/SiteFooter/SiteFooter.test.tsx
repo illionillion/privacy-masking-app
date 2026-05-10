@@ -25,17 +25,19 @@ describe("SiteFooter", () => {
 
   it("GitHub 外部リンクが正しく設定される", () => {
     render(<SiteFooter />);
-    expect(screen.getByRole("link", { name: /GitHub Issues/ })).toHaveAttribute(
-      "href",
-      GITHUB_ISSUES_URL
-    );
-    expect(screen.getByRole("link", { name: /GitHub Discussions/ })).toHaveAttribute(
-      "href",
-      GITHUB_DISCUSSIONS_URL
-    );
-    expect(screen.getByRole("link", { name: /ソースコード/ })).toHaveAttribute(
-      "href",
-      GITHUB_REPOSITORY_URL
-    );
+    const issuesLink = screen.getByRole("link", { name: /GitHub Issues/ });
+    expect(issuesLink).toHaveAttribute("href", GITHUB_ISSUES_URL);
+    expect(issuesLink).toHaveAttribute("target", "_blank");
+    expect(issuesLink).toHaveAttribute("rel", "noopener noreferrer");
+
+    const discussionsLink = screen.getByRole("link", { name: /GitHub Discussions/ });
+    expect(discussionsLink).toHaveAttribute("href", GITHUB_DISCUSSIONS_URL);
+    expect(discussionsLink).toHaveAttribute("target", "_blank");
+    expect(discussionsLink).toHaveAttribute("rel", "noopener noreferrer");
+
+    const repoLink = screen.getByRole("link", { name: /ソースコード/ });
+    expect(repoLink).toHaveAttribute("href", GITHUB_REPOSITORY_URL);
+    expect(repoLink).toHaveAttribute("target", "_blank");
+    expect(repoLink).toHaveAttribute("rel", "noopener noreferrer");
   });
 });
