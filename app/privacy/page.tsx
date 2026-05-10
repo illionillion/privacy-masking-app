@@ -74,7 +74,7 @@ export default function PrivacyPage() {
 
       <section className="space-y-3" aria-labelledby="privacy-cookies-heading">
         <h2 id="privacy-cookies-heading" className="text-base font-semibold text-zinc-900">
-          3. Cookie・広告・解析
+          3. Cookie・広告・解析・識別子
         </h2>
         <p>
           本サービスは、現時点で当方が独自に設置する広告タグやアクセス解析ツール（いわゆる第三者配信の広告用
@@ -82,7 +82,24 @@ export default function PrivacyPage() {
         </p>
         <p>
           将来的に Google AdSense
-          等の広告または解析を導入する場合は、利用する技術に応じて本ポリシーを改定し、必要に応じて同意取得の手段を設けるなど、法令および各サービスのポリシーに従います。
+          等のディスプレイ広告やアクセス解析を導入する場合、広告配信事業者・広告ネットワーク運営者等の第三者が、
+          <strong>
+            Cookie、モバイル広告識別子、ブラウザに保存される類似の識別情報、その他の技術
+          </strong>
+          を用いて、次のような処理を行うことがあります。これらはいわゆる「追跡」や計測・パーソナライズに該当し得ます。
+        </p>
+        <ul className="list-inside list-disc space-y-1 pl-1">
+          <li>広告の表示回数・効果の計測、不正対策</li>
+          <li>
+            利用者の興味関心や閲覧履歴等に基づく広告の配信、またはその可否の判定（パーソナライズド広告等）
+          </li>
+          <li>第三者が定めるプライバシーポリシー・オプトアウト手段に基づく取り扱い</li>
+        </ul>
+        <p>
+          上記は本サービスが画像データを当方のサーバーに送信しないこととは別のレイヤーで、
+          <strong>利用者のブラウザまたは端末上で</strong>
+          行われることが一般的です。導入時点で利用する事業者・技術の範囲に応じて本ポリシーを具体化し、必要に応じて同意取得の手段を設けるなど、法令および各サービス（例:
+          Google の広告・ Cookie に関する説明）のポリシーに従います。
         </p>
       </section>
 
