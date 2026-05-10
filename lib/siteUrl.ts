@@ -1,4 +1,5 @@
-const DEFAULT_SITE_URL = "https://privacy-masking-app.pages.dev";
+/** `NEXT_PUBLIC_SITE_URL` 未設定時の本番既定URL（Cloudflare Pages の公開ドメイン）。 */
+const DEFAULT_SITE_URL = "https://fusely-app.pages.dev";
 
 /**
  * サイトURL文字列の末尾スラッシュを除去して正規化する。
