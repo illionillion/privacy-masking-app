@@ -10,4 +10,14 @@
 <changefreq>weekly</changefreq>
 <priority>0.8</priority>
 </url>
+<url>
+<loc>https://fusely-app.pages.dev/privacy</loc>
+<changefreq>monthly</changefreq>
+<priority>0.5</priority>
+</url>
+<url>
+<loc>https://fusely-app.pages.dev/terms</loc>
+<changefreq>monthly</changefreq>
+<priority>0.5</priority>
+</url>
 </urlset>
