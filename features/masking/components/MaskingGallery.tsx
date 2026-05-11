@@ -9,6 +9,7 @@ import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_FILE_SIZE } from "@/components/ImageUpl
 import { useFaceDetection } from "@/features/face-detection";
 import { useOcr } from "@/features/ocr";
 import { useConfirmStore } from "@/lib/confirmStore";
+import { useNarrowViewport } from "@/lib/useNarrowViewport";
 import { type MaskingImageItem, createDownloadFileName } from "../types";
 import { GalleryItem } from "./GalleryItem";
 
@@ -33,6 +34,8 @@ const loadImageElement = (src: string): Promise<HTMLImageElement> => {
  * 画像アップロード、顔検出、Canvas表示を統合する。
  */
 export function MaskingGallery() {
+  /** ビューポート幅はギャラリー全体で共通のため、ここで1回だけ matchMedia を購読する */
+  const isNarrow = useNarrowViewport();
   const [images, setImages] = useState<MaskingImageItem[]>([]);
   const imagesRef = useRef(images);
   const isMountedRef = useRef(true);
@@ -457,6 +460,7 @@ export function MaskingGallery() {
                 image={image}
                 isActive={image.id === activeImageId}
                 isModelLoading={isModelLoading}
+                isNarrow={isNarrow}
                 onSelect={setActiveImageId}
                 onRedetect={handleRedetect}
                 onRendered={handleRendered}

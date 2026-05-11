@@ -7,7 +7,6 @@ import { useEditorState } from "@/features/editor/hooks/useEditorState";
 import { EditorToolbar } from "@/features/editor/components/EditorToolbar";
 import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
 import { STAMP_CATALOG, STAMP_FILE_NAMES } from "@/features/editor/constants";
-import { useNarrowViewport } from "@/lib/useNarrowViewport";
 import { type MaskingImageItem, createDownloadFileName } from "../types";
 
 /** Konva は window を module ロード時に参照するため SSR を無効化して動的インポートする */
@@ -21,6 +20,8 @@ interface GalleryItemProps {
   isActive: boolean;
   /** face-api モデルのロード中フラグ（ロード中は再検出を無効化する） */
   isModelLoading: boolean;
+  /** Tailwind `md` 未満の狭いビューポートか（親で1回だけ matchMedia を購読する） */
+  isNarrow: boolean;
   onSelect: (id: string) => void;
   onRedetect: (id: string) => void | Promise<void>;
   onRendered: (id: string, blobUrl: string) => void;
@@ -77,12 +78,11 @@ export function GalleryItem({
   image,
   isActive,
   isModelLoading,
+  isNarrow,
   onSelect,
   onRedetect,
   onRendered,
 }: GalleryItemProps) {
-  const isNarrow = useNarrowViewport();
-
   const editor = useEditorState(STAMP_FILE_NAMES[0] ?? "");
   const selectedStampRegion = editor.stampRegions.find((region) => region.id === editor.selectedId);
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
