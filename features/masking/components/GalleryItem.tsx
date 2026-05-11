@@ -7,6 +7,7 @@ import { useEditorState } from "@/features/editor/hooks/useEditorState";
 import { EditorToolbar } from "@/features/editor/components/EditorToolbar";
 import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
 import { STAMP_CATALOG, STAMP_FILE_NAMES } from "@/features/editor/constants";
+import { useNarrowViewport } from "@/lib/useNarrowViewport";
 import { type MaskingImageItem, createDownloadFileName } from "../types";
 
 /** Konva は window を module ロード時に参照するため SSR を無効化して動的インポートする */
@@ -81,6 +82,7 @@ export function GalleryItem({
   onRendered,
 }: GalleryItemProps) {
   const isRedetectDisabled = image.isProcessing || isModelLoading;
+  const isNarrow = useNarrowViewport();
 
   const editor = useEditorState(STAMP_FILE_NAMES[0] ?? "");
   const selectedStampRegion = editor.stampRegions.find((region) => region.id === editor.selectedId);
@@ -90,6 +92,11 @@ export function GalleryItem({
   const [stampImages, setStampImages] = useState<Map<string, HTMLImageElement>>(new Map());
   const exportedBlobUrlRef = useRef<string | null>(null);
   const onRenderedRef = useRef(onRendered);
+  /** SP 時の編集モードフラグ（PC では常に編集 UI を表示するため未使用） */
+  const [isEditing, setIsEditing] = useState(false);
+
+  /** SP かつ非編集中のときはプレビュー img を表示し、Konva をマウントしない */
+  const showPreviewOnly = isNarrow && !isEditing;
 
   useEffect(() => {
     onRenderedRef.current = onRendered;
@@ -195,21 +202,41 @@ export function GalleryItem({
         >
           {image.name}
         </p>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            void onRedetect(image.id);
-          }}
-          disabled={isRedetectDisabled}
-          className={clsx([
-            "relative z-10 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-            "bg-blue-600 text-white hover:bg-blue-700",
-            isRedetectDisabled && "cursor-not-allowed opacity-50",
-          ])}
-        >
-          再検出
-        </button>
+        <div className="relative z-10 flex items-center gap-2">
+          {/* SP のみ: 編集 / 完了 ボタン */}
+          {isNarrow && !image.isProcessing && !image.processingError && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing((prev) => !prev);
+              }}
+              className={clsx([
+                "min-h-[44px] min-w-[44px] rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                isEditing
+                  ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                  : "bg-emerald-600 text-white hover:bg-emerald-700",
+              ])}
+            >
+              {isEditing ? "完了" : "編集"}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              void onRedetect(image.id);
+            }}
+            disabled={isRedetectDisabled}
+            className={clsx([
+              "min-h-[44px] min-w-[44px] rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              "bg-blue-600 text-white hover:bg-blue-700",
+              isRedetectDisabled && "cursor-not-allowed opacity-50",
+            ])}
+          >
+            再検出
+          </button>
+        </div>
       </div>
 
       <p className="mt-2 text-xs text-zinc-500">
@@ -235,7 +262,18 @@ export function GalleryItem({
           <div className="flex justify-center p-3">
             <p className="text-sm text-red-500">検出に失敗しました。再検出してください。</p>
           </div>
+        ) : showPreviewOnly ? (
+          /* SP・非編集中: マスク適用済みプレビュー img（Konva はマウントしない） */
+          <div className="flex justify-center p-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={image.maskedBlobUrl ?? image.imageUrl}
+              alt={image.name}
+              className="max-h-full max-w-full rounded-lg object-contain"
+            />
+          </div>
         ) : (
+          /* PC 常時 / SP 編集中: ツールバー + Konva Canvas */
           <>
             <div className="relative z-10 p-2">
               <EditorToolbar
