@@ -90,6 +90,8 @@ export function GalleryItem({
   const [imageNaturalHeight, setImageNaturalHeight] = useState(0);
   const [stampImages, setStampImages] = useState<Map<string, HTMLImageElement>>(new Map());
   const exportedBlobUrlRef = useRef<string | null>(null);
+  /** 親の `maskedBlobUrl` が更新されたあとにのみ古い Blob URL を revoke する（同期 revoke だと img がまだ旧 URL 参照中に切れる） */
+  const prevMaskedBlobUrlForRevokeRef = useRef<string | null>(null);
   const onRenderedRef = useRef(onRendered);
   /** SP 時の編集モードフラグ（PC では常に編集 UI を表示するため未使用） */
   const [isEditing, setIsEditing] = useState(false);
@@ -151,10 +153,8 @@ export function GalleryItem({
           URL.revokeObjectURL(blobUrl);
           return;
         }
-        const prev = exportedBlobUrlRef.current;
         exportedBlobUrlRef.current = blobUrl;
         onRenderedRef.current(image.id, blobUrl);
-        if (prev) URL.revokeObjectURL(prev);
       })
       .catch((err: unknown) => {
         if (!cancelled) {
@@ -174,6 +174,24 @@ export function GalleryItem({
     editor.paintStrokes,
     stampImages,
   ]);
+
+  /**
+   * マスク結果 Blob URL の解放
+   *
+   * `onRendered` 直後に旧 URL を revoke すると、親 state 反映前の img が壊れるため、
+   * `image.maskedBlobUrl` が更新されたタイミングで直前の blob のみ revoke する。
+   */
+  useEffect(() => {
+    const current = image.maskedBlobUrl;
+    const prev = prevMaskedBlobUrlForRevokeRef.current;
+    if (prev !== null && prev !== current && prev.startsWith("blob:")) {
+      URL.revokeObjectURL(prev);
+      if (exportedBlobUrlRef.current === prev) {
+        exportedBlobUrlRef.current = null;
+      }
+    }
+    prevMaskedBlobUrlForRevokeRef.current = current;
+  }, [image.maskedBlobUrl]);
 
   /** アンマウント時に Blob URL を解放する */
   useEffect(() => {
@@ -209,6 +227,8 @@ export function GalleryItem({
           {isNarrow && !image.isProcessing && !image.processingError && (
             <button
               type="button"
+              aria-pressed={isEditing}
+              aria-label={isEditing ? "編集を完了してプレビューを表示" : "画像を編集"}
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditing((prev) => !prev);
