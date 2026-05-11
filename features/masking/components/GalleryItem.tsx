@@ -229,8 +229,9 @@ export function GalleryItem({
             }}
             disabled={isRedetectDisabled}
             className={clsx([
-              "min-h-[44px] min-w-[44px] rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
               "bg-blue-600 text-white hover:bg-blue-700",
+              isNarrow && "min-h-[44px] min-w-[44px]",
               isRedetectDisabled && "cursor-not-allowed opacity-50",
             ])}
           >
