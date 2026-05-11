@@ -1,3 +1,5 @@
+"use client";
+
 import { useSyncExternalStore } from "react";
 
 /** SP 判定のブレークポイント（Tailwind の `md` と同じ 768px 未満） */
@@ -5,8 +7,13 @@ const NARROW_BREAKPOINT = "(max-width: 767px)";
 
 function subscribeToNarrow(callback: () => void): () => void {
   const mq = window.matchMedia(NARROW_BREAKPOINT);
-  mq.addEventListener("change", callback);
-  return () => mq.removeEventListener("change", callback);
+  if (typeof mq.addEventListener === "function") {
+    mq.addEventListener("change", callback);
+    return () => mq.removeEventListener("change", callback);
+  }
+  // 古い環境向けフォールバック（addListener は deprecated だが一部環境で必要）
+  mq.addListener(callback);
+  return () => mq.removeListener(callback);
 }
 
 function getSnapshot(): boolean {
