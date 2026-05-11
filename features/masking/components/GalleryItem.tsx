@@ -212,9 +212,9 @@ export function GalleryItem({
                 setIsEditing((prev) => !prev);
               }}
               className={clsx([
-                "min-h-[44px] min-w-[44px] rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                 isEditing
-                  ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                  ? "bg-zinc-600 text-white hover:bg-zinc-700"
                   : "bg-emerald-600 text-white hover:bg-emerald-700",
               ])}
             >
@@ -231,7 +231,6 @@ export function GalleryItem({
             className={clsx([
               "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
               "bg-blue-600 text-white hover:bg-blue-700",
-              isNarrow && "min-h-[44px] min-w-[44px]",
               isRedetectDisabled && "cursor-not-allowed opacity-50",
             ])}
           >
