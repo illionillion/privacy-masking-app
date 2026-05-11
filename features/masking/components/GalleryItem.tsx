@@ -81,7 +81,6 @@ export function GalleryItem({
   onRedetect,
   onRendered,
 }: GalleryItemProps) {
-  const isRedetectDisabled = image.isProcessing || isModelLoading;
   const isNarrow = useNarrowViewport();
 
   const editor = useEditorState(STAMP_FILE_NAMES[0] ?? "");
@@ -97,6 +96,9 @@ export function GalleryItem({
 
   /** SP かつ非編集中のときはプレビュー img を表示し、Konva をマウントしない */
   const showPreviewOnly = isNarrow && !isEditing;
+  /** SP 編集中は再検出・ダウンロードを無効化する */
+  const isEditingOnSp = isNarrow && isEditing;
+  const isRedetectDisabled = image.isProcessing || isModelLoading || isEditingOnSp;
 
   useEffect(() => {
     onRenderedRef.current = onRendered;
@@ -335,7 +337,9 @@ export function GalleryItem({
         <p className="text-xs text-zinc-400">{(image.size / 1024 / 1024).toFixed(2)} MB</p>
 
         <div className="flex items-center gap-2">
-          {image.maskedBlobUrl && !image.isProcessing && !image.processingError ? (
+          {isEditingOnSp ? (
+            <span className="text-xs text-zinc-400">編集中…</span>
+          ) : image.maskedBlobUrl && !image.isProcessing && !image.processingError ? (
             <a
               href={image.maskedBlobUrl}
               download={createDownloadFileName(image.name)}
