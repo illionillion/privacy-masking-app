@@ -138,7 +138,8 @@ export function GalleryItem({
    * エディタ状態の変化に応じて自動エクスポートを行い onRendered に通知する
    */
   useEffect(() => {
-    if (!imageElement || image.isProcessing) return;
+    /** 親は `processingError` 時に `handleRendered` で `maskedBlobUrl` を更新しないため、Blob がリークしないようエクスポートしない */
+    if (!imageElement || image.isProcessing || image.processingError) return;
     let cancelled = false;
 
     void exportEditorCanvas(
@@ -169,6 +170,7 @@ export function GalleryItem({
     imageElement,
     image.id,
     image.isProcessing,
+    image.processingError,
     editor.stampRegions,
     editor.fillRegions,
     editor.paintStrokes,

@@ -1,5 +1,6 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
 import { GalleryItem } from "./GalleryItem";
 import type { MaskingImageItem } from "../types";
 
@@ -110,5 +111,20 @@ describe("GalleryItem", () => {
     await waitFor(() => {
       expect(screen.getByTestId("mock-editor-canvas")).toBeInTheDocument();
     });
+  });
+
+  it("検出失敗時は exportEditorCanvas を呼ばない", async () => {
+    render(
+      <GalleryItem
+        image={createImage({ processingError: true })}
+        isActive={false}
+        isModelLoading={false}
+        isNarrow={false}
+        {...handlers}
+      />
+    );
+
+    expect(await screen.findByText("検出に失敗しました。再検出してください。")).toBeInTheDocument();
+    expect(vi.mocked(exportEditorCanvas)).not.toHaveBeenCalled();
   });
 });
