@@ -13,7 +13,7 @@ import {
   Stage,
   Transformer,
 } from "react-konva";
-import { Minus, Plus } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Minus, Plus } from "lucide-react";
 import type {
   EditorMode,
   FillRegion,
@@ -22,7 +22,14 @@ import type {
   StampRegion,
   StampType,
 } from "../types";
-import { VIEW_ZOOM, roundViewZoomStep, stagePointerToContentSpace } from "../lib/viewZoom";
+import {
+  DEFAULT_VIEW_PAN,
+  VIEW_PAN_NUDGE_PX,
+  VIEW_ZOOM,
+  clampViewPan,
+  roundViewZoomStep,
+  stagePointerToContentSpace,
+} from "../lib/viewZoom";
 
 interface EditorCanvasProps {
   imageUrl: string;
@@ -279,8 +286,15 @@ export function EditorCanvas({
   const [drawingStroke, setDrawingStroke] = useState<DrawingStroke | null>(null);
   /** 表示のみの倍率（1 = 等倍）。論理領域・エクスポートは画像自然サイズ基準のまま */
   const [viewZoom, setViewZoom] = useState<number>(VIEW_ZOOM.default);
+  /** 表示のみのパン（ステージ px）。論理マスク座標は変えない */
+  const [viewPan, setViewPan] = useState(DEFAULT_VIEW_PAN);
   const isDrawing = useRef(false);
   const drawStart = useRef<{ x: number; y: number } | null>(null);
+  const viewZoomRef = useRef(viewZoom);
+
+  useEffect(() => {
+    viewZoomRef.current = viewZoom;
+  }, [viewZoom]);
 
   const stageHeight =
     imageNaturalWidth > 0 ? stageWidth * (imageNaturalHeight / imageNaturalWidth) : 400;
@@ -312,13 +326,17 @@ export function EditorCanvas({
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry) {
-        setStageWidth(entry.contentRect.width || 600);
+        const w = entry.contentRect.width || 600;
+        setStageWidth(w);
+        const h = imageNaturalWidth > 0 ? w * (imageNaturalHeight / imageNaturalWidth) : 400;
+        setViewPan((p) => clampViewPan(p, w, h, viewZoomRef.current));
       }
     });
     observer.observe(container);
-    setStageWidth(container.offsetWidth || 600);
+    const w0 = container.offsetWidth || 600;
+    setStageWidth(w0);
     return () => observer.disconnect();
-  }, []);
+  }, [imageNaturalHeight, imageNaturalWidth]);
 
   /** 背景画像を読み込む */
   useEffect(() => {
@@ -585,7 +603,7 @@ export function EditorCanvas({
   function pointerToContentSpace(stage: Konva.Stage): { x: number; y: number } | null {
     const stagePos = getStagePos(stage);
     if (!stagePos) return null;
-    return stagePointerToContentSpace(stagePos, stageWidth, stageHeight, viewZoom);
+    return stagePointerToContentSpace(stagePos, stageWidth, stageHeight, viewZoom, viewPan);
   }
 
   const layerContent = (
@@ -772,35 +790,131 @@ export function EditorCanvas({
 
   return (
     <div ref={containerRef} className="w-full overflow-hidden rounded-xl border border-zinc-200">
-      <div className="flex flex-wrap items-center justify-end gap-1.5 border-b border-zinc-200 bg-zinc-50 px-2 py-1">
-        <span className="mr-auto text-xs text-zinc-600">表示ズーム</span>
-        <span className="min-w-[3rem] text-center text-xs tabular-nums text-zinc-700">
-          {Math.round(viewZoom * 100)}%
-        </span>
-        <button
-          type="button"
-          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
-          aria-label="ズームアウト"
-          onClick={() => setViewZoom((z) => roundViewZoomStep(z - VIEW_ZOOM.step))}
-        >
-          <Minus className="h-4 w-4" aria-hidden />
-        </button>
-        <button
-          type="button"
-          className="rounded border border-zinc-300 bg-white px-2 py-0.5 text-xs text-zinc-800 hover:bg-zinc-100"
-          aria-label="表示ズームを等倍に戻す"
-          onClick={() => setViewZoom(VIEW_ZOOM.default)}
-        >
-          等倍
-        </button>
-        <button
-          type="button"
-          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
-          aria-label="ズームイン"
-          onClick={() => setViewZoom((z) => roundViewZoomStep(z + VIEW_ZOOM.step))}
-        >
-          <Plus className="h-4 w-4" aria-hidden />
-        </button>
+      <div className="flex flex-col gap-1 border-b border-zinc-200 bg-zinc-50 px-2 py-1.5">
+        <span className="text-xs text-zinc-600">表示ズーム</span>
+        <div className="flex w-full flex-wrap items-center gap-2">
+          {viewZoom !== 1 && (
+            <div className="flex flex-wrap items-center gap-1 border-r border-zinc-300 pr-1.5">
+              <span className="text-xs text-zinc-600">移動</span>
+              <button
+                type="button"
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+                aria-label="表示を左へ移動"
+                onClick={() =>
+                  setViewPan((p) =>
+                    clampViewPan(
+                      { x: p.x + VIEW_PAN_NUDGE_PX, y: p.y },
+                      stageWidth,
+                      stageHeight,
+                      viewZoom
+                    )
+                  )
+                }
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+                aria-label="表示を上へ移動"
+                onClick={() =>
+                  setViewPan((p) =>
+                    clampViewPan(
+                      { x: p.x, y: p.y + VIEW_PAN_NUDGE_PX },
+                      stageWidth,
+                      stageHeight,
+                      viewZoom
+                    )
+                  )
+                }
+              >
+                <ChevronUp className="h-4 w-4" aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+                aria-label="表示を下へ移動"
+                onClick={() =>
+                  setViewPan((p) =>
+                    clampViewPan(
+                      { x: p.x, y: p.y - VIEW_PAN_NUDGE_PX },
+                      stageWidth,
+                      stageHeight,
+                      viewZoom
+                    )
+                  )
+                }
+              >
+                <ChevronDown className="h-4 w-4" aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+                aria-label="表示を右へ移動"
+                onClick={() =>
+                  setViewPan((p) =>
+                    clampViewPan(
+                      { x: p.x - VIEW_PAN_NUDGE_PX, y: p.y },
+                      stageWidth,
+                      stageHeight,
+                      viewZoom
+                    )
+                  )
+                }
+              >
+                <ChevronRight className="h-4 w-4" aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="rounded border border-zinc-300 bg-white px-2 py-0.5 text-xs text-zinc-800 hover:bg-zinc-100"
+                aria-label="表示位置を中央に戻す"
+                onClick={() => setViewPan(DEFAULT_VIEW_PAN)}
+              >
+                中央
+              </button>
+            </div>
+          )}
+          <div className="ml-auto flex shrink-0 items-center gap-1.5">
+            <span className="min-w-[3rem] text-center text-xs tabular-nums text-zinc-700">
+              {Math.round(viewZoom * 100)}%
+            </span>
+            <button
+              type="button"
+              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+              aria-label="ズームアウト"
+              onClick={() => {
+                const nz = roundViewZoomStep(viewZoom - VIEW_ZOOM.step);
+                setViewZoom(nz);
+                setViewPan((p) => clampViewPan(p, stageWidth, stageHeight, nz));
+              }}
+            >
+              <Minus className="h-4 w-4" aria-hidden />
+            </button>
+            <button
+              type="button"
+              className="rounded border border-zinc-300 bg-white px-2 py-0.5 text-xs text-zinc-800 hover:bg-zinc-100"
+              aria-label="表示ズームを等倍に戻す"
+              onClick={() => {
+                setViewZoom(VIEW_ZOOM.default);
+                setViewPan(DEFAULT_VIEW_PAN);
+              }}
+            >
+              等倍
+            </button>
+            <button
+              type="button"
+              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+              aria-label="ズームイン"
+              onClick={() => {
+                const nz = roundViewZoomStep(viewZoom + VIEW_ZOOM.step);
+                setViewZoom(nz);
+                setViewPan((p) => clampViewPan(p, stageWidth, stageHeight, nz));
+              }}
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+            </button>
+          </div>
+        </div>
       </div>
       <Stage
         width={stageWidth}
@@ -814,20 +928,22 @@ export function EditorCanvas({
         style={{ cursor: MODE_CURSORS[mode] }}
       >
         <Layer>
-          {viewZoom !== 1 ? (
-            <Group
-              x={stageWidth / 2}
-              y={stageHeight / 2}
-              offsetX={stageWidth / 2}
-              offsetY={stageHeight / 2}
-              scaleX={viewZoom}
-              scaleY={viewZoom}
-            >
-              {layerContent}
-            </Group>
-          ) : (
-            layerContent
-          )}
+          <Group x={viewPan.x} y={viewPan.y}>
+            {viewZoom !== 1 ? (
+              <Group
+                x={stageWidth / 2}
+                y={stageHeight / 2}
+                offsetX={stageWidth / 2}
+                offsetY={stageHeight / 2}
+                scaleX={viewZoom}
+                scaleY={viewZoom}
+              >
+                {layerContent}
+              </Group>
+            ) : (
+              layerContent
+            )}
+          </Group>
         </Layer>
       </Stage>
     </div>
