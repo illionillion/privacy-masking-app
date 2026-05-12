@@ -13,6 +13,7 @@ import {
   Stage,
   Transformer,
 } from "react-konva";
+import { Minus, Plus } from "lucide-react";
 import type {
   EditorMode,
   FillRegion,
@@ -21,6 +22,7 @@ import type {
   StampRegion,
   StampType,
 } from "../types";
+import { VIEW_ZOOM, roundViewZoomStep, stagePointerToContentSpace } from "../lib/viewZoom";
 
 interface EditorCanvasProps {
   imageUrl: string;
@@ -275,6 +277,8 @@ export function EditorCanvas({
   const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
   const [drawingRect, setDrawingRect] = useState<DrawingRect | null>(null);
   const [drawingStroke, setDrawingStroke] = useState<DrawingStroke | null>(null);
+  /** 表示のみの倍率（1 = 等倍）。論理領域・エクスポートは画像自然サイズ基準のまま */
+  const [viewZoom, setViewZoom] = useState<number>(VIEW_ZOOM.default);
   const isDrawing = useRef(false);
   const drawStart = useRef<{ x: number; y: number } | null>(null);
 
@@ -356,7 +360,7 @@ export function EditorCanvas({
   function handlePointerDown(e: KonvaEventObject<MouseEvent> | KonvaEventObject<TouchEvent>) {
     const stage = e.target.getStage();
     if (!stage) return;
-    const pos = getStagePos(stage);
+    const pos = pointerToContentSpace(stage);
     if (!pos) return;
 
     if (mode === "select") {
@@ -384,7 +388,7 @@ export function EditorCanvas({
     if (!isDrawing.current) return;
     const stage = e.target.getStage();
     if (!stage) return;
-    const pos = getStagePos(stage);
+    const pos = pointerToContentSpace(stage);
     if (!pos || !drawStart.current) return;
 
     if (mode === "rect") {
@@ -572,8 +576,232 @@ export function EditorCanvas({
 
   const isInteractive = mode === "select";
 
+  /**
+   * ステージ上のポインタを、ズーム補正後のコンテンツ座標（領域描画と同じ系）に変換する
+   *
+   * @param stage - Konva ステージ
+   * @returns コンテンツ座標、取得できない場合は null
+   */
+  function pointerToContentSpace(stage: Konva.Stage): { x: number; y: number } | null {
+    const stagePos = getStagePos(stage);
+    if (!stagePos) return null;
+    return stagePointerToContentSpace(stagePos, stageWidth, stageHeight, viewZoom);
+  }
+
+  const layerContent = (
+    <>
+      {/* 背景画像 */}
+      {bgImage && <KonvaImage image={bgImage} width={stageWidth} height={stageHeight} />}
+
+      {/* 塗りつぶし領域 */}
+      {fillRegions.map((region) => (
+        <Group
+          key={region.id}
+          id={region.id}
+          x={region.x * scaleX}
+          y={region.y * scaleY}
+          draggable={isInteractive}
+          onClick={() => isInteractive && onSelectItem(region.id)}
+          onTap={() => isInteractive && onSelectItem(region.id)}
+          onDragEnd={(e) => handleDragEnd(region.id, "fill", e.target)}
+          onTransformEnd={(e) => handleTransformEnd(region.id, "fill", e.target)}
+        >
+          <Rect
+            width={region.width * scaleX}
+            height={region.height * scaleY}
+            fill={region.isEnabled ? "#000000" : undefined}
+            stroke={region.isEnabled ? "#3b82f6" : "#9ca3af"}
+            strokeWidth={1}
+            dash={region.isEnabled ? undefined : [6, 3]}
+            opacity={region.isEnabled ? 1 : 0.6}
+          />
+        </Group>
+      ))}
+
+      {/* スタンプ領域 */}
+      {stampRegions.map((region) => {
+        const rx = region.x * scaleX;
+        const ry = region.y * scaleY;
+        const w = region.width * scaleX;
+        const h = region.height * scaleY;
+        const squareStampSize = Math.max(w, h);
+        const squareStampX = (w - squareStampSize) / 2;
+        const squareStampY = (h - squareStampSize) / 2;
+        const stampImg =
+          region.stampType === "stamp-face" ? pickStampImage(region, stampImages) : null;
+        const isEffectStamp =
+          (region.stampType === "blur" || region.stampType === "mosaic") && bgImage !== null;
+        return (
+          <Fragment key={region.id}>
+            {isEffectStamp && (
+              /* blur / mosaic の見た目は操作ノードと分離し、Transformer の計算へ影響させない */
+              <Group x={rx} y={ry} listening={false}>
+                <EffectPreviewGroup
+                  kind={region.stampType as "blur" | "mosaic"}
+                  bgImage={bgImage}
+                  offsetX={-rx}
+                  offsetY={-ry}
+                  stageWidth={stageWidth}
+                  stageHeight={stageHeight}
+                  w={w}
+                  h={h}
+                />
+              </Group>
+            )}
+
+            <Group
+              id={region.id}
+              x={rx}
+              y={ry}
+              draggable={isInteractive}
+              onClick={() => isInteractive && onSelectItem(region.id)}
+              onTap={() => isInteractive && onSelectItem(region.id)}
+              onDragEnd={(e) => handleDragEnd(region.id, "stamp", e.target)}
+              onTransformEnd={(e) => handleTransformEnd(region.id, "stamp", e.target)}
+            >
+              {stampImg ? (
+                /* stamp-face: 顔領域中心を基準に正方形スタンプを表示（旧仕様互換） */
+                <KonvaImage
+                  image={stampImg}
+                  x={squareStampX}
+                  y={squareStampY}
+                  width={squareStampSize}
+                  height={squareStampSize}
+                  opacity={region.isEnabled ? 1 : 0.4}
+                  stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
+                  strokeWidth={1}
+                />
+              ) : isEffectStamp ? (
+                /* blur / mosaic: クリック/変形用の矩形ハンドル */
+                <Rect
+                  width={w}
+                  height={h}
+                  fill="rgba(0,0,0,0.001)"
+                  stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
+                  strokeWidth={1}
+                  listening={true}
+                />
+              ) : (
+                /* fill-black またはフォールバック: 不透明な塗りつぶし矩形 */
+                <Rect
+                  width={w}
+                  height={h}
+                  fill={STAMP_TYPE_COLORS[region.stampType]}
+                  opacity={1}
+                  stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
+                  strokeWidth={1}
+                />
+              )}
+            </Group>
+          </Fragment>
+        );
+      })}
+
+      {/* ペイントストローク */}
+      {paintStrokes.map((stroke) => (
+        <Line
+          key={stroke.id}
+          id={stroke.id}
+          points={stroke.points.flatMap((p) => [p.x * scaleX, p.y * scaleY])}
+          stroke="#000000"
+          strokeWidth={stroke.brushSize * scaleX}
+          lineCap="round"
+          lineJoin="round"
+          opacity={stroke.isEnabled ? 1 : 0.3}
+          hitStrokeWidth={Math.max(stroke.brushSize * scaleX, 12)}
+          draggable={isInteractive}
+          onClick={() => isInteractive && onSelectItem(stroke.id)}
+          onTap={() => isInteractive && onSelectItem(stroke.id)}
+          onDragEnd={(e) => handlePaintStrokeDragEnd(stroke.id, e.target as Konva.Line)}
+          onTransformEnd={(e) =>
+            handlePaintStrokeTransformEnd(stroke.id, stroke, e.target as Konva.Line)
+          }
+        />
+      ))}
+
+      {/* 描画中の矩形プレビュー */}
+      {drawingRect && mode === "rect" && (
+        <Rect
+          x={drawingRect.x}
+          y={drawingRect.y}
+          width={drawingRect.width}
+          height={drawingRect.height}
+          fill={rectTarget === "fill" ? "rgba(0,0,0,0.3)" : "rgba(251,146,60,0.3)"}
+          stroke={rectTarget === "fill" ? "#3b82f6" : "#f97316"}
+          strokeWidth={1}
+          dash={[6, 3]}
+        />
+      )}
+
+      {/* 描画中のペイントプレビュー */}
+      {drawingStroke && mode === "paint" && drawingStroke.points.length >= 2 && (
+        <Line
+          points={drawingStroke.points.flatMap((p) => [p.x * scaleX, p.y * scaleY])}
+          stroke="#000000"
+          strokeWidth={brushSize * scaleX}
+          lineCap="round"
+          lineJoin="round"
+          opacity={0.6}
+        />
+      )}
+
+      {/* ペイント中のカーソルインジケーター */}
+      {drawingStroke && mode === "paint" && drawingStroke.points.length >= 1 && (
+        <Circle
+          x={(drawingStroke.points[drawingStroke.points.length - 1]?.x ?? 0) * scaleX}
+          y={(drawingStroke.points[drawingStroke.points.length - 1]?.y ?? 0) * scaleY}
+          radius={(brushSize * scaleX) / 2}
+          fill="rgba(0,0,0,0.2)"
+          listening={false}
+        />
+      )}
+
+      {/* Transformer（選択モードのみ） */}
+      {mode === "select" && (
+        <Transformer
+          ref={transformerRef}
+          boundBoxFunc={(oldBox, newBox) => {
+            if (newBox.width < MIN_TRANSFORM_SIZE || newBox.height < MIN_TRANSFORM_SIZE)
+              return oldBox;
+            return newBox;
+          }}
+        />
+      )}
+    </>
+  );
+
   return (
     <div ref={containerRef} className="w-full overflow-hidden rounded-xl border border-zinc-200">
+      <div className="flex flex-wrap items-center justify-end gap-1.5 border-b border-zinc-200 bg-zinc-50 px-2 py-1">
+        <span className="mr-auto text-xs text-zinc-600">表示ズーム</span>
+        <span className="min-w-[3rem] text-center text-xs tabular-nums text-zinc-700">
+          {Math.round(viewZoom * 100)}%
+        </span>
+        <button
+          type="button"
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+          aria-label="ズームアウト"
+          onClick={() => setViewZoom((z) => roundViewZoomStep(z - VIEW_ZOOM.step))}
+        >
+          <Minus className="h-4 w-4" aria-hidden />
+        </button>
+        <button
+          type="button"
+          className="rounded border border-zinc-300 bg-white px-2 py-0.5 text-xs text-zinc-800 hover:bg-zinc-100"
+          aria-label="表示ズームを等倍に戻す"
+          onClick={() => setViewZoom(VIEW_ZOOM.default)}
+        >
+          等倍
+        </button>
+        <button
+          type="button"
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+          aria-label="ズームイン"
+          onClick={() => setViewZoom((z) => roundViewZoomStep(z + VIEW_ZOOM.step))}
+        >
+          <Plus className="h-4 w-4" aria-hidden />
+        </button>
+      </div>
       <Stage
         width={stageWidth}
         height={stageHeight}
@@ -586,182 +814,19 @@ export function EditorCanvas({
         style={{ cursor: MODE_CURSORS[mode] }}
       >
         <Layer>
-          {/* 背景画像 */}
-          {bgImage && <KonvaImage image={bgImage} width={stageWidth} height={stageHeight} />}
-
-          {/* 塗りつぶし領域 */}
-          {fillRegions.map((region) => (
+          {viewZoom !== 1 ? (
             <Group
-              key={region.id}
-              id={region.id}
-              x={region.x * scaleX}
-              y={region.y * scaleY}
-              draggable={isInteractive}
-              onClick={() => isInteractive && onSelectItem(region.id)}
-              onTap={() => isInteractive && onSelectItem(region.id)}
-              onDragEnd={(e) => handleDragEnd(region.id, "fill", e.target)}
-              onTransformEnd={(e) => handleTransformEnd(region.id, "fill", e.target)}
+              x={stageWidth / 2}
+              y={stageHeight / 2}
+              offsetX={stageWidth / 2}
+              offsetY={stageHeight / 2}
+              scaleX={viewZoom}
+              scaleY={viewZoom}
             >
-              <Rect
-                width={region.width * scaleX}
-                height={region.height * scaleY}
-                fill={region.isEnabled ? "#000000" : undefined}
-                stroke={region.isEnabled ? "#3b82f6" : "#9ca3af"}
-                strokeWidth={1}
-                dash={region.isEnabled ? undefined : [6, 3]}
-                opacity={region.isEnabled ? 1 : 0.6}
-              />
+              {layerContent}
             </Group>
-          ))}
-
-          {/* スタンプ領域 */}
-          {stampRegions.map((region) => {
-            const rx = region.x * scaleX;
-            const ry = region.y * scaleY;
-            const w = region.width * scaleX;
-            const h = region.height * scaleY;
-            const squareStampSize = Math.max(w, h);
-            const squareStampX = (w - squareStampSize) / 2;
-            const squareStampY = (h - squareStampSize) / 2;
-            const stampImg =
-              region.stampType === "stamp-face" ? pickStampImage(region, stampImages) : null;
-            const isEffectStamp =
-              (region.stampType === "blur" || region.stampType === "mosaic") && bgImage !== null;
-            return (
-              <Fragment key={region.id}>
-                {isEffectStamp && (
-                  /* blur / mosaic の見た目は操作ノードと分離し、Transformer の計算へ影響させない */
-                  <Group x={rx} y={ry} listening={false}>
-                    <EffectPreviewGroup
-                      kind={region.stampType as "blur" | "mosaic"}
-                      bgImage={bgImage}
-                      offsetX={-rx}
-                      offsetY={-ry}
-                      stageWidth={stageWidth}
-                      stageHeight={stageHeight}
-                      w={w}
-                      h={h}
-                    />
-                  </Group>
-                )}
-
-                <Group
-                  id={region.id}
-                  x={rx}
-                  y={ry}
-                  draggable={isInteractive}
-                  onClick={() => isInteractive && onSelectItem(region.id)}
-                  onTap={() => isInteractive && onSelectItem(region.id)}
-                  onDragEnd={(e) => handleDragEnd(region.id, "stamp", e.target)}
-                  onTransformEnd={(e) => handleTransformEnd(region.id, "stamp", e.target)}
-                >
-                  {stampImg ? (
-                    /* stamp-face: 顔領域中心を基準に正方形スタンプを表示（旧仕様互換） */
-                    <KonvaImage
-                      image={stampImg}
-                      x={squareStampX}
-                      y={squareStampY}
-                      width={squareStampSize}
-                      height={squareStampSize}
-                      opacity={region.isEnabled ? 1 : 0.4}
-                      stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
-                      strokeWidth={1}
-                    />
-                  ) : isEffectStamp ? (
-                    /* blur / mosaic: クリック/変形用の矩形ハンドル */
-                    <Rect
-                      width={w}
-                      height={h}
-                      fill="rgba(0,0,0,0.001)"
-                      stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
-                      strokeWidth={1}
-                      listening={true}
-                    />
-                  ) : (
-                    /* fill-black またはフォールバック: 不透明な塗りつぶし矩形 */
-                    <Rect
-                      width={w}
-                      height={h}
-                      fill={STAMP_TYPE_COLORS[region.stampType]}
-                      opacity={1}
-                      stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
-                      strokeWidth={1}
-                    />
-                  )}
-                </Group>
-              </Fragment>
-            );
-          })}
-
-          {/* ペイントストローク */}
-          {paintStrokes.map((stroke) => (
-            <Line
-              key={stroke.id}
-              id={stroke.id}
-              points={stroke.points.flatMap((p) => [p.x * scaleX, p.y * scaleY])}
-              stroke="#000000"
-              strokeWidth={stroke.brushSize * scaleX}
-              lineCap="round"
-              lineJoin="round"
-              opacity={stroke.isEnabled ? 1 : 0.3}
-              hitStrokeWidth={Math.max(stroke.brushSize * scaleX, 12)}
-              draggable={isInteractive}
-              onClick={() => isInteractive && onSelectItem(stroke.id)}
-              onTap={() => isInteractive && onSelectItem(stroke.id)}
-              onDragEnd={(e) => handlePaintStrokeDragEnd(stroke.id, e.target as Konva.Line)}
-              onTransformEnd={(e) =>
-                handlePaintStrokeTransformEnd(stroke.id, stroke, e.target as Konva.Line)
-              }
-            />
-          ))}
-
-          {/* 描画中の矩形プレビュー */}
-          {drawingRect && mode === "rect" && (
-            <Rect
-              x={drawingRect.x}
-              y={drawingRect.y}
-              width={drawingRect.width}
-              height={drawingRect.height}
-              fill={rectTarget === "fill" ? "rgba(0,0,0,0.3)" : "rgba(251,146,60,0.3)"}
-              stroke={rectTarget === "fill" ? "#3b82f6" : "#f97316"}
-              strokeWidth={1}
-              dash={[6, 3]}
-            />
-          )}
-
-          {/* 描画中のペイントプレビュー */}
-          {drawingStroke && mode === "paint" && drawingStroke.points.length >= 2 && (
-            <Line
-              points={drawingStroke.points.flatMap((p) => [p.x * scaleX, p.y * scaleY])}
-              stroke="#000000"
-              strokeWidth={brushSize * scaleX}
-              lineCap="round"
-              lineJoin="round"
-              opacity={0.6}
-            />
-          )}
-
-          {/* ペイント中のカーソルインジケーター */}
-          {drawingStroke && mode === "paint" && drawingStroke.points.length >= 1 && (
-            <Circle
-              x={(drawingStroke.points[drawingStroke.points.length - 1]?.x ?? 0) * scaleX}
-              y={(drawingStroke.points[drawingStroke.points.length - 1]?.y ?? 0) * scaleY}
-              radius={(brushSize * scaleX) / 2}
-              fill="rgba(0,0,0,0.2)"
-              listening={false}
-            />
-          )}
-
-          {/* Transformer（選択モードのみ） */}
-          {mode === "select" && (
-            <Transformer
-              ref={transformerRef}
-              boundBoxFunc={(oldBox, newBox) => {
-                if (newBox.width < MIN_TRANSFORM_SIZE || newBox.height < MIN_TRANSFORM_SIZE)
-                  return oldBox;
-                return newBox;
-              }}
-            />
+          ) : (
+            layerContent
           )}
         </Layer>
       </Stage>
