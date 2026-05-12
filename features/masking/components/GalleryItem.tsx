@@ -20,6 +20,8 @@ interface GalleryItemProps {
   isActive: boolean;
   /** face-api モデルのロード中フラグ（ロード中は再検出を無効化する） */
   isModelLoading: boolean;
+  /** Tailwind `md` 未満の狭いビューポートか（親で1回だけ matchMedia を購読する） */
+  isNarrow: boolean;
   onSelect: (id: string) => void;
   onRedetect: (id: string) => void | Promise<void>;
   onRendered: (id: string, blobUrl: string) => void;
@@ -76,12 +78,11 @@ export function GalleryItem({
   image,
   isActive,
   isModelLoading,
+  isNarrow,
   onSelect,
   onRedetect,
   onRendered,
 }: GalleryItemProps) {
-  const isRedetectDisabled = image.isProcessing || isModelLoading;
-
   const editor = useEditorState(STAMP_FILE_NAMES[0] ?? "");
   const selectedStampRegion = editor.stampRegions.find((region) => region.id === editor.selectedId);
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
@@ -89,7 +90,17 @@ export function GalleryItem({
   const [imageNaturalHeight, setImageNaturalHeight] = useState(0);
   const [stampImages, setStampImages] = useState<Map<string, HTMLImageElement>>(new Map());
   const exportedBlobUrlRef = useRef<string | null>(null);
+  /** 親の `maskedBlobUrl` が更新されたあとにのみ古い Blob URL を revoke する（同期 revoke だと img がまだ旧 URL 参照中に切れる） */
+  const prevMaskedBlobUrlForRevokeRef = useRef<string | null>(null);
   const onRenderedRef = useRef(onRendered);
+  /** SP 時の編集モードフラグ（PC では常に編集 UI を表示するため未使用） */
+  const [isEditing, setIsEditing] = useState(false);
+
+  /** SP かつ非編集中のときはプレビュー img を表示し、Konva をマウントしない */
+  const showPreviewOnly = isNarrow && !isEditing;
+  /** SP 編集中は再検出・ダウンロードを無効化する */
+  const isEditingOnSp = isNarrow && isEditing;
+  const isRedetectDisabled = image.isProcessing || isModelLoading || isEditingOnSp;
 
   useEffect(() => {
     onRenderedRef.current = onRendered;
@@ -127,7 +138,8 @@ export function GalleryItem({
    * エディタ状態の変化に応じて自動エクスポートを行い onRendered に通知する
    */
   useEffect(() => {
-    if (!imageElement || image.isProcessing) return;
+    /** 親は `processingError` 時に `handleRendered` で `maskedBlobUrl` を更新しないため、Blob がリークしないようエクスポートしない */
+    if (!imageElement || image.isProcessing || image.processingError) return;
     let cancelled = false;
 
     void exportEditorCanvas(
@@ -142,10 +154,8 @@ export function GalleryItem({
           URL.revokeObjectURL(blobUrl);
           return;
         }
-        const prev = exportedBlobUrlRef.current;
         exportedBlobUrlRef.current = blobUrl;
         onRenderedRef.current(image.id, blobUrl);
-        if (prev) URL.revokeObjectURL(prev);
       })
       .catch((err: unknown) => {
         if (!cancelled) {
@@ -160,11 +170,30 @@ export function GalleryItem({
     imageElement,
     image.id,
     image.isProcessing,
+    image.processingError,
     editor.stampRegions,
     editor.fillRegions,
     editor.paintStrokes,
     stampImages,
   ]);
+
+  /**
+   * マスク結果 Blob URL の解放
+   *
+   * `onRendered` 直後に旧 URL を revoke すると、親 state 反映前の img が壊れるため、
+   * `image.maskedBlobUrl` が更新されたタイミングで直前の blob のみ revoke する。
+   */
+  useEffect(() => {
+    const current = image.maskedBlobUrl;
+    const prev = prevMaskedBlobUrlForRevokeRef.current;
+    if (prev !== null && prev !== current && prev.startsWith("blob:")) {
+      URL.revokeObjectURL(prev);
+      if (exportedBlobUrlRef.current === prev) {
+        exportedBlobUrlRef.current = null;
+      }
+    }
+    prevMaskedBlobUrlForRevokeRef.current = current;
+  }, [image.maskedBlobUrl]);
 
   /** アンマウント時に Blob URL を解放する */
   useEffect(() => {
@@ -195,21 +224,43 @@ export function GalleryItem({
         >
           {image.name}
         </p>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            void onRedetect(image.id);
-          }}
-          disabled={isRedetectDisabled}
-          className={clsx([
-            "relative z-10 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-            "bg-blue-600 text-white hover:bg-blue-700",
-            isRedetectDisabled && "cursor-not-allowed opacity-50",
-          ])}
-        >
-          再検出
-        </button>
+        <div className="relative z-10 flex items-center gap-2">
+          {/* SP のみ: 編集 / 完了 ボタン */}
+          {isNarrow && !image.isProcessing && !image.processingError && (
+            <button
+              type="button"
+              aria-pressed={isEditing}
+              aria-label={isEditing ? "編集を完了してプレビューを表示" : "画像を編集"}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing((prev) => !prev);
+              }}
+              className={clsx([
+                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                isEditing
+                  ? "bg-zinc-600 text-white hover:bg-zinc-700"
+                  : "bg-emerald-600 text-white hover:bg-emerald-700",
+              ])}
+            >
+              {isEditing ? "完了" : "編集"}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              void onRedetect(image.id);
+            }}
+            disabled={isRedetectDisabled}
+            className={clsx([
+              "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              "bg-blue-600 text-white hover:bg-blue-700",
+              isRedetectDisabled && "cursor-not-allowed opacity-50",
+            ])}
+          >
+            再検出
+          </button>
+        </div>
       </div>
 
       <p className="mt-2 text-xs text-zinc-500">
@@ -235,7 +286,18 @@ export function GalleryItem({
           <div className="flex justify-center p-3">
             <p className="text-sm text-red-500">検出に失敗しました。再検出してください。</p>
           </div>
+        ) : showPreviewOnly ? (
+          /* SP・非編集中: マスク適用済みプレビュー img（Konva はマウントしない） */
+          <div className="flex justify-center p-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={image.maskedBlobUrl ?? image.imageUrl}
+              alt={image.name}
+              className="max-h-full max-w-full rounded-lg object-contain"
+            />
+          </div>
         ) : (
+          /* PC 常時 / SP 編集中: ツールバー + Konva Canvas */
           <>
             <div className="relative z-10 p-2">
               <EditorToolbar
@@ -297,7 +359,9 @@ export function GalleryItem({
         <p className="text-xs text-zinc-400">{(image.size / 1024 / 1024).toFixed(2)} MB</p>
 
         <div className="flex items-center gap-2">
-          {image.maskedBlobUrl && !image.isProcessing && !image.processingError ? (
+          {isEditingOnSp ? (
+            <span className="text-xs text-zinc-400">編集中…</span>
+          ) : image.maskedBlobUrl && !image.isProcessing && !image.processingError ? (
             <a
               href={image.maskedBlobUrl}
               download={createDownloadFileName(image.name)}
