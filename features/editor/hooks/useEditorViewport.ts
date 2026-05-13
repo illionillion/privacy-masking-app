@@ -20,6 +20,8 @@ export interface UseEditorViewportReturn {
   defaultViewCenter: ViewCenter;
   contentCenter: { x: number; y: number };
   canPan: boolean;
+  canZoomOut: boolean;
+  canZoomIn: boolean;
   nudgeViewCenter: (dxImageDir: ViewportDirection, dyImageDir: ViewportDirection) => void;
   resetViewCenter: () => void;
   zoomOut: () => void;
@@ -64,6 +66,8 @@ export function useEditorViewport(
   );
 
   const canPan = viewZoom > 1;
+  const canZoomOut = viewZoom > VIEW_ZOOM.min;
+  const canZoomIn = viewZoom < VIEW_ZOOM.max;
 
   /**
    * ボタン操作で表示中心を移動する
@@ -136,6 +140,8 @@ export function useEditorViewport(
     defaultViewCenter,
     contentCenter,
     canPan,
+    canZoomOut,
+    canZoomIn,
     nudgeViewCenter,
     resetViewCenter,
     zoomOut,

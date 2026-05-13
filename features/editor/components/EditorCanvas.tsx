@@ -290,6 +290,8 @@ export function EditorCanvas({
     viewCenter,
     contentCenter,
     canPan,
+    canZoomOut,
+    canZoomIn,
     nudgeViewCenter,
     resetViewCenter,
     zoomOut,
@@ -326,7 +328,7 @@ export function EditorCanvas({
       }
     });
     observer.observe(container);
-    const w0 = container.offsetWidth || 600;
+    const w0 = container.clientWidth || 600;
     setStageWidth(w0);
     return () => observer.disconnect();
   }, [imageNaturalHeight, imageNaturalWidth]);
@@ -797,6 +799,8 @@ export function EditorCanvas({
     <div ref={containerRef} className="w-full overflow-hidden rounded-xl border border-zinc-200">
       <EditorViewportControls
         canPan={canPan}
+        canZoomOut={canZoomOut}
+        canZoomIn={canZoomIn}
         viewZoom={viewZoom}
         onNudgeViewCenter={nudgeViewCenter}
         onResetViewCenter={resetViewCenter}

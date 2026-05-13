@@ -1,10 +1,13 @@
 "use client";
 
+import clsx from "clsx";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Minus, Plus } from "lucide-react";
 import type { ViewportDirection } from "../hooks/useEditorViewport";
 
 interface EditorViewportControlsProps {
   canPan: boolean;
+  canZoomOut: boolean;
+  canZoomIn: boolean;
   viewZoom: number;
   onNudgeViewCenter: (dxImageDir: ViewportDirection, dyImageDir: ViewportDirection) => void;
   onResetViewCenter: () => void;
@@ -20,6 +23,8 @@ interface EditorViewportControlsProps {
  */
 export function EditorViewportControls({
   canPan,
+  canZoomOut,
+  canZoomIn,
   viewZoom,
   onNudgeViewCenter,
   onResetViewCenter,
@@ -90,8 +95,15 @@ export function EditorViewportControls({
           <div className="flex items-center gap-1.5">
             <button
               type="button"
-              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+              className={clsx([
+                "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 text-zinc-800",
+                canZoomOut
+                  ? "bg-white hover:bg-zinc-100"
+                  : "cursor-not-allowed bg-zinc-100 text-zinc-400",
+              ])}
               aria-label="ズームアウト"
+              aria-disabled={!canZoomOut}
+              disabled={!canZoomOut}
               onClick={onZoomOut}
             >
               <Minus className="h-4 w-4" aria-hidden />
@@ -106,8 +118,15 @@ export function EditorViewportControls({
             </button>
             <button
               type="button"
-              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+              className={clsx([
+                "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 text-zinc-800",
+                canZoomIn
+                  ? "bg-white hover:bg-zinc-100"
+                  : "cursor-not-allowed bg-zinc-100 text-zinc-400",
+              ])}
               aria-label="ズームイン"
+              aria-disabled={!canZoomIn}
+              disabled={!canZoomIn}
               onClick={onZoomIn}
             >
               <Plus className="h-4 w-4" aria-hidden />
