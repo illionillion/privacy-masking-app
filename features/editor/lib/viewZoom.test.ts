@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   VIEW_ZOOM,
-  clampViewPan,
+  clampViewCenter,
   clampViewZoom,
+  getDefaultViewCenter,
   roundViewZoomStep,
   stagePointerToContentSpace,
 } from "./viewZoom";
@@ -26,44 +27,53 @@ describe("roundViewZoomStep", () => {
   });
 });
 
-describe("clampViewPan", () => {
-  it("等倍では常に 0", () => {
-    expect(clampViewPan({ x: 50, y: -30 }, 100, 80, 1)).toEqual({ x: 0, y: 0 });
+describe("getDefaultViewCenter", () => {
+  it("画像中央を返す", () => {
+    expect(getDefaultViewCenter(100, 80)).toEqual({ x: 50, y: 40 });
+  });
+});
+
+describe("clampViewCenter", () => {
+  it("等倍以下では常に画像中央に戻す", () => {
+    expect(clampViewCenter({ x: 10, y: 20 }, 100, 80, 1)).toEqual({ x: 50, y: 40 });
+    expect(clampViewCenter({ x: 10, y: 20 }, 100, 80, 0.5)).toEqual({ x: 50, y: 40 });
   });
 
-  it("2 倍ズーム時はステージ幅の半分まで許容する", () => {
-    const w = 200;
-    const h = 100;
+  it("2 倍ズーム時は画像の外側を見ない範囲へ収める", () => {
+    const w = 400;
+    const h = 200;
     const z = 2;
-    expect(clampViewPan({ x: 200, y: 0 }, w, h, z)).toEqual({ x: 100, y: 0 });
-    expect(clampViewPan({ x: -200, y: 0 }, w, h, z)).toEqual({ x: -100, y: 0 });
+    expect(clampViewCenter({ x: 10, y: 10 }, w, h, z)).toEqual({ x: 100, y: 50 });
+    expect(clampViewCenter({ x: 390, y: 190 }, w, h, z)).toEqual({ x: 300, y: 150 });
   });
 });
 
 describe("stagePointerToContentSpace", () => {
-  it("等倍でパンなしでは座標を変えない", () => {
+  it("等倍で contentCenter がステージ中央なら座標を変えない", () => {
     const p = { x: 10, y: 20 };
     expect(stagePointerToContentSpace(p, 100, 80, 1)).toEqual(p);
   });
 
-  it("等倍でパンありではステージ座標からパンを差し引く", () => {
-    const p = { x: 10, y: 20 };
-    expect(stagePointerToContentSpace(p, 100, 80, 1, { x: 3, y: 4 })).toEqual({ x: 7, y: 16 });
+  it("表示中心がずれているときはステージ中央がその contentCenter に対応する", () => {
+    const center = { x: 120, y: 90 };
+    expect(stagePointerToContentSpace({ x: 100, y: 50 }, 200, 100, 1, center)).toEqual(center);
   });
 
   it("ステージ中心を通る点はズーム後もコンテンツ中心と一致する", () => {
     const w = 200;
     const h = 100;
-    const center = { x: w / 2, y: h / 2 };
-    expect(stagePointerToContentSpace(center, w, h, 2)).toEqual(center);
+    const contentCenter = { x: 140, y: 80 };
+    expect(stagePointerToContentSpace({ x: w / 2, y: h / 2 }, w, h, 2, contentCenter)).toEqual(
+      contentCenter
+    );
   });
 
   it("2 倍ズーム時、ステージ左上はコンテンツ上で中心より左上に射影される", () => {
     const w = 200;
     const h = 200;
     const z = 2;
-    const out = stagePointerToContentSpace({ x: 0, y: 0 }, w, h, z);
-    expect(out.x).toBeCloseTo(50);
-    expect(out.y).toBeCloseTo(50);
+    const out = stagePointerToContentSpace({ x: 0, y: 0 }, w, h, z, { x: 150, y: 130 });
+    expect(out.x).toBeCloseTo(100);
+    expect(out.y).toBeCloseTo(80);
   });
 });

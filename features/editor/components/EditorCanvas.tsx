@@ -23,10 +23,10 @@ import type {
   StampType,
 } from "../types";
 import {
-  DEFAULT_VIEW_PAN,
-  VIEW_PAN_NUDGE_PX,
+  VIEW_CENTER_NUDGE_PX,
   VIEW_ZOOM,
-  clampViewPan,
+  clampViewCenter,
+  getDefaultViewCenter,
   roundViewZoomStep,
   stagePointerToContentSpace,
 } from "../lib/viewZoom";
@@ -286,20 +286,23 @@ export function EditorCanvas({
   const [drawingStroke, setDrawingStroke] = useState<DrawingStroke | null>(null);
   /** 表示のみの倍率（1 = 等倍）。論理領域・エクスポートは画像自然サイズ基準のまま */
   const [viewZoom, setViewZoom] = useState<number>(VIEW_ZOOM.default);
-  /** 表示のみのパン（ステージ px）。論理マスク座標は変えない */
-  const [viewPan, setViewPan] = useState(DEFAULT_VIEW_PAN);
+  /** 表示中心（画像自然サイズ座標）。この点がステージ中央に来るよう表示する。 */
+  const [viewCenter, setViewCenter] = useState(() =>
+    getDefaultViewCenter(imageNaturalWidth, imageNaturalHeight)
+  );
   const isDrawing = useRef(false);
   const drawStart = useRef<{ x: number; y: number } | null>(null);
-  const viewZoomRef = useRef(viewZoom);
-
-  useEffect(() => {
-    viewZoomRef.current = viewZoom;
-  }, [viewZoom]);
+  const defaultViewCenter = getDefaultViewCenter(imageNaturalWidth, imageNaturalHeight);
 
   const stageHeight =
     imageNaturalWidth > 0 ? stageWidth * (imageNaturalHeight / imageNaturalWidth) : 400;
   const scaleX = imageNaturalWidth > 0 ? stageWidth / imageNaturalWidth : 1;
   const scaleY = imageNaturalHeight > 0 ? stageHeight / imageNaturalHeight : 1;
+  const contentCenter = {
+    x: viewCenter.x * scaleX,
+    y: viewCenter.y * scaleY,
+  };
+  const canPan = viewZoom > 1;
 
   /**
    * キーボードショートカット
@@ -326,10 +329,7 @@ export function EditorCanvas({
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry) {
-        const w = entry.contentRect.width || 600;
-        setStageWidth(w);
-        const h = imageNaturalWidth > 0 ? w * (imageNaturalHeight / imageNaturalWidth) : 400;
-        setViewPan((p) => clampViewPan(p, w, h, viewZoomRef.current));
+        setStageWidth(entry.contentRect.width || 600);
       }
     });
     observer.observe(container);
@@ -347,30 +347,42 @@ export function EditorCanvas({
   }, [imageUrl]);
 
   /**
-   * 選択変化・領域サイズ変化時に Transformer を再アタッチする
+   * 選択変化・領域サイズ変化・表示中心／表示倍率変化時に Transformer を再アタッチする
    *
-   * stampRegions / fillRegions / paintStrokes を依存に含めることで、
-   * リサイズ後に React state が更新された際に Transformer が
-   * キャッシュ済みのバウンディングボックスを再計算する。
+   * 親 Group の offset/scale が変わると、同じ selectedId でも
+   * Transformer の対象ノードを付け直した方がハンドル表示が安定する。
    */
   useEffect(() => {
     const transformer = transformerRef.current;
     if (!transformer) return;
-    if (selectedId) {
-      const stage = transformer.getStage();
-      const node = stage?.findOne(
+
+    if (!selectedId) {
+      transformer.nodes([]);
+      transformer.getLayer()?.batchDraw();
+      return;
+    }
+
+    const stage = transformer.getStage();
+    const node =
+      stage?.findOne(
         (n: Konva.Node) =>
           n.id() === selectedId && n.getType() !== "Stage" && n.getType() !== "Layer"
-      );
-      if (node) {
-        transformer.nodes([node]);
-      } else {
-        transformer.nodes([]);
-      }
-    } else {
-      transformer.nodes([]);
-    }
-  }, [selectedId, stampRegions, fillRegions, paintStrokes]);
+      ) ?? null;
+
+    transformer.nodes(node ? [node] : []);
+    transformer.getLayer()?.batchDraw();
+  }, [
+    selectedId,
+    stampRegions,
+    fillRegions,
+    paintStrokes,
+    viewZoom,
+    viewCenter.x,
+    viewCenter.y,
+    stageWidth,
+    stageHeight,
+    mode,
+  ]);
 
   /**
    * ステージのマウスダウン/タッチスタートハンドラ
@@ -603,7 +615,38 @@ export function EditorCanvas({
   function pointerToContentSpace(stage: Konva.Stage): { x: number; y: number } | null {
     const stagePos = getStagePos(stage);
     if (!stagePos) return null;
-    return stagePointerToContentSpace(stagePos, stageWidth, stageHeight, viewZoom, viewPan);
+    return stagePointerToContentSpace(stagePos, stageWidth, stageHeight, viewZoom, contentCenter);
+  }
+
+  /**
+   * 表示中心を現在のズーム倍率に対して有効範囲へ収める
+   *
+   * @param center - 次の表示中心
+   * @param zoom - 次の表示倍率
+   * @returns クランプ後の表示中心
+   */
+  function clampCurrentViewCenter(center: { x: number; y: number }, zoom = viewZoom) {
+    return clampViewCenter(center, imageNaturalWidth, imageNaturalHeight, zoom);
+  }
+
+  /**
+   * ボタン操作で表示中心を移動する
+   *
+   * ボタンの移動量は見た目上の一貫性を保つためステージ px で定義し、
+   * 現在のフィット倍率と表示ズーム倍率から画像座標へ逆変換して加算する。
+   *
+   * @param dxImageDir - X 方向の移動係数（左:-1 / 右:+1）
+   * @param dyImageDir - Y 方向の移動係数（上:-1 / 下:+1）
+   */
+  function nudgeViewCenter(dxImageDir: -1 | 0 | 1, dyImageDir: -1 | 0 | 1) {
+    const deltaX = scaleX > 0 ? VIEW_CENTER_NUDGE_PX / (scaleX * viewZoom) : 0;
+    const deltaY = scaleY > 0 ? VIEW_CENTER_NUDGE_PX / (scaleY * viewZoom) : 0;
+    setViewCenter((center) =>
+      clampCurrentViewCenter({
+        x: center.x + deltaX * dxImageDir,
+        y: center.y + deltaY * dyImageDir,
+      })
+    );
   }
 
   const layerContent = (
@@ -793,23 +836,14 @@ export function EditorCanvas({
       <div className="flex flex-col gap-1 border-b border-zinc-200 bg-zinc-50 px-2 py-1.5">
         <span className="text-xs text-zinc-600">表示ズーム</span>
         <div className="flex w-full flex-wrap items-center gap-2">
-          {viewZoom !== 1 && (
+          {canPan && (
             <div className="flex flex-wrap items-center gap-1 border-r border-zinc-300 pr-1.5">
               <span className="text-xs text-zinc-600">移動</span>
               <button
                 type="button"
                 className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
                 aria-label="表示を左へ移動"
-                onClick={() =>
-                  setViewPan((p) =>
-                    clampViewPan(
-                      { x: p.x + VIEW_PAN_NUDGE_PX, y: p.y },
-                      stageWidth,
-                      stageHeight,
-                      viewZoom
-                    )
-                  )
-                }
+                onClick={() => nudgeViewCenter(-1, 0)}
               >
                 <ChevronLeft className="h-4 w-4" aria-hidden />
               </button>
@@ -817,16 +851,7 @@ export function EditorCanvas({
                 type="button"
                 className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
                 aria-label="表示を上へ移動"
-                onClick={() =>
-                  setViewPan((p) =>
-                    clampViewPan(
-                      { x: p.x, y: p.y + VIEW_PAN_NUDGE_PX },
-                      stageWidth,
-                      stageHeight,
-                      viewZoom
-                    )
-                  )
-                }
+                onClick={() => nudgeViewCenter(0, -1)}
               >
                 <ChevronUp className="h-4 w-4" aria-hidden />
               </button>
@@ -834,16 +859,7 @@ export function EditorCanvas({
                 type="button"
                 className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
                 aria-label="表示を下へ移動"
-                onClick={() =>
-                  setViewPan((p) =>
-                    clampViewPan(
-                      { x: p.x, y: p.y - VIEW_PAN_NUDGE_PX },
-                      stageWidth,
-                      stageHeight,
-                      viewZoom
-                    )
-                  )
-                }
+                onClick={() => nudgeViewCenter(0, 1)}
               >
                 <ChevronDown className="h-4 w-4" aria-hidden />
               </button>
@@ -851,16 +867,7 @@ export function EditorCanvas({
                 type="button"
                 className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
                 aria-label="表示を右へ移動"
-                onClick={() =>
-                  setViewPan((p) =>
-                    clampViewPan(
-                      { x: p.x - VIEW_PAN_NUDGE_PX, y: p.y },
-                      stageWidth,
-                      stageHeight,
-                      viewZoom
-                    )
-                  )
-                }
+                onClick={() => nudgeViewCenter(1, 0)}
               >
                 <ChevronRight className="h-4 w-4" aria-hidden />
               </button>
@@ -868,7 +875,7 @@ export function EditorCanvas({
                 type="button"
                 className="rounded border border-zinc-300 bg-white px-2 py-0.5 text-xs text-zinc-800 hover:bg-zinc-100"
                 aria-label="表示位置を中央に戻す"
-                onClick={() => setViewPan(DEFAULT_VIEW_PAN)}
+                onClick={() => setViewCenter(defaultViewCenter)}
               >
                 中央
               </button>
@@ -885,7 +892,7 @@ export function EditorCanvas({
               onClick={() => {
                 const nz = roundViewZoomStep(viewZoom - VIEW_ZOOM.step);
                 setViewZoom(nz);
-                setViewPan((p) => clampViewPan(p, stageWidth, stageHeight, nz));
+                setViewCenter((center) => clampCurrentViewCenter(center, nz));
               }}
             >
               <Minus className="h-4 w-4" aria-hidden />
@@ -896,7 +903,7 @@ export function EditorCanvas({
               aria-label="表示ズームを等倍に戻す"
               onClick={() => {
                 setViewZoom(VIEW_ZOOM.default);
-                setViewPan(DEFAULT_VIEW_PAN);
+                setViewCenter(defaultViewCenter);
               }}
             >
               等倍
@@ -908,7 +915,7 @@ export function EditorCanvas({
               onClick={() => {
                 const nz = roundViewZoomStep(viewZoom + VIEW_ZOOM.step);
                 setViewZoom(nz);
-                setViewPan((p) => clampViewPan(p, stageWidth, stageHeight, nz));
+                setViewCenter((center) => clampCurrentViewCenter(center, nz));
               }}
             >
               <Plus className="h-4 w-4" aria-hidden />
@@ -928,21 +935,15 @@ export function EditorCanvas({
         style={{ cursor: MODE_CURSORS[mode] }}
       >
         <Layer>
-          <Group x={viewPan.x} y={viewPan.y}>
-            {viewZoom !== 1 ? (
-              <Group
-                x={stageWidth / 2}
-                y={stageHeight / 2}
-                offsetX={stageWidth / 2}
-                offsetY={stageHeight / 2}
-                scaleX={viewZoom}
-                scaleY={viewZoom}
-              >
-                {layerContent}
-              </Group>
-            ) : (
-              layerContent
-            )}
+          <Group
+            x={stageWidth / 2}
+            y={stageHeight / 2}
+            offsetX={contentCenter.x}
+            offsetY={contentCenter.y}
+            scaleX={viewZoom}
+            scaleY={viewZoom}
+          >
+            {layerContent}
           </Group>
         </Layer>
       </Stage>
