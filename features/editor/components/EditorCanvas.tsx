@@ -616,7 +616,9 @@ export function EditorCanvas({
   const layerContent = (
     <>
       {/* 背景画像 */}
-      {bgImage && <KonvaImage image={bgImage} width={stageWidth} height={stageHeight} />}
+      {bgImage && (
+        <KonvaImage image={bgImage} width={stageWidth} height={stageHeight} listening={false} />
+      )}
 
       {/* 塗りつぶし領域 */}
       {fillRegions.map((region) => (

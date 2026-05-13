@@ -36,7 +36,8 @@ export function clampViewZoom(z: number): number {
  * @returns 0.1 刻みに丸めた倍率（その後クランプ）
  */
 export function roundViewZoomStep(z: number): number {
-  const rounded = Math.round(z * 10) / 10;
+  const stepScale = Math.round(1 / VIEW_ZOOM.step);
+  const rounded = Math.round(z * stepScale) / stepScale;
   return clampViewZoom(rounded);
 }
 
