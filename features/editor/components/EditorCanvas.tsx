@@ -13,7 +13,6 @@ import {
   Stage,
   Transformer,
 } from "react-konva";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Minus, Plus } from "lucide-react";
 import type {
   EditorMode,
   FillRegion,
@@ -22,14 +21,9 @@ import type {
   StampRegion,
   StampType,
 } from "../types";
-import {
-  VIEW_CENTER_NUDGE_PX,
-  VIEW_ZOOM,
-  clampViewCenter,
-  getDefaultViewCenter,
-  roundViewZoomStep,
-  stagePointerToContentSpace,
-} from "../lib/viewZoom";
+import { stagePointerToContentSpace } from "../lib/viewZoom";
+import { useEditorViewport } from "../hooks/useEditorViewport";
+import { EditorViewportControls } from "./EditorViewportControls";
 
 interface EditorCanvasProps {
   imageUrl: string;
@@ -284,25 +278,24 @@ export function EditorCanvas({
   const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
   const [drawingRect, setDrawingRect] = useState<DrawingRect | null>(null);
   const [drawingStroke, setDrawingStroke] = useState<DrawingStroke | null>(null);
-  /** 表示のみの倍率（1 = 等倍）。論理領域・エクスポートは画像自然サイズ基準のまま */
-  const [viewZoom, setViewZoom] = useState<number>(VIEW_ZOOM.default);
-  /** 表示中心（画像自然サイズ座標）。この点がステージ中央に来るよう表示する。 */
-  const [viewCenter, setViewCenter] = useState(() =>
-    getDefaultViewCenter(imageNaturalWidth, imageNaturalHeight)
-  );
   const isDrawing = useRef(false);
   const drawStart = useRef<{ x: number; y: number } | null>(null);
-  const defaultViewCenter = getDefaultViewCenter(imageNaturalWidth, imageNaturalHeight);
 
   const stageHeight =
     imageNaturalWidth > 0 ? stageWidth * (imageNaturalHeight / imageNaturalWidth) : 400;
   const scaleX = imageNaturalWidth > 0 ? stageWidth / imageNaturalWidth : 1;
   const scaleY = imageNaturalHeight > 0 ? stageHeight / imageNaturalHeight : 1;
-  const contentCenter = {
-    x: viewCenter.x * scaleX,
-    y: viewCenter.y * scaleY,
-  };
-  const canPan = viewZoom > 1;
+  const {
+    viewZoom,
+    viewCenter,
+    contentCenter,
+    canPan,
+    nudgeViewCenter,
+    resetViewCenter,
+    zoomOut,
+    resetViewport,
+    zoomIn,
+  } = useEditorViewport(imageNaturalWidth, imageNaturalHeight, scaleX, scaleY);
 
   /**
    * キーボードショートカット
@@ -618,37 +611,6 @@ export function EditorCanvas({
     return stagePointerToContentSpace(stagePos, stageWidth, stageHeight, viewZoom, contentCenter);
   }
 
-  /**
-   * 表示中心を現在のズーム倍率に対して有効範囲へ収める
-   *
-   * @param center - 次の表示中心
-   * @param zoom - 次の表示倍率
-   * @returns クランプ後の表示中心
-   */
-  function clampCurrentViewCenter(center: { x: number; y: number }, zoom = viewZoom) {
-    return clampViewCenter(center, imageNaturalWidth, imageNaturalHeight, zoom);
-  }
-
-  /**
-   * ボタン操作で表示中心を移動する
-   *
-   * ボタンの移動量は見た目上の一貫性を保つためステージ px で定義し、
-   * 現在のフィット倍率と表示ズーム倍率から画像座標へ逆変換して加算する。
-   *
-   * @param dxImageDir - X 方向の移動係数（左:-1 / 右:+1）
-   * @param dyImageDir - Y 方向の移動係数（上:-1 / 下:+1）
-   */
-  function nudgeViewCenter(dxImageDir: -1 | 0 | 1, dyImageDir: -1 | 0 | 1) {
-    const deltaX = scaleX > 0 ? VIEW_CENTER_NUDGE_PX / (scaleX * viewZoom) : 0;
-    const deltaY = scaleY > 0 ? VIEW_CENTER_NUDGE_PX / (scaleY * viewZoom) : 0;
-    setViewCenter((center) =>
-      clampCurrentViewCenter({
-        x: center.x + deltaX * dxImageDir,
-        y: center.y + deltaY * dyImageDir,
-      })
-    );
-  }
-
   const layerContent = (
     <>
       {/* 背景画像 */}
@@ -833,105 +795,15 @@ export function EditorCanvas({
 
   return (
     <div ref={containerRef} className="w-full overflow-hidden rounded-xl border border-zinc-200">
-      <div className="flex flex-col gap-1 border-b border-zinc-200 bg-zinc-50 px-2 py-1.5">
-        <span className="text-xs text-zinc-600">表示ズーム</span>
-        <div className="flex w-full flex-wrap items-start gap-2 md:items-center">
-          {canPan && (
-            <div className="flex flex-col gap-1 border-r border-zinc-300 pr-1.5 md:flex-row md:items-center md:gap-2">
-              <div className="flex items-center justify-between gap-2 md:justify-start">
-                <span className="text-xs text-zinc-600">移動</span>
-                <button
-                  type="button"
-                  className="rounded border border-zinc-300 bg-white px-2 py-0.5 text-xs text-zinc-800 hover:bg-zinc-100"
-                  aria-label="表示位置を中央に戻す"
-                  onClick={() => setViewCenter(defaultViewCenter)}
-                >
-                  中央
-                </button>
-              </div>
-              <div className="flex flex-wrap items-center gap-1 md:flex-nowrap">
-                <button
-                  type="button"
-                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
-                  aria-label="表示を左へ移動"
-                  onClick={() => nudgeViewCenter(-1, 0)}
-                >
-                  <ChevronLeft className="h-4 w-4" aria-hidden />
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
-                  aria-label="表示を上へ移動"
-                  onClick={() => nudgeViewCenter(0, -1)}
-                >
-                  <ChevronUp className="h-4 w-4" aria-hidden />
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
-                  aria-label="表示を下へ移動"
-                  onClick={() => nudgeViewCenter(0, 1)}
-                >
-                  <ChevronDown className="h-4 w-4" aria-hidden />
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
-                  aria-label="表示を右へ移動"
-                  onClick={() => nudgeViewCenter(1, 0)}
-                >
-                  <ChevronRight className="h-4 w-4" aria-hidden />
-                </button>
-              </div>
-            </div>
-          )}
-          <div className="ml-auto flex shrink-0 flex-col items-end gap-1">
-            <div className="flex items-center justify-between gap-2 md:justify-start">
-              <span className="text-xs text-zinc-600">拡大縮小</span>
-              <span className="text-xs tabular-nums text-zinc-500">
-                {Math.round(viewZoom * 100)}%
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
-                aria-label="ズームアウト"
-                onClick={() => {
-                  const nz = roundViewZoomStep(viewZoom - VIEW_ZOOM.step);
-                  setViewZoom(nz);
-                  setViewCenter((center) => clampCurrentViewCenter(center, nz));
-                }}
-              >
-                <Minus className="h-4 w-4" aria-hidden />
-              </button>
-              <button
-                type="button"
-                className="inline-flex h-7 items-center justify-center rounded border border-zinc-300 bg-white px-2 text-xs text-zinc-800 hover:bg-zinc-100"
-                aria-label={`表示ズームを等倍に戻す。現在 ${Math.round(viewZoom * 100)}%`}
-                onClick={() => {
-                  setViewZoom(VIEW_ZOOM.default);
-                  setViewCenter(defaultViewCenter);
-                }}
-              >
-                等倍
-              </button>
-              <button
-                type="button"
-                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
-                aria-label="ズームイン"
-                onClick={() => {
-                  const nz = roundViewZoomStep(viewZoom + VIEW_ZOOM.step);
-                  setViewZoom(nz);
-                  setViewCenter((center) => clampCurrentViewCenter(center, nz));
-                }}
-              >
-                <Plus className="h-4 w-4" aria-hidden />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <EditorViewportControls
+        canPan={canPan}
+        viewZoom={viewZoom}
+        onNudgeViewCenter={nudgeViewCenter}
+        onResetViewCenter={resetViewCenter}
+        onZoomOut={zoomOut}
+        onResetViewport={resetViewport}
+        onZoomIn={zoomIn}
+      />
       <Stage
         width={stageWidth}
         height={stageHeight}
