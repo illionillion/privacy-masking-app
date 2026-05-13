@@ -835,91 +835,100 @@ export function EditorCanvas({
     <div ref={containerRef} className="w-full overflow-hidden rounded-xl border border-zinc-200">
       <div className="flex flex-col gap-1 border-b border-zinc-200 bg-zinc-50 px-2 py-1.5">
         <span className="text-xs text-zinc-600">表示ズーム</span>
-        <div className="flex w-full flex-wrap items-center gap-2">
+        <div className="flex w-full flex-wrap items-start gap-2 md:items-center">
           {canPan && (
-            <div className="flex flex-wrap items-center gap-1 border-r border-zinc-300 pr-1.5">
-              <span className="text-xs text-zinc-600">移動</span>
-              <button
-                type="button"
-                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
-                aria-label="表示を左へ移動"
-                onClick={() => nudgeViewCenter(-1, 0)}
-              >
-                <ChevronLeft className="h-4 w-4" aria-hidden />
-              </button>
-              <button
-                type="button"
-                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
-                aria-label="表示を上へ移動"
-                onClick={() => nudgeViewCenter(0, -1)}
-              >
-                <ChevronUp className="h-4 w-4" aria-hidden />
-              </button>
-              <button
-                type="button"
-                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
-                aria-label="表示を下へ移動"
-                onClick={() => nudgeViewCenter(0, 1)}
-              >
-                <ChevronDown className="h-4 w-4" aria-hidden />
-              </button>
-              <button
-                type="button"
-                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
-                aria-label="表示を右へ移動"
-                onClick={() => nudgeViewCenter(1, 0)}
-              >
-                <ChevronRight className="h-4 w-4" aria-hidden />
-              </button>
-              <button
-                type="button"
-                className="rounded border border-zinc-300 bg-white px-2 py-0.5 text-xs text-zinc-800 hover:bg-zinc-100"
-                aria-label="表示位置を中央に戻す"
-                onClick={() => setViewCenter(defaultViewCenter)}
-              >
-                中央
-              </button>
+            <div className="flex flex-col gap-1 border-r border-zinc-300 pr-1.5 md:flex-row md:items-center md:gap-2">
+              <div className="flex items-center justify-between gap-2 md:justify-start">
+                <span className="text-xs text-zinc-600">移動</span>
+                <button
+                  type="button"
+                  className="rounded border border-zinc-300 bg-white px-2 py-0.5 text-xs text-zinc-800 hover:bg-zinc-100"
+                  aria-label="表示位置を中央に戻す"
+                  onClick={() => setViewCenter(defaultViewCenter)}
+                >
+                  中央
+                </button>
+              </div>
+              <div className="flex flex-wrap items-center gap-1 md:flex-nowrap">
+                <button
+                  type="button"
+                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+                  aria-label="表示を左へ移動"
+                  onClick={() => nudgeViewCenter(-1, 0)}
+                >
+                  <ChevronLeft className="h-4 w-4" aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+                  aria-label="表示を上へ移動"
+                  onClick={() => nudgeViewCenter(0, -1)}
+                >
+                  <ChevronUp className="h-4 w-4" aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+                  aria-label="表示を下へ移動"
+                  onClick={() => nudgeViewCenter(0, 1)}
+                >
+                  <ChevronDown className="h-4 w-4" aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+                  aria-label="表示を右へ移動"
+                  onClick={() => nudgeViewCenter(1, 0)}
+                >
+                  <ChevronRight className="h-4 w-4" aria-hidden />
+                </button>
+              </div>
             </div>
           )}
-          <div className="ml-auto flex shrink-0 items-center gap-1.5">
-            <span className="min-w-[3rem] text-center text-xs tabular-nums text-zinc-700">
-              {Math.round(viewZoom * 100)}%
-            </span>
-            <button
-              type="button"
-              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
-              aria-label="ズームアウト"
-              onClick={() => {
-                const nz = roundViewZoomStep(viewZoom - VIEW_ZOOM.step);
-                setViewZoom(nz);
-                setViewCenter((center) => clampCurrentViewCenter(center, nz));
-              }}
-            >
-              <Minus className="h-4 w-4" aria-hidden />
-            </button>
-            <button
-              type="button"
-              className="rounded border border-zinc-300 bg-white px-2 py-0.5 text-xs text-zinc-800 hover:bg-zinc-100"
-              aria-label="表示ズームを等倍に戻す"
-              onClick={() => {
-                setViewZoom(VIEW_ZOOM.default);
-                setViewCenter(defaultViewCenter);
-              }}
-            >
-              等倍
-            </button>
-            <button
-              type="button"
-              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
-              aria-label="ズームイン"
-              onClick={() => {
-                const nz = roundViewZoomStep(viewZoom + VIEW_ZOOM.step);
-                setViewZoom(nz);
-                setViewCenter((center) => clampCurrentViewCenter(center, nz));
-              }}
-            >
-              <Plus className="h-4 w-4" aria-hidden />
-            </button>
+          <div className="ml-auto flex shrink-0 flex-col items-end gap-1">
+            <div className="flex items-center justify-between gap-2 md:justify-start">
+              <span className="text-xs text-zinc-600">拡大縮小</span>
+              <span className="text-xs tabular-nums text-zinc-500">
+                {Math.round(viewZoom * 100)}%
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+                aria-label="ズームアウト"
+                onClick={() => {
+                  const nz = roundViewZoomStep(viewZoom - VIEW_ZOOM.step);
+                  setViewZoom(nz);
+                  setViewCenter((center) => clampCurrentViewCenter(center, nz));
+                }}
+              >
+                <Minus className="h-4 w-4" aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-7 items-center justify-center rounded border border-zinc-300 bg-white px-2 text-xs text-zinc-800 hover:bg-zinc-100"
+                aria-label={`表示ズームを等倍に戻す。現在 ${Math.round(viewZoom * 100)}%`}
+                onClick={() => {
+                  setViewZoom(VIEW_ZOOM.default);
+                  setViewCenter(defaultViewCenter);
+                }}
+              >
+                等倍
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100"
+                aria-label="ズームイン"
+                onClick={() => {
+                  const nz = roundViewZoomStep(viewZoom + VIEW_ZOOM.step);
+                  setViewZoom(nz);
+                  setViewCenter((center) => clampCurrentViewCenter(center, nz));
+                }}
+              >
+                <Plus className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
           </div>
         </div>
       </div>
