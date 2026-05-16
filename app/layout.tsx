@@ -59,7 +59,6 @@ export default function RootLayout({
   return (
     <html lang="ja" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <head>
-        <JsonLdWebApplication />
         {/* AdSense: 検証は head 内の素の script を期待する。next/script の静的書き出しは __next_s になり不一致になり得る */}
         <script
           async
@@ -68,6 +67,8 @@ export default function RootLayout({
         />
       </head>
       <body className="flex min-h-full flex-col bg-zinc-50 text-zinc-900">
+        {/* JSON-LD は head 隣接の AdSense script と hydration でタグがずれるため body 先頭に配置（Google は body 内も可） */}
+        <JsonLdWebApplication />
         <Header />
         <main className="flex flex-1 flex-col">{children}</main>
         <SiteFooter />
