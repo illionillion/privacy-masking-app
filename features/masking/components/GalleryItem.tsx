@@ -321,6 +321,7 @@ export function GalleryItem({
             <div className="relative z-10 px-2 pb-2">
               {imageNaturalWidth > 0 && imageNaturalHeight > 0 && (
                 <EditorCanvas
+                  key={image.id}
                   imageUrl={image.imageUrl}
                   imageNaturalWidth={imageNaturalWidth}
                   imageNaturalHeight={imageNaturalHeight}
