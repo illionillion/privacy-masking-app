@@ -411,6 +411,11 @@ export function EditorCanvas({
    */
   function handlePointerMove(e: KonvaEventObject<MouseEvent> | KonvaEventObject<TouchEvent>) {
     if (!isDrawing.current) return;
+    // canvas / .konvajs-content は touch-action が継承されないため SP でページスクロールと競合する。
+    // Konva が passive:false で登録している touchmove でも念のため抑止する。
+    if ((mode === "rect" || mode === "paint") && "touches" in e.evt && e.evt.cancelable) {
+      e.evt.preventDefault();
+    }
     const stage = e.target.getStage();
     if (!stage) return;
     const pos = pointerToContentSpace(stage);
@@ -810,30 +815,37 @@ export function EditorCanvas({
         onResetViewport={resetViewport}
         onZoomIn={zoomIn}
       />
-      <Stage
-        width={stageWidth}
-        height={stageHeight}
-        onMouseDown={handlePointerDown}
-        onMouseMove={handlePointerMove}
-        onMouseUp={handlePointerUp}
-        onTouchStart={handlePointerDown}
-        onTouchMove={handlePointerMove}
-        onTouchEnd={handlePointerUp}
-        style={{ cursor: MODE_CURSORS[mode] }}
-      >
-        <Layer>
-          <Group
-            x={stageWidth / 2}
-            y={stageHeight / 2}
-            offsetX={contentCenter.x}
-            offsetY={contentCenter.y}
-            scaleX={viewZoom}
-            scaleY={viewZoom}
-          >
-            {layerContent}
-          </Group>
-        </Layer>
-      </Stage>
+      {/*
+       * Stage 直下の DOM のみ style が当たり、Konva が差し込む .konvajs-content / canvas には伝わらない。
+       * そのため descendant に touch-none を適用して SP でのドラッグとスクロールの競合を防ぐ。
+       */}
+      <div className="[&_.konvajs-content]:touch-none [&_canvas]:touch-none">
+        <Stage
+          width={stageWidth}
+          height={stageHeight}
+          onMouseDown={handlePointerDown}
+          onMouseMove={handlePointerMove}
+          onMouseUp={handlePointerUp}
+          onTouchStart={handlePointerDown}
+          onTouchMove={handlePointerMove}
+          onTouchEnd={handlePointerUp}
+          // StageWrap のコンテナ側でも指定（親 div と canvas 側のクラス指定と併用）
+          style={{ cursor: MODE_CURSORS[mode], touchAction: "none" }}
+        >
+          <Layer>
+            <Group
+              x={stageWidth / 2}
+              y={stageHeight / 2}
+              offsetX={contentCenter.x}
+              offsetY={contentCenter.y}
+              scaleX={viewZoom}
+              scaleY={viewZoom}
+            >
+              {layerContent}
+            </Group>
+          </Layer>
+        </Stage>
+      </div>
     </div>
   );
 }
