@@ -23,7 +23,7 @@ const demos: DemoItem[] = [
   },
   {
     label: "名刺",
-    description: "氏名・電話番号・メールアドレスなどのテキストを黒塗り",
+    description: "電話番号・メールアドレスなどの文字情報を黒塗り",
     beforeSrc: "/lp/sample2.png",
     afterSrc: "/lp/sample2-masked.png",
     beforeAlt: "名刺のマスキング処理前",
@@ -49,7 +49,7 @@ export function DemoSection() {
             こんな感じでマスキングできます
           </h2>
           <p className="mt-3 text-zinc-500">
-            顔・名前・電話番号など個人情報をワンクリックで隠せます
+            画像を選択すると、顔・文字を検出してマスキングできます。手動での調整も可能です
           </p>
         </div>
 

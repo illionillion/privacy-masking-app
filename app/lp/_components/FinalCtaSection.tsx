@@ -10,7 +10,7 @@ export function FinalCtaSection() {
           今すぐ、無料で試してみましょう
         </h2>
         <p className="mt-4 text-lg text-indigo-200">
-          ログイン不要・インストール不要。ブラウザさえあればすぐ使えます。
+          自動マスキングは無料。ログイン・インストール不要の顔隠しWebアプリを、ブラウザですぐお試しください。
         </p>
         <div className="mt-10">
           <Link

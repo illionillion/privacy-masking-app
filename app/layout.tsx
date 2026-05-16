@@ -6,7 +6,9 @@ import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ToasterProvider } from "@/components/ToasterProvider";
 import { ADSENSE_CLIENT_ID } from "@/lib/adsenseClientId";
+import { JsonLdWebApplication } from "@/components/JsonLdWebApplication";
 import { SITE_SOCIAL_METADATA } from "@/lib/siteOpenGraph";
+import { HOME_PAGE_TITLE, SITE_DEFAULT_DESCRIPTION, SITE_METADATA_KEYWORDS } from "@/lib/siteSeo";
 import { getSiteUrlAsUrl } from "@/lib/siteUrl";
 import "./globals.css";
 
@@ -22,19 +24,12 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: getSiteUrlAsUrl(),
-  title: "伏せ太郎 | Fusely",
-  description:
-    "伏せ太郎（Fusely）は、画像内の顔・文字情報を検出して黒塗り・モザイク・ぼかし編集ができるブラウザ完結型ツール",
-  keywords: [
-    "伏せ太郎",
-    "Fusely",
-    "画像 マスキング",
-    "顔隠し",
-    "個人情報 保護",
-    "AI 画像編集",
-    "モザイク",
-    "ぼかし",
-  ],
+  title: {
+    default: HOME_PAGE_TITLE,
+    template: "%s",
+  },
+  description: SITE_DEFAULT_DESCRIPTION,
+  keywords: [...SITE_METADATA_KEYWORDS],
   openGraph: {
     type: "website",
     locale: "ja_JP",
@@ -72,6 +67,8 @@ export default function RootLayout({
         />
       </head>
       <body className="flex min-h-full flex-col bg-zinc-50 text-zinc-900">
+        {/* JSON-LD は head 隣接の AdSense script と hydration でタグがずれるため body 先頭に配置（Google は body 内も可） */}
+        <JsonLdWebApplication />
         <Header />
         <main className="flex flex-1 flex-col">{children}</main>
         <SiteFooter />
