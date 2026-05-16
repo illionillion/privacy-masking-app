@@ -7,6 +7,7 @@ import {
   GITHUB_REPOSITORY_URL,
 } from "@/lib/githubRepositoryUrl";
 import { LEGAL_DOCUMENT_LAST_UPDATED_LABEL } from "@/lib/legalDocuments";
+import { SITE_SOCIAL_METADATA } from "@/lib/siteOpenGraph";
 import { resolveSiteUrl } from "@/lib/siteUrl";
 
 const PAGE_TITLE = "プライバシーポリシー | 伏せ太郎（Fusely）";
@@ -23,6 +24,13 @@ export const metadata: Metadata = {
     description:
       "伏せ太郎（Fusely）のプライバシーポリシー。ブラウザ内での画像処理方針と、連絡方法について説明します。",
     url: resolveSiteUrl("privacy"),
+    ...SITE_SOCIAL_METADATA.openGraph,
+  },
+  twitter: {
+    title: PAGE_TITLE,
+    description:
+      "伏せ太郎（Fusely）のプライバシーポリシー。ブラウザ内での画像処理方針と、連絡方法について説明します。",
+    ...SITE_SOCIAL_METADATA.twitter,
   },
 };
 

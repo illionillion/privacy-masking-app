@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MaskingGallery } from "@/features/masking";
+import { SITE_SOCIAL_METADATA } from "@/lib/siteOpenGraph";
 import { resolveSiteUrl } from "@/lib/siteUrl";
 
 const HOME_TITLE = "伏せ太郎 | Fusely";
@@ -16,10 +17,12 @@ export const metadata: Metadata = {
     title: HOME_TITLE,
     description: HOME_DESCRIPTION,
     url: resolveSiteUrl(),
+    ...SITE_SOCIAL_METADATA.openGraph,
   },
   twitter: {
     title: HOME_TITLE,
     description: HOME_DESCRIPTION,
+    ...SITE_SOCIAL_METADATA.twitter,
   },
 };
 

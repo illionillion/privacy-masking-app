@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { clsx } from "clsx";
+import { SITE_SOCIAL_METADATA } from "@/lib/siteOpenGraph";
 
 const NOT_FOUND_PAGE_TITLE = "ページが見つかりません | 伏せ太郎 | Fusely";
 const NOT_FOUND_DESCRIPTION =
@@ -12,6 +13,16 @@ export const metadata: Metadata = {
   robots: {
     index: false,
     follow: true,
+  },
+  openGraph: {
+    title: NOT_FOUND_PAGE_TITLE,
+    description: NOT_FOUND_DESCRIPTION,
+    ...SITE_SOCIAL_METADATA.openGraph,
+  },
+  twitter: {
+    title: NOT_FOUND_PAGE_TITLE,
+    description: NOT_FOUND_DESCRIPTION,
+    ...SITE_SOCIAL_METADATA.twitter,
   },
 };
 

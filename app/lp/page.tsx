@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_SOCIAL_METADATA } from "@/lib/siteOpenGraph";
 import { resolveSiteUrl } from "@/lib/siteUrl";
 import { BackToTopButton } from "./_components/BackToTopButton";
 import { DemoSection } from "./_components/DemoSection";
@@ -22,10 +23,12 @@ export const metadata: Metadata = {
     title: LP_TITLE,
     description: LP_DESCRIPTION,
     url: resolveSiteUrl("lp"),
+    ...SITE_SOCIAL_METADATA.openGraph,
   },
   twitter: {
     title: LP_TITLE,
     description: LP_DESCRIPTION,
+    ...SITE_SOCIAL_METADATA.twitter,
   },
 };
 

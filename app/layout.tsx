@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ToasterProvider } from "@/components/ToasterProvider";
 import { ADSENSE_CLIENT_ID } from "@/lib/adsenseClientId";
+import { SITE_SOCIAL_METADATA } from "@/lib/siteOpenGraph";
 import { getSiteUrlAsUrl } from "@/lib/siteUrl";
 import "./globals.css";
 
@@ -38,18 +39,10 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ja_JP",
     siteName: "伏せ太郎 | Fusely",
-    images: [
-      {
-        url: "hero.png",
-        width: 1024,
-        height: 537,
-        alt: "伏せ太郎 | Fusely",
-      },
-    ],
+    ...SITE_SOCIAL_METADATA.openGraph,
   },
   twitter: {
-    card: "summary_large_image",
-    images: ["hero.png"],
+    ...SITE_SOCIAL_METADATA.twitter,
   },
   icons: {
     icon: "favicon.ico",
