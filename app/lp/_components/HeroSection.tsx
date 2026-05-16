@@ -39,7 +39,7 @@ export function HeroSection() {
         </h1>
 
         <p className="mt-6 text-lg leading-relaxed text-indigo-100 sm:text-xl">
-          写真・スクショの顔・文字をAIで自動マスキング。無料の顔隠しWebアプリです。
+          写真・スクショの顔・文字を検出してマスキング。検出できない部分は手動で調整できます。無料の顔隠しWebアプリです。
           <br className="hidden sm:block" />
           画像の個人情報はサーバーに送らず、ブラウザ内だけで処理されます。
         </p>

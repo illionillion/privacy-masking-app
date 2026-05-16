@@ -15,7 +15,7 @@ export function UseCasesSection() {
       icon: Monitor,
       title: "社内資料・スクショの共有",
       description:
-        "スクショの個人情報（名前・メール・電話番号）を隠してから社外共有。ブラウザだけで画像マスキングでき、情報漏洩リスクを低減します。",
+        "スクショの個人情報（メール・電話番号など）を隠してから社外共有。ブラウザだけで画像マスキングでき、情報漏洩リスクを低減します。",
       tag: "ビジネス",
       tagColor: "bg-violet-100 text-violet-700",
     },

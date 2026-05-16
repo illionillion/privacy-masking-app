@@ -17,8 +17,9 @@ describe("siteSeo", () => {
     expect(description).toMatch(/顔隠し/);
     expect(description).toMatch(/マスキング/);
     expect(description).toMatch(/スクショ|写真/);
-    expect(description).toMatch(/AI/);
+    expect(description).toMatch(/文字/);
+    expect(description).toMatch(/手動/);
     expect(description).toMatch(/無料/);
-    expect(description).toMatch(/ブラウザ/);
+    expect(description).toMatch(/サーバー/);
   });
 });

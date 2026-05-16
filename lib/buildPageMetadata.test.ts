@@ -43,6 +43,14 @@ describe("buildPageMetadata", () => {
     expect(metadata.twitter).toEqual(SITE_SOCIAL_METADATA.twitter);
   });
 
+  it("robots をそのまま返す", () => {
+    const robots = { index: false, follow: true } as const;
+    const metadata = buildPageMetadata({ robots });
+
+    expect(metadata.robots).toEqual(robots);
+    expect(metadata.openGraph).toBeUndefined();
+  });
+
   it("canonicalPath 省略時は openGraph / twitter を付けない", () => {
     const metadata = buildPageMetadata({
       title: "タイトルのみ",

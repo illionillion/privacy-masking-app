@@ -18,7 +18,7 @@ export function HowToSection() {
       icon: Wand2,
       title: "自動または手動でマスク処理",
       description:
-        "顔・テキストをAIで自動検出し、マスキング範囲を提案。自動マスキング後も手動で調整・追加できます。",
+        "顔・文字を検出してマスキング範囲を提案。検出できない部分は手動で調整・追加できます。",
       color: "text-violet-600",
       bg: "bg-violet-50",
       ring: "ring-violet-100",
