@@ -1,3 +1,4 @@
+import { serializeJsonLd } from "@/lib/serializeJsonLd";
 import { SITE_DEFAULT_DESCRIPTION } from "@/lib/siteSeo";
 import { getSiteUrl } from "@/lib/siteUrl";
 
@@ -31,7 +32,7 @@ export function JsonLdWebApplication() {
     <script
       type="application/ld+json"
       suppressHydrationWarning
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
     />
   );
 }

@@ -11,6 +11,7 @@ describe("JsonLdWebApplication", () => {
 
     expect(script).not.toBeNull();
     expect(script).toHaveAttribute("type", "application/ld+json");
+    expect(script?.innerHTML).not.toMatch(/<\//);
 
     const jsonLd = JSON.parse(script?.textContent ?? "") as {
       "@type": string;
