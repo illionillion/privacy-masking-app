@@ -15,7 +15,7 @@ export const HERO_OG_IMAGE = {
 
 /**
  * 全ページで共有する OGP 画像と Twitter 大画像カード設定。
- * 子ページの `openGraph` / `twitter` は親 layout の値を上書きするため、各ページで明示的にスプレッドする。
+ * layout のデフォルトおよび `buildPageMetadata` から利用する。
  */
 export const SITE_SOCIAL_METADATA = {
   openGraph: {

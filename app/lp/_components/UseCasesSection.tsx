@@ -7,7 +7,7 @@ export function UseCasesSection() {
       icon: ImageIcon,
       title: "SNS投稿前の画像編集",
       description:
-        "インスタグラムやXへの投稿前に、写り込んだ他人の顔や個人情報をサッと処理。スマートフォンのブラウザからも使えます。",
+        "インスタグラムやXへの投稿前に、写真に写り込んだ顔や個人情報をAIマスキングでサッと消去。スマホのブラウザからも顔隠しできます。",
       tag: "個人利用",
       tagColor: "bg-sky-100 text-sky-700",
     },
@@ -15,7 +15,7 @@ export function UseCasesSection() {
       icon: Monitor,
       title: "社内資料・スクショの共有",
       description:
-        "スクリーンショットに映り込んだ名前・メールアドレス・電話番号を隠してから社外共有。情報漏洩リスクを低減できます。",
+        "スクショの個人情報（名前・メール・電話番号）を隠してから社外共有。ブラウザだけで画像マスキングでき、情報漏洩リスクを低減します。",
       tag: "ビジネス",
       tagColor: "bg-violet-100 text-violet-700",
     },

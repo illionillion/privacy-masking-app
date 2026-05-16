@@ -6,7 +6,9 @@ import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ToasterProvider } from "@/components/ToasterProvider";
 import { ADSENSE_CLIENT_ID } from "@/lib/adsenseClientId";
+import { JsonLdWebApplication } from "@/components/JsonLdWebApplication";
 import { SITE_SOCIAL_METADATA } from "@/lib/siteOpenGraph";
+import { HOME_PAGE_TITLE, SITE_DEFAULT_DESCRIPTION, SITE_METADATA_KEYWORDS } from "@/lib/siteSeo";
 import { getSiteUrlAsUrl } from "@/lib/siteUrl";
 import "./globals.css";
 
@@ -22,19 +24,12 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: getSiteUrlAsUrl(),
-  title: "伏せ太郎 | Fusely",
-  description:
-    "伏せ太郎（Fusely）は、画像内の顔・文字情報を検出して黒塗り・モザイク・ぼかし編集ができるブラウザ完結型ツール",
-  keywords: [
-    "伏せ太郎",
-    "Fusely",
-    "画像 マスキング",
-    "顔隠し",
-    "個人情報 保護",
-    "AI 画像編集",
-    "モザイク",
-    "ぼかし",
-  ],
+  title: {
+    default: HOME_PAGE_TITLE,
+    template: "%s",
+  },
+  description: SITE_DEFAULT_DESCRIPTION,
+  keywords: [...SITE_METADATA_KEYWORDS],
   openGraph: {
     type: "website",
     locale: "ja_JP",
@@ -64,6 +59,7 @@ export default function RootLayout({
   return (
     <html lang="ja" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <head>
+        <JsonLdWebApplication />
         {/* AdSense: 検証は head 内の素の script を期待する。next/script の静的書き出しは __next_s になり不一致になり得る */}
         <script
           async

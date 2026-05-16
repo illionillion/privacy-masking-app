@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPageLayout } from "@/components/LegalPageLayout";
 import {
@@ -7,32 +6,17 @@ import {
   GITHUB_REPOSITORY_URL,
 } from "@/lib/githubRepositoryUrl";
 import { LEGAL_DOCUMENT_LAST_UPDATED_LABEL } from "@/lib/legalDocuments";
-import { SITE_SOCIAL_METADATA } from "@/lib/siteOpenGraph";
-import { resolveSiteUrl } from "@/lib/siteUrl";
+import { buildPageMetadata } from "@/lib/buildPageMetadata";
 
 const PAGE_TITLE = "利用規約 | 伏せ太郎（Fusely）";
+const PAGE_DESCRIPTION =
+  "伏せ太郎（Fusely）の利用規約。免責、禁止事項、連絡方法、ソフトウェアライセンスについて定めます。";
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: PAGE_TITLE,
-  description:
-    "伏せ太郎（Fusely）の利用規約。免責、禁止事項、連絡方法、ソフトウェアライセンスについて定めます。",
-  alternates: {
-    canonical: "terms",
-  },
-  openGraph: {
-    title: PAGE_TITLE,
-    description:
-      "伏せ太郎（Fusely）の利用規約。免責、禁止事項、連絡方法、ソフトウェアライセンスについて定めます。",
-    url: resolveSiteUrl("terms"),
-    ...SITE_SOCIAL_METADATA.openGraph,
-  },
-  twitter: {
-    title: PAGE_TITLE,
-    description:
-      "伏せ太郎（Fusely）の利用規約。免責、禁止事項、連絡方法、ソフトウェアライセンスについて定めます。",
-    ...SITE_SOCIAL_METADATA.twitter,
-  },
-};
+  description: PAGE_DESCRIPTION,
+  canonicalPath: "terms",
+});
 
 /**
  * 利用規約ページ

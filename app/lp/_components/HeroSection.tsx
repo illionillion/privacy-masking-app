@@ -39,9 +39,9 @@ export function HeroSection() {
         </h1>
 
         <p className="mt-6 text-lg leading-relaxed text-indigo-100 sm:text-xl">
-          顔・テキストを自動検出してモザイク・黒塗りでマスキング。
+          写真・スクショの顔・文字をAIで自動マスキング。無料の顔隠しWebアプリです。
           <br className="hidden sm:block" />
-          画像はあなたのブラウザの中だけで処理されます。
+          画像の個人情報はサーバーに送らず、ブラウザ内だけで処理されます。
         </p>
 
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">

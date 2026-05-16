@@ -1,30 +1,17 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { clsx } from "clsx";
-import { SITE_SOCIAL_METADATA } from "@/lib/siteOpenGraph";
+import { buildPageMetadata } from "@/lib/buildPageMetadata";
 
 const NOT_FOUND_PAGE_TITLE = "ページが見つかりません | 伏せ太郎 | Fusely";
 const NOT_FOUND_DESCRIPTION =
   "お探しのページは移動または削除された可能性があります。URL をご確認のうえ、トップからお試しください。";
 
-export const metadata: Metadata = {
+/** 404: OGP 画像は layout から継承。og:url は付けない */
+export const metadata = buildPageMetadata({
   title: NOT_FOUND_PAGE_TITLE,
   description: NOT_FOUND_DESCRIPTION,
-  robots: {
-    index: false,
-    follow: true,
-  },
-  openGraph: {
-    title: NOT_FOUND_PAGE_TITLE,
-    description: NOT_FOUND_DESCRIPTION,
-    ...SITE_SOCIAL_METADATA.openGraph,
-  },
-  twitter: {
-    title: NOT_FOUND_PAGE_TITLE,
-    description: NOT_FOUND_DESCRIPTION,
-    ...SITE_SOCIAL_METADATA.twitter,
-  },
-};
+  robots: { index: false, follow: true },
+});
 
 /**
  * 404 Not Found ページ

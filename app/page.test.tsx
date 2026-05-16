@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { HOME_PAGE_HEADING, HOME_PAGE_LEAD } from "@/lib/siteSeo";
 import Home from "./page";
 
 // MaskingGallery をモック
@@ -10,16 +11,12 @@ vi.mock("@/features/masking", () => ({
 describe("Home", () => {
   it("ページタイトルが表示される", () => {
     render(<Home />);
-    expect(screen.getByText("画像プライバシーマスキング")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: HOME_PAGE_HEADING })).toBeInTheDocument();
   });
 
   it("説明テキストが表示される", () => {
     render(<Home />);
-    expect(
-      screen.getByText(
-        "画像をアップロードすると、顔・文字を検出してマスキングを編集し、ダウンロードできます"
-      )
-    ).toBeInTheDocument();
+    expect(screen.getByText(HOME_PAGE_LEAD)).toBeInTheDocument();
   });
 
   it("MaskingGalleryコンポーネントが表示される", () => {

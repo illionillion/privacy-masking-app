@@ -23,7 +23,7 @@ export function PrivacySection() {
       icon: ShieldCheck,
       title: "ログイン不要・登録不要",
       description:
-        "アカウント作成やメールアドレスの入力は不要。URLにアクセスすれば即座に使い始められます。",
+        "顔隠しWebアプリをすぐ使えます。会員登録・インストールは不要で、URLを開いて画像を選ぶだけです。",
       color: "text-emerald-600",
       bg: "bg-emerald-50",
     },
