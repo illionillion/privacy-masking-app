@@ -2,7 +2,7 @@
 
 import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Circle,
   Group,
@@ -23,6 +23,8 @@ import type {
 } from "../types";
 import { stagePointerToContentSpace } from "../lib/viewZoom";
 import { useEditorViewport } from "../hooks/useEditorViewport";
+import { EditorFillRegionNode } from "./EditorFillRegionNode";
+import { EditorStampRegionNode } from "./EditorStampRegionNode";
 import { EditorViewportControls } from "./EditorViewportControls";
 
 interface EditorCanvasProps {
@@ -64,14 +66,6 @@ interface DrawingRect {
 interface DrawingStroke {
   points: { x: number; y: number }[];
 }
-
-/** スタンプ種別ごとの表示色 */
-const STAMP_TYPE_COLORS: Record<StampType, string> = {
-  "fill-black": "#000000",
-  mosaic: "#6b7280",
-  blur: "#93c5fd",
-  "stamp-face": "#fb923c",
-};
 
 /** 矩形描画の最小サイズ閾値（px）。この値以下の矩形は追加しない */
 const MIN_RECT_SIZE = 5;
@@ -120,135 +114,6 @@ function toImageSpace(
  * 選択・矩形追加・ペイントの 3 モードをサポートし、
  * 顔検出・OCR 結果からマスキング領域をインタラクティブに編集できる。
  */
-/**
- * スタンプ画像マップから画像を選択する
- *
- * region.stampFileName が設定されている場合はそれを優先し、
- * 未設定の場合は region.id ハッシュで決定的に選択する。
- *
- * @param region - StampRegion
- * @param stampImages - ファイル名をキーにした HTMLImageElement の Map
- * @returns 選択された HTMLImageElement、見つからない場合は null
- */
-function pickStampImage(
-  region: StampRegion,
-  stampImages: Map<string, HTMLImageElement>
-): HTMLImageElement | null {
-  if (region.stampFileName) {
-    return stampImages.get(region.stampFileName) ?? null;
-  }
-  const values = Array.from(stampImages.values());
-  if (values.length === 0) return null;
-  const idHash = region.id.split("").reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) | 0, 0);
-  return values[Math.abs(idHash) % values.length] ?? null;
-}
-
-/** filters プロパティの要素型（Konva.Filter は v10 では直接エクスポートされないため NodeConfig から取得） */
-type KonvaFilter = NonNullable<Konva.NodeConfig["filters"]>[number];
-
-/** モザイクブロックの最小サイズ（px） */
-const MIN_MOSAIC_BLOCK_SIZE = 3;
-
-/** モザイクブロックサイズ算出用の除数（短辺に対する割合の逆数） */
-const MOSAIC_BLOCK_SIZE_DIVISOR = 24;
-
-/**
- * モザイク（ピクセレーション）プレビュー用 Konva カスタムフィルター
- *
- * ブロックサイズは領域短辺の 1/24（最小 3px）で自動算出する。
- */
-const pixelateFilter: KonvaFilter = function (imageData: ImageData) {
-  const size = Math.max(
-    MIN_MOSAIC_BLOCK_SIZE,
-    Math.round(Math.min(imageData.width, imageData.height) / MOSAIC_BLOCK_SIZE_DIVISOR)
-  );
-  for (let y = 0; y < imageData.height; y += size) {
-    for (let x = 0; x < imageData.width; x += size) {
-      const idx = (y * imageData.width + x) * 4;
-      const r = imageData.data[idx] ?? 0;
-      const g = imageData.data[idx + 1] ?? 0;
-      const b = imageData.data[idx + 2] ?? 0;
-      for (let dy = y; dy < Math.min(y + size, imageData.height); dy++) {
-        for (let dx = x; dx < Math.min(x + size, imageData.width); dx++) {
-          const i = (dy * imageData.width + dx) * 4;
-          imageData.data[i] = r;
-          imageData.data[i + 1] = g;
-          imageData.data[i + 2] = b;
-        }
-      }
-    }
-  }
-};
-
-/**
- * ぼかし・モザイクのリアルタイムプレビューコンポーネント
- *
- * 背景画像を領域でクリップし Konva フィルターを適用してエディタ上でリアルタイムプレビューを表示する。
- * cache() の呼び出しによりフィルターが有効になる。
- *
- * @param kind - エフェクト種別（"blur" | "mosaic"）
- * @param bgImage - 背景画像
- * @param offsetX - グループ内での画像 X オフセット（= -(領域X * scaleX)）
- * @param offsetY - グループ内での画像 Y オフセット（= -(領域Y * scaleY)）
- * @param stageWidth - ステージ幅（px）
- * @param stageHeight - ステージ高さ（px）
- * @param w - 領域の幅（px）
- * @param h - 領域の高さ（px）
- */
-function EffectPreviewGroup({
-  kind,
-  bgImage,
-  offsetX,
-  offsetY,
-  stageWidth,
-  stageHeight,
-  w,
-  h,
-}: {
-  kind: "blur" | "mosaic";
-  bgImage: HTMLImageElement;
-  offsetX: number;
-  offsetY: number;
-  stageWidth: number;
-  stageHeight: number;
-  w: number;
-  h: number;
-}) {
-  const groupRef = useRef<Konva.Group>(null);
-
-  useEffect(() => {
-    const group = groupRef.current;
-    if (!group) return;
-    if (kind === "blur") {
-      group.setAttr("blurRadius", Math.max(4, Math.round(Math.min(w, h) / 8)));
-    }
-    group.clearCache();
-    group.cache({
-      x: 0,
-      y: 0,
-      width: Math.max(1, w),
-      height: Math.max(1, h),
-      pixelRatio: 1,
-    });
-    group.getLayer()?.batchDraw();
-  }, [kind, bgImage, offsetX, offsetY, stageWidth, stageHeight, w, h]);
-
-  const filters = kind === "blur" ? [Konva.Filters.Blur] : [pixelateFilter];
-
-  return (
-    <Group ref={groupRef} clipX={0} clipY={0} clipWidth={w} clipHeight={h} filters={filters}>
-      <KonvaImage
-        image={bgImage}
-        x={offsetX}
-        y={offsetY}
-        width={stageWidth}
-        height={stageHeight}
-        listening={false}
-      />
-    </Group>
-  );
-}
-
 export function EditorCanvas({
   imageUrl,
   imageNaturalWidth,
@@ -627,107 +492,36 @@ export function EditorCanvas({
 
       {/* 塗りつぶし領域 */}
       {fillRegions.map((region) => (
-        <Group
+        <EditorFillRegionNode
           key={region.id}
-          id={region.id}
-          x={region.x * scaleX}
-          y={region.y * scaleY}
-          draggable={isInteractive}
-          onClick={() => isInteractive && onSelectItem(region.id)}
-          onTap={() => isInteractive && onSelectItem(region.id)}
-          onDragEnd={(e) => handleDragEnd(region.id, "fill", e.target)}
-          onTransformEnd={(e) => handleTransformEnd(region.id, "fill", e.target)}
-        >
-          <Rect
-            width={region.width * scaleX}
-            height={region.height * scaleY}
-            fill={region.isEnabled ? "#000000" : undefined}
-            stroke={region.isEnabled ? "#3b82f6" : "#9ca3af"}
-            strokeWidth={1}
-            dash={region.isEnabled ? undefined : [6, 3]}
-            opacity={region.isEnabled ? 1 : 0.6}
-          />
-        </Group>
+          region={region}
+          scaleX={scaleX}
+          scaleY={scaleY}
+          isInteractive={isInteractive}
+          onSelect={() => onSelectItem(region.id)}
+          onDragEnd={(node) => handleDragEnd(region.id, "fill", node)}
+          onTransformEnd={(node) => handleTransformEnd(region.id, "fill", node)}
+        />
       ))}
 
       {/* スタンプ領域 */}
-      {stampRegions.map((region) => {
-        const rx = region.x * scaleX;
-        const ry = region.y * scaleY;
-        const w = region.width * scaleX;
-        const h = region.height * scaleY;
-        const squareStampSize = Math.max(w, h);
-        const squareStampX = (w - squareStampSize) / 2;
-        const squareStampY = (h - squareStampSize) / 2;
-        const stampImg =
-          region.stampType === "stamp-face" ? pickStampImage(region, stampImages) : null;
-        const isEffectStamp =
-          (region.stampType === "blur" || region.stampType === "mosaic") && bgImage !== null;
-        return (
-          <Fragment key={region.id}>
-            {isEffectStamp && (
-              /* blur / mosaic の見た目は操作ノードと分離し、Transformer の計算へ影響させない */
-              <Group x={rx} y={ry} listening={false}>
-                <EffectPreviewGroup
-                  kind={region.stampType as "blur" | "mosaic"}
-                  bgImage={bgImage}
-                  offsetX={-rx}
-                  offsetY={-ry}
-                  stageWidth={stageWidth}
-                  stageHeight={stageHeight}
-                  w={w}
-                  h={h}
-                />
-              </Group>
-            )}
-
-            <Group
-              id={region.id}
-              x={rx}
-              y={ry}
-              draggable={isInteractive}
-              onClick={() => isInteractive && onSelectItem(region.id)}
-              onTap={() => isInteractive && onSelectItem(region.id)}
-              onDragEnd={(e) => handleDragEnd(region.id, "stamp", e.target)}
-              onTransformEnd={(e) => handleTransformEnd(region.id, "stamp", e.target)}
-            >
-              {stampImg ? (
-                /* stamp-face: 顔領域中心を基準に正方形スタンプを表示（旧仕様互換） */
-                <KonvaImage
-                  image={stampImg}
-                  x={squareStampX}
-                  y={squareStampY}
-                  width={squareStampSize}
-                  height={squareStampSize}
-                  opacity={region.isEnabled ? 1 : 0.4}
-                  stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
-                  strokeWidth={1}
-                />
-              ) : isEffectStamp ? (
-                /* blur / mosaic: クリック/変形用の矩形ハンドル */
-                <Rect
-                  width={w}
-                  height={h}
-                  fill="rgba(0,0,0,0.001)"
-                  stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
-                  strokeWidth={1}
-                  listening={true}
-                />
-              ) : (
-                /* fill-black またはフォールバック: 不透明な塗りつぶし矩形 */
-                <Rect
-                  width={w}
-                  height={h}
-                  fill={STAMP_TYPE_COLORS[region.stampType]}
-                  opacity={1}
-                  stroke={selectedId === region.id ? "#1d4ed8" : "#6b7280"}
-                  strokeWidth={1}
-                />
-              )}
-            </Group>
-          </Fragment>
-        );
-      })}
+      {stampRegions.map((region) => (
+        <EditorStampRegionNode
+          key={region.id}
+          region={region}
+          scaleX={scaleX}
+          scaleY={scaleY}
+          isInteractive={isInteractive}
+          selected={selectedId === region.id}
+          stampImages={stampImages}
+          bgImage={bgImage}
+          stageWidth={stageWidth}
+          stageHeight={stageHeight}
+          onSelect={() => onSelectItem(region.id)}
+          onDragEnd={(node) => handleDragEnd(region.id, "stamp", node)}
+          onTransformEnd={(node) => handleTransformEnd(region.id, "stamp", node)}
+        />
+      ))}
 
       {/* ペイントストローク */}
       {paintStrokes.map((stroke) => (
