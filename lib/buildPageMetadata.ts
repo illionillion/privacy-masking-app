@@ -26,6 +26,10 @@ type BuildPageMetadataOptions = {
  * `og:url` は自動では付かない（canonical だけでは不足）。
  *
  * このヘルパーは url・画像・Twitter カードを常にセットで付与し、各 page の重複を防ぐ。
+ *
+ * title / description を省略した場合、openGraph / twitter には同名フィールドを載せない。
+ * トップ（/）のように layout 側で title / description を定義しているページでは、
+ * Next.js が解決済みの title / description から og:title 等を補完する。
  */
 export function buildPageMetadata(options: BuildPageMetadataOptions): Metadata {
   const { title, description, canonicalPath, robots } = options;
