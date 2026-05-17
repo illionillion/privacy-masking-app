@@ -63,10 +63,11 @@ export function EditorToolbar({
   onDeleteSelected,
 }: EditorToolbarProps) {
   const showStampControls = mode === "rect" || isStampSelected;
+  const selectedStampEntry = stampCatalog.find((entry) => entry.fileName === selectedStampFileName);
 
   return (
     <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1.5">
-      <div className="flex items-center gap-x-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
         {/* モード切替: ピルグループ（アイコンのみ・title でツールチップ） */}
         <div className="flex overflow-hidden rounded-md border border-zinc-300 shadow-sm">
           {MODE_BUTTONS.map(({ mode: m, label, Icon }, i) => (
@@ -97,11 +98,15 @@ export function EditorToolbar({
               <select
                 value={selectedStampFileName}
                 onChange={(e) => onStampFileNameChange(e.target.value)}
-                className="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label={
+                  selectedStampEntry ? `スタンプ: ${selectedStampEntry.label}` : "スタンプ画像"
+                }
+                title={selectedStampEntry?.label}
+                className="w-12 shrink-0 rounded-md border border-zinc-300 bg-white px-1 py-1.5 text-center text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {stampCatalog.map(({ fileName, emoji, label }) => (
+                {stampCatalog.map(({ fileName, emoji }) => (
                   <option key={fileName} value={fileName}>
-                    {emoji} {label}
+                    {emoji}
                   </option>
                 ))}
               </select>

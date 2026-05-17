@@ -25,7 +25,7 @@ export function StampTypeSelector({ value, onChange }: StampTypeSelectorProps) {
     <select
       value={value}
       onChange={(e) => onChange(e.target.value as StampType)}
-      className="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      className="max-w-[8.5rem] shrink-0 rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
     >
       {STAMP_OPTIONS.map(({ type, label }) => (
         <option key={type} value={type}>
