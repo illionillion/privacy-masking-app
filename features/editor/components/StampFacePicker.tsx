@@ -135,35 +135,46 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
       </button>
 
       {open && (
-        <ul
-          ref={listRef}
-          id={listboxId}
-          role="listbox"
-          aria-label="スタンプ画像"
-          className="absolute top-full left-0 z-50 mt-1 max-h-48 w-56 overflow-y-auto rounded-md border border-zinc-200 bg-white py-1 shadow-lg"
+        <div
+          className={clsx([
+            "absolute top-full left-0 z-50 mt-1 w-56 overflow-hidden rounded-md border border-zinc-200 bg-white shadow-lg",
+            /* Safari: スクロール層の背景が透けるのを防ぐ */
+            "[transform:translateZ(0)]",
+          ])}
         >
-          {catalog.map((entry, index) => (
-            <li
-              key={entry.fileName}
-              role="option"
-              aria-selected={entry.fileName === value}
-              data-index={index}
-              className={clsx([
-                "flex cursor-pointer items-center gap-2 px-2 py-2 text-sm text-zinc-700",
-                entry.fileName === value && "bg-blue-50",
-                index === activeIndex && entry.fileName !== value && "bg-zinc-100",
-                index === activeIndex && entry.fileName === value && "bg-blue-100",
-              ])}
-              onMouseEnter={() => setActiveIndex(index)}
-              onClick={() => handleSelect(entry.fileName)}
-            >
-              <span className="text-lg leading-none" aria-hidden="true">
-                {entry.emoji}
-              </span>
-              <span className="min-w-0 truncate">{entry.label}</span>
-            </li>
-          ))}
-        </ul>
+          <ul
+            ref={listRef}
+            id={listboxId}
+            role="listbox"
+            aria-label="スタンプ画像"
+            className={clsx([
+              "m-0 max-h-48 list-none overflow-y-auto bg-white py-1",
+              "[-webkit-overflow-scrolling:touch]",
+            ])}
+          >
+            {catalog.map((entry, index) => (
+              <li
+                key={entry.fileName}
+                role="option"
+                aria-selected={entry.fileName === value}
+                data-index={index}
+                className={clsx([
+                  "flex cursor-pointer items-center gap-2 bg-white px-2 py-2 text-sm text-zinc-700",
+                  entry.fileName === value && "bg-blue-50",
+                  index === activeIndex && entry.fileName !== value && "bg-zinc-100",
+                  index === activeIndex && entry.fileName === value && "bg-blue-100",
+                ])}
+                onMouseEnter={() => setActiveIndex(index)}
+                onClick={() => handleSelect(entry.fileName)}
+              >
+                <span className="text-lg leading-none" aria-hidden="true">
+                  {entry.emoji}
+                </span>
+                <span className="min-w-0 truncate">{entry.label}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );
