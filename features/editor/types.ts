@@ -4,9 +4,6 @@ export type StampType = "mosaic" | "blur" | "stamp-face" | "fill-black";
 /** エディタの操作モード */
 export type EditorMode = "select" | "rect" | "paint";
 
-/** 矩形追加時のターゲット種別 */
-export type RectAddTarget = "fill" | "stamp";
-
 /** スタンプ（顔検出など）のマスキング領域 */
 export interface StampRegion {
   /** 一意のID */

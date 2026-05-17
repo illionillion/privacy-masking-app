@@ -302,13 +302,11 @@ export function GalleryItem({
             <div className="relative z-10 p-2">
               <EditorToolbar
                 mode={editor.mode}
-                rectTarget={editor.rectTarget}
                 selectedStampType={editor.selectedStampType}
                 brushSize={editor.brushSize}
                 selectedId={editor.selectedId}
                 isStampSelected={selectedStampRegion !== undefined}
                 onChangeMode={editor.onChangeMode}
-                onRectTargetChange={editor.setRectTarget}
                 onStampTypeChange={editor.setSelectedStampType}
                 onStampFileNameChange={editor.setSelectedStampFileName}
                 onBrushSizeChange={editor.setBrushSize}
@@ -331,11 +329,9 @@ export function GalleryItem({
                   selectedId={editor.selectedId}
                   mode={editor.mode}
                   selectedStampType={editor.selectedStampType}
-                  rectTarget={editor.rectTarget}
                   brushSize={editor.brushSize}
                   onSelectItem={editor.selectItem}
                   onAddStampRegion={editor.addStampRegion}
-                  onAddFillRegion={editor.addFillRegion}
                   onAddPaintStroke={editor.addPaintStroke}
                   onUpdateStampRegion={editor.updateStampRegion}
                   onUpdateFillRegion={editor.updateFillRegion}

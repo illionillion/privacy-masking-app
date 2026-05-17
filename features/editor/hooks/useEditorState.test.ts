@@ -22,7 +22,6 @@ describe("useEditorState", () => {
     expect(result.current.paintStrokes).toHaveLength(0);
     expect(result.current.selectedId).toBeNull();
     expect(result.current.selectedStampType).toBe("stamp-face");
-    expect(result.current.rectTarget).toBe("fill");
     expect(result.current.brushSize).toBe(20);
   });
 

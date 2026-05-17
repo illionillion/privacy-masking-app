@@ -1,14 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type {
-  EditorMode,
-  FillRegion,
-  PaintStroke,
-  RectAddTarget,
-  StampRegion,
-  StampType,
-} from "../types";
+import type { EditorMode, FillRegion, PaintStroke, StampRegion, StampType } from "../types";
 
 /**
  * `crypto.randomUUID` 未対応ブラウザ向けのフォールバックを含むUUID生成関数
@@ -44,12 +37,10 @@ export interface UseEditorStateReturn {
   selectedId: string | null;
   selectedStampType: StampType;
   selectedStampFileName: string;
-  rectTarget: RectAddTarget;
   brushSize: number;
   onChangeMode: (mode: EditorMode) => void;
   setSelectedStampType: (type: StampType) => void;
   setSelectedStampFileName: (name: string) => void;
-  setRectTarget: (target: RectAddTarget) => void;
   setBrushSize: (size: number) => void;
   selectItem: (id: string | null) => void;
   initFromDetections: (
@@ -84,7 +75,6 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedStampType, _setSelectedStampType] = useState<StampType>("stamp-face");
   const [selectedStampFileName, _setSelectedStampFileName] = useState<string>(initialStampFileName);
-  const [rectTarget, setRectTarget] = useState<RectAddTarget>("fill");
   const [brushSize, setBrushSize] = useState<number>(20);
 
   /**
@@ -304,12 +294,10 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
     selectedId,
     selectedStampType,
     selectedStampFileName,
-    rectTarget,
     brushSize,
     onChangeMode,
     setSelectedStampType,
     setSelectedStampFileName,
-    setRectTarget,
     setBrushSize,
     selectItem,
     initFromDetections,

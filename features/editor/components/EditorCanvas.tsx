@@ -13,14 +13,7 @@ import {
   Stage,
   Transformer,
 } from "react-konva";
-import type {
-  EditorMode,
-  FillRegion,
-  PaintStroke,
-  RectAddTarget,
-  StampRegion,
-  StampType,
-} from "../types";
+import type { EditorMode, FillRegion, PaintStroke, StampRegion, StampType } from "../types";
 import { stagePointerToContentSpace } from "../lib/viewZoom";
 import { useEditorViewport } from "../hooks/useEditorViewport";
 import { EditorFillRegionNode } from "./EditorFillRegionNode";
@@ -37,11 +30,9 @@ interface EditorCanvasProps {
   selectedId: string | null;
   mode: EditorMode;
   selectedStampType: StampType;
-  rectTarget: RectAddTarget;
   brushSize: number;
   onSelectItem: (id: string | null) => void;
   onAddStampRegion: (region: Omit<StampRegion, "id">) => void;
-  onAddFillRegion: (region: Omit<FillRegion, "id">) => void;
   onAddPaintStroke: (stroke: Omit<PaintStroke, "id">) => void;
   onUpdateStampRegion: (id: string, updates: Partial<Omit<StampRegion, "id">>) => void;
   onUpdateFillRegion: (id: string, updates: Partial<Omit<FillRegion, "id">>) => void;
@@ -69,6 +60,14 @@ interface DrawingStroke {
 
 /** 矩形描画の最小サイズ閾値（px）。この値以下の矩形は追加しない */
 const MIN_RECT_SIZE = 5;
+
+/** 矩形プレビューの種別ごとの表示色 */
+const RECT_PREVIEW_BY_STAMP_TYPE: Record<StampType, { fill: string; stroke: string }> = {
+  "fill-black": { fill: "rgba(0,0,0,0.3)", stroke: "#000000" },
+  "stamp-face": { fill: "rgba(251,146,60,0.3)", stroke: "#f97316" },
+  mosaic: { fill: "rgba(107,114,128,0.3)", stroke: "#6b7280" },
+  blur: { fill: "rgba(147,197,253,0.3)", stroke: "#93c5fd" },
+};
 
 /** Transformer のリサイズ最小サイズ（px）。この値未満へのリサイズを禁止する */
 const MIN_TRANSFORM_SIZE = 10;
@@ -124,11 +123,9 @@ export function EditorCanvas({
   selectedId,
   mode,
   selectedStampType,
-  rectTarget,
   brushSize,
   onSelectItem,
   onAddStampRegion,
-  onAddFillRegion,
   onAddPaintStroke,
   onUpdateStampRegion,
   onUpdateFillRegion,
@@ -315,27 +312,16 @@ export function EditorCanvas({
         const imgW = drawingRect.width / scaleX;
         const imgH = drawingRect.height / scaleY;
 
-        if (rectTarget === "fill") {
-          onAddFillRegion({
-            x: imgX,
-            y: imgY,
-            width: imgW,
-            height: imgH,
-            isEnabled: true,
-            source: "manual",
-          });
-        } else {
-          onAddStampRegion({
-            x: imgX,
-            y: imgY,
-            width: imgW,
-            height: imgH,
-            stampType: selectedStampType,
-            stampFileName: selectedStampType === "stamp-face" ? selectedStampFileName : undefined,
-            isEnabled: true,
-            source: "manual",
-          });
-        }
+        onAddStampRegion({
+          x: imgX,
+          y: imgY,
+          width: imgW,
+          height: imgH,
+          stampType: selectedStampType,
+          stampFileName: selectedStampType === "stamp-face" ? selectedStampFileName : undefined,
+          isEnabled: true,
+          source: "manual",
+        });
       }
       setDrawingRect(null);
       drawStart.current = null;
@@ -552,8 +538,8 @@ export function EditorCanvas({
           y={drawingRect.y}
           width={drawingRect.width}
           height={drawingRect.height}
-          fill={rectTarget === "fill" ? "rgba(0,0,0,0.3)" : "rgba(251,146,60,0.3)"}
-          stroke={rectTarget === "fill" ? "#3b82f6" : "#f97316"}
+          fill={RECT_PREVIEW_BY_STAMP_TYPE[selectedStampType].fill}
+          stroke={RECT_PREVIEW_BY_STAMP_TYPE[selectedStampType].stroke}
           strokeWidth={1}
           dash={[6, 3]}
         />
