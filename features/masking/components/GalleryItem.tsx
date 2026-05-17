@@ -309,7 +309,7 @@ export function GalleryItem({
               />
             </div>
 
-            <div className="relative z-0 overflow-hidden px-2 pb-2">
+            <div className="relative z-10 overflow-hidden px-2 pb-2">
               {imageNaturalWidth > 0 && imageNaturalHeight > 0 && (
                 <EditorCanvas
                   key={image.id}
