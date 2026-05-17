@@ -87,4 +87,30 @@ describe("StampFacePicker", () => {
     await userEvent.click(document.body);
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
+
+  it("一覧表示中、ピッカー外にフォーカスがあるとき矢印キーを奪わない", async () => {
+    render(
+      <div>
+        <StampFacePicker catalog={CATALOG} value="a.png" onChange={vi.fn()} />
+        <button type="button">他のボタン</button>
+      </div>
+    );
+    const trigger = getTrigger("笑顔");
+    await userEvent.click(trigger);
+    const firstOption = screen.getByRole("option", { name: /笑顔/ });
+    await userEvent.tab();
+    await userEvent.keyboard("{ArrowDown}");
+    expect(trigger).toHaveAttribute("aria-activedescendant", firstOption.id);
+  });
+
+  it("開いている間に catalog が空になったら一覧を閉じる", async () => {
+    const { rerender } = render(
+      <StampFacePicker catalog={CATALOG} value="a.png" onChange={vi.fn()} />
+    );
+    await userEvent.click(getTrigger("笑顔"));
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+    rerender(<StampFacePicker catalog={[]} value="a.png" onChange={vi.fn()} />);
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  });
 });

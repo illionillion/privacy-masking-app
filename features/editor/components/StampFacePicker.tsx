@@ -67,50 +67,6 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
   }, [open]);
 
   useEffect(() => {
-    if (!open) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setOpen(false);
-        return;
-      }
-      if (event.key === "ArrowDown") {
-        event.preventDefault();
-        const { length } = catalogRef.current;
-        setActiveIndex((index) => {
-          const next = (index + 1) % length;
-          activeIndexRef.current = next;
-          return next;
-        });
-        return;
-      }
-      if (event.key === "ArrowUp") {
-        event.preventDefault();
-        const { length } = catalogRef.current;
-        setActiveIndex((index) => {
-          const next = (index - 1 + length) % length;
-          activeIndexRef.current = next;
-          return next;
-        });
-        return;
-      }
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        const entry = catalogRef.current[activeIndexRef.current];
-        if (!entry) return;
-        onChangeRef.current(entry.fileName);
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
-
-  useEffect(() => {
     if (!open || !listRef.current) return;
     const option = listRef.current.querySelector<HTMLElement>(`[data-index="${activeIndex}"]`);
     option?.scrollIntoView?.({ block: "nearest" });
@@ -124,12 +80,52 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
     [onChange]
   );
 
-  const handleTriggerKeyDown = useCallback(
+  const handleComboboxKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLButtonElement>) => {
-      if (open) return;
-      if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+      if (!open) {
+        if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openList();
+        }
+        return;
+      }
+
+      if (event.key === "Escape") {
         event.preventDefault();
-        openList();
+        setOpen(false);
+        return;
+      }
+
+      const { length } = catalogRef.current;
+      if (length === 0) {
+        setOpen(false);
+        return;
+      }
+
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setActiveIndex((index) => {
+          const next = (index + 1) % length;
+          activeIndexRef.current = next;
+          return next;
+        });
+        return;
+      }
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setActiveIndex((index) => {
+          const next = (index - 1 + length) % length;
+          activeIndexRef.current = next;
+          return next;
+        });
+        return;
+      }
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        const entry = catalogRef.current[activeIndexRef.current];
+        if (!entry) return;
+        onChangeRef.current(entry.fileName);
+        setOpen(false);
       }
     },
     [open, openList]
@@ -157,7 +153,7 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
             openList();
           }
         }}
-        onKeyDown={handleTriggerKeyDown}
+        onKeyDown={handleComboboxKeyDown}
         className={clsx([
           "flex items-center gap-0.5 rounded-md border border-zinc-300 bg-white px-1.5 py-1.5 shadow-sm",
           "hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500",
