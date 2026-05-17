@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { EditorMode, FillRegion, PaintStroke, StampRegion, StampType } from "../types";
+import type { EditorMode, PaintStroke, StampRegion, StampType } from "../types";
 
 /**
  * `crypto.randomUUID` 未対応ブラウザ向けのフォールバックを含むUUID生成関数
@@ -32,7 +32,6 @@ const generateUUID = (): string => {
 export interface UseEditorStateReturn {
   mode: EditorMode;
   stampRegions: StampRegion[];
-  fillRegions: FillRegion[];
   paintStrokes: PaintStroke[];
   selectedId: string | null;
   selectedStampType: StampType;
@@ -48,12 +47,10 @@ export interface UseEditorStateReturn {
     ocrRegions: Array<{ x: number; y: number; width: number; height: number; text: string }>
   ) => void;
   addStampRegion: (region: Omit<StampRegion, "id">) => void;
-  addFillRegion: (region: Omit<FillRegion, "id">) => void;
   addPaintStroke: (stroke: Omit<PaintStroke, "id">) => void;
   updateStampRegion: (id: string, updates: Partial<Omit<StampRegion, "id">>) => void;
-  updateFillRegion: (id: string, updates: Partial<Omit<FillRegion, "id">>) => void;
   updatePaintStroke: (id: string, updates: Partial<Omit<PaintStroke, "id">>) => void;
-  toggleFillRegion: (id: string) => void;
+  toggleStampRegion: (id: string) => void;
   removeItem: (id: string) => void;
   removeSelectedItem: () => void;
 }
@@ -61,8 +58,7 @@ export interface UseEditorStateReturn {
 /**
  * エディタの状態管理フック
  *
- * スタンプ領域・塗りつぶし領域・ペイントストロークの管理と
- * エディタモード・選択状態を提供する。
+ * マスキング領域・ペイントストロークの管理とエディタモード・選択状態を提供する。
  *
  * @param initialStampFileName - stamp-face 種別の初期選択ファイル名
  * @returns {UseEditorStateReturn} エディタ状態と操作関数
@@ -70,7 +66,6 @@ export interface UseEditorStateReturn {
 export function useEditorState(initialStampFileName = ""): UseEditorStateReturn {
   const [mode, setMode] = useState<EditorMode>("select");
   const [stampRegions, setStampRegions] = useState<StampRegion[]>([]);
-  const [fillRegions, setFillRegions] = useState<FillRegion[]>([]);
   const [paintStrokes, setPaintStrokes] = useState<PaintStroke[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedStampType, _setSelectedStampType] = useState<StampType>("stamp-face");
@@ -97,7 +92,7 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
   );
 
   /**
-   * スタンプ種別の選択を更新し、必要に応じて選択中のスタンプ領域にも反映する
+   * スタンプ種別の選択を更新し、必要に応じて選択中のマスキング領域にも反映する
    *
    * @param type - 新しく選択されたスタンプ種別
    */
@@ -125,7 +120,7 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
 
   /**
    * stamp-face 用のスタンプ画像ファイル名を更新し、
-   * 選択中のスタンプ領域にも反映する
+   * 選択中のマスキング領域にも反映する
    *
    * @param name - 新しく選択されたファイル名
    */
@@ -148,7 +143,7 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
   );
 
   /**
-   * 顔検出結果とOCR結果からStampRegion/FillRegionを初期化する
+   * 顔検出結果とOCR結果からマスキング領域を初期化する
    *
    * @param detections - 顔検出結果の配列
    * @param ocrRegions - OCR検出結果の配列
@@ -158,51 +153,40 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
       detections: Array<{ x: number; y: number; width: number; height: number }>,
       ocrRegions: Array<{ x: number; y: number; width: number; height: number; text: string }>
     ) => {
-      setStampRegions(
-        detections.map((det) => ({
-          id: generateUUID(),
-          x: det.x,
-          y: det.y,
-          width: det.width,
-          height: det.height,
-          stampType: "stamp-face" as StampType,
-          isEnabled: true,
-          source: "face-detection" as const,
-        }))
-      );
-      setFillRegions(
-        ocrRegions.map((region) => ({
-          id: generateUUID(),
-          x: region.x,
-          y: region.y,
-          width: region.width,
-          height: region.height,
-          isEnabled: true,
-          source: "ocr" as const,
-          text: region.text,
-        }))
-      );
+      const faceRegions: StampRegion[] = detections.map((det) => ({
+        id: generateUUID(),
+        x: det.x,
+        y: det.y,
+        width: det.width,
+        height: det.height,
+        stampType: "stamp-face" as StampType,
+        isEnabled: true,
+        source: "face-detection" as const,
+      }));
+      const ocrMaskRegions: StampRegion[] = ocrRegions.map((region) => ({
+        id: generateUUID(),
+        x: region.x,
+        y: region.y,
+        width: region.width,
+        height: region.height,
+        stampType: "fill-black" as StampType,
+        isEnabled: true,
+        source: "ocr" as const,
+        text: region.text,
+      }));
+      setStampRegions([...faceRegions, ...ocrMaskRegions]);
       setSelectedId(null);
     },
     []
   );
 
   /**
-   * スタンプ領域を追加する
+   * マスキング領域を追加する
    *
    * @param region - 追加する領域（id を除く）
    */
   const addStampRegion = useCallback((region: Omit<StampRegion, "id">) => {
     setStampRegions((prev) => [...prev, { ...region, id: generateUUID() }]);
-  }, []);
-
-  /**
-   * 塗りつぶし領域を追加する
-   *
-   * @param region - 追加する領域（id を除く）
-   */
-  const addFillRegion = useCallback((region: Omit<FillRegion, "id">) => {
-    setFillRegions((prev) => [...prev, { ...region, id: generateUUID() }]);
   }, []);
 
   /**
@@ -215,23 +199,13 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
   }, []);
 
   /**
-   * スタンプ領域を更新する
+   * マスキング領域を更新する
    *
    * @param id - 更新する領域のID
    * @param updates - 更新内容
    */
   const updateStampRegion = useCallback((id: string, updates: Partial<Omit<StampRegion, "id">>) => {
     setStampRegions((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
-  }, []);
-
-  /**
-   * 塗りつぶし領域を更新する
-   *
-   * @param id - 更新する領域のID
-   * @param updates - 更新内容
-   */
-  const updateFillRegion = useCallback((id: string, updates: Partial<Omit<FillRegion, "id">>) => {
-    setFillRegions((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
   }, []);
 
   /**
@@ -245,12 +219,12 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
   }, []);
 
   /**
-   * 塗りつぶし領域の有効/無効を切り替える
+   * マスキング領域の有効/無効を切り替える
    *
    * @param id - 切り替える領域のID
    */
-  const toggleFillRegion = useCallback((id: string) => {
-    setFillRegions((prev) =>
+  const toggleStampRegion = useCallback((id: string) => {
+    setStampRegions((prev) =>
       prev.map((r) => (r.id === id ? { ...r, isEnabled: !r.isEnabled } : r))
     );
   }, []);
@@ -262,7 +236,6 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
    */
   const removeItem = useCallback((id: string) => {
     setStampRegions((prev) => prev.filter((r) => r.id !== id));
-    setFillRegions((prev) => prev.filter((r) => r.id !== id));
     setPaintStrokes((prev) => prev.filter((s) => s.id !== id));
     setSelectedId((prev) => (prev === id ? null : prev));
   }, []);
@@ -273,7 +246,6 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
   const removeSelectedItem = useCallback(() => {
     if (selectedId === null) return;
     setStampRegions((prev) => prev.filter((r) => r.id !== selectedId));
-    setFillRegions((prev) => prev.filter((r) => r.id !== selectedId));
     setPaintStrokes((prev) => prev.filter((s) => s.id !== selectedId));
     setSelectedId(null);
   }, [selectedId]);
@@ -289,7 +261,6 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
   return {
     mode,
     stampRegions,
-    fillRegions,
     paintStrokes,
     selectedId,
     selectedStampType,
@@ -302,12 +273,10 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
     selectItem,
     initFromDetections,
     addStampRegion,
-    addFillRegion,
     addPaintStroke,
     updateStampRegion,
-    updateFillRegion,
     updatePaintStroke,
-    toggleFillRegion,
+    toggleStampRegion,
     removeItem,
     removeSelectedItem,
   };

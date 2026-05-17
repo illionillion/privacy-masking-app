@@ -142,13 +142,7 @@ export function GalleryItem({
     if (!imageElement || image.isProcessing || image.processingError) return;
     let cancelled = false;
 
-    void exportEditorCanvas(
-      imageElement,
-      editor.stampRegions,
-      editor.fillRegions,
-      editor.paintStrokes,
-      stampImages
-    )
+    void exportEditorCanvas(imageElement, editor.stampRegions, editor.paintStrokes, stampImages)
       .then((blobUrl) => {
         if (cancelled) {
           URL.revokeObjectURL(blobUrl);
@@ -172,7 +166,6 @@ export function GalleryItem({
     image.isProcessing,
     image.processingError,
     editor.stampRegions,
-    editor.fillRegions,
     editor.paintStrokes,
     stampImages,
   ]);
@@ -324,7 +317,6 @@ export function GalleryItem({
                   imageNaturalWidth={imageNaturalWidth}
                   imageNaturalHeight={imageNaturalHeight}
                   stampRegions={editor.stampRegions}
-                  fillRegions={editor.fillRegions}
                   paintStrokes={editor.paintStrokes}
                   selectedId={editor.selectedId}
                   mode={editor.mode}
@@ -334,7 +326,6 @@ export function GalleryItem({
                   onAddStampRegion={editor.addStampRegion}
                   onAddPaintStroke={editor.addPaintStroke}
                   onUpdateStampRegion={editor.updateStampRegion}
-                  onUpdateFillRegion={editor.updateFillRegion}
                   onUpdatePaintStroke={editor.updatePaintStroke}
                   stampImages={stampImages}
                   selectedStampFileName={editor.selectedStampFileName}

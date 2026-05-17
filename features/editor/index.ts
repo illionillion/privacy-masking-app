@@ -3,4 +3,4 @@ export { EditorToolbar } from "./components/EditorToolbar";
 export { StampTypeSelector } from "./components/StampTypeSelector";
 export { useEditorState } from "./hooks/useEditorState";
 export { exportEditorCanvas } from "./utils/exportCanvas";
-export type { EditorMode, FillRegion, PaintStroke, StampRegion, StampType } from "./types";
+export type { EditorMode, PaintStroke, StampRegion, StampRegionSource, StampType } from "./types";

@@ -18,14 +18,13 @@ describe("useEditorState", () => {
     const { result } = renderHook(() => useEditorState());
     expect(result.current.mode).toBe("select");
     expect(result.current.stampRegions).toHaveLength(0);
-    expect(result.current.fillRegions).toHaveLength(0);
     expect(result.current.paintStrokes).toHaveLength(0);
     expect(result.current.selectedId).toBeNull();
     expect(result.current.selectedStampType).toBe("stamp-face");
     expect(result.current.brushSize).toBe(20);
   });
 
-  it("initFromDetections で StampRegion と FillRegion を初期化できる", () => {
+  it("initFromDetections で顔検出と OCR を StampRegion として初期化できる", () => {
     vi.stubGlobal("crypto", {
       randomUUID: vi.fn().mockReturnValueOnce("s-1").mockReturnValueOnce("f-1"),
     });
@@ -36,7 +35,7 @@ describe("useEditorState", () => {
         [{ x: 100, y: 200, width: 80, height: 30, text: "test@example.com" }]
       );
     });
-    expect(result.current.stampRegions).toHaveLength(1);
+    expect(result.current.stampRegions).toHaveLength(2);
     expect(result.current.stampRegions[0]).toMatchObject({
       id: "s-1",
       x: 10,
@@ -47,20 +46,20 @@ describe("useEditorState", () => {
       isEnabled: true,
       source: "face-detection",
     });
-    expect(result.current.fillRegions).toHaveLength(1);
-    expect(result.current.fillRegions[0]).toMatchObject({
+    expect(result.current.stampRegions[1]).toMatchObject({
       id: "f-1",
       x: 100,
       y: 200,
       width: 80,
       height: 30,
+      stampType: "fill-black",
       isEnabled: true,
       source: "ocr",
       text: "test@example.com",
     });
   });
 
-  it("addStampRegion でスタンプ領域を追加できる", () => {
+  it("addStampRegion でマスキング領域を追加できる", () => {
     vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("stamp-uuid") });
     const { result } = renderHook(() => useEditorState());
     act(() => {
@@ -77,23 +76,6 @@ describe("useEditorState", () => {
     expect(result.current.stampRegions).toHaveLength(1);
     expect(result.current.stampRegions[0].stampType).toBe("mosaic");
     expect(result.current.stampRegions[0].source).toBe("manual");
-  });
-
-  it("addFillRegion で塗りつぶし領域を追加できる", () => {
-    vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("fill-uuid") });
-    const { result } = renderHook(() => useEditorState());
-    act(() => {
-      result.current.addFillRegion({
-        x: 0,
-        y: 0,
-        width: 30,
-        height: 30,
-        isEnabled: true,
-        source: "manual",
-      });
-    });
-    expect(result.current.fillRegions).toHaveLength(1);
-    expect(result.current.fillRegions[0].source).toBe("manual");
   });
 
   it("addPaintStroke でペイントストロークを追加できる", () => {
@@ -113,7 +95,7 @@ describe("useEditorState", () => {
     expect(result.current.paintStrokes[0].id).toBe("stroke-uuid");
   });
 
-  it("updateStampRegion でスタンプ領域を更新できる", () => {
+  it("updateStampRegion でマスキング領域を更新できる", () => {
     vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("upd-uuid") });
     const { result } = renderHook(() => useEditorState());
     act(() => {
@@ -132,6 +114,29 @@ describe("useEditorState", () => {
     });
     expect(result.current.stampRegions[0].stampType).toBe("blur");
     expect(result.current.stampRegions[0].x).toBe(100);
+  });
+
+  it("選択中の OCR 領域の種別を変更できる", () => {
+    vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("ocr-uuid") });
+    const { result } = renderHook(() => useEditorState());
+    act(() => {
+      result.current.initFromDetections(
+        [],
+        [{ x: 0, y: 0, width: 30, height: 30, text: "secret@example.com" }]
+      );
+    });
+    act(() => {
+      result.current.selectItem("ocr-uuid");
+    });
+    act(() => {
+      result.current.setSelectedStampType("blur");
+    });
+    expect(result.current.stampRegions[0]).toMatchObject({
+      id: "ocr-uuid",
+      stampType: "blur",
+      source: "ocr",
+      text: "secret@example.com",
+    });
   });
 
   it("選択中領域を stamp-face に変更すると選択中ファイル名を引き継ぐ", () => {
@@ -210,24 +215,25 @@ describe("useEditorState", () => {
     expect(result.current.paintStrokes[0].brushSize).toBe(10);
   });
 
-  it("toggleFillRegion で isEnabled を切り替えられる", () => {
+  it("toggleStampRegion で isEnabled を切り替えられる", () => {
     vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("tog-uuid") });
     const { result } = renderHook(() => useEditorState());
     act(() => {
-      result.current.addFillRegion({
+      result.current.addStampRegion({
         x: 0,
         y: 0,
         width: 30,
         height: 30,
+        stampType: "fill-black",
         isEnabled: true,
         source: "manual",
       });
     });
-    expect(result.current.fillRegions[0].isEnabled).toBe(true);
+    expect(result.current.stampRegions[0].isEnabled).toBe(true);
     act(() => {
-      result.current.toggleFillRegion("tog-uuid");
+      result.current.toggleStampRegion("tog-uuid");
     });
-    expect(result.current.fillRegions[0].isEnabled).toBe(false);
+    expect(result.current.stampRegions[0].isEnabled).toBe(false);
   });
 
   it("removeItem で指定IDのアイテムを削除できる", () => {
