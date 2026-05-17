@@ -6,6 +6,7 @@ import type React from "react";
 import type { LucideProps } from "lucide-react";
 import type { StampCatalogEntry } from "../constants";
 import type { EditorMode, StampType } from "../types";
+import { StampFacePicker } from "./StampFacePicker";
 import { StampTypeSelector } from "./StampTypeSelector";
 
 interface EditorToolbarProps {
@@ -63,7 +64,6 @@ export function EditorToolbar({
   onDeleteSelected,
 }: EditorToolbarProps) {
   const showStampControls = mode === "rect" || isStampSelected;
-  const selectedStampEntry = stampCatalog.find((entry) => entry.fileName === selectedStampFileName);
 
   return (
     <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1.5">
@@ -94,22 +94,12 @@ export function EditorToolbar({
           <>
             <Divider />
             <StampTypeSelector value={selectedStampType} onChange={onStampTypeChange} />
-            {selectedStampType === "stamp-face" && stampCatalog.length > 0 && (
-              <select
+            {selectedStampType === "stamp-face" && (
+              <StampFacePicker
+                catalog={stampCatalog}
                 value={selectedStampFileName}
-                onChange={(e) => onStampFileNameChange(e.target.value)}
-                aria-label={
-                  selectedStampEntry ? `スタンプ: ${selectedStampEntry.label}` : "スタンプ画像"
-                }
-                title={selectedStampEntry?.label}
-                className="w-12 shrink-0 rounded-md border border-zinc-300 bg-white px-1 py-1.5 text-center text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {stampCatalog.map(({ fileName, emoji }) => (
-                  <option key={fileName} value={fileName}>
-                    {emoji}
-                  </option>
-                ))}
-              </select>
+                onChange={onStampFileNameChange}
+              />
             )}
           </>
         )}
