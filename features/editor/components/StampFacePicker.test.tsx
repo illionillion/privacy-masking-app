@@ -103,6 +103,22 @@ describe("StampFacePicker", () => {
     expect(trigger).toHaveAttribute("aria-activedescendant", firstOption.id);
   });
 
+  it("開いている間に catalog が短くなったら activeIndex を補正する", async () => {
+    const shortCatalog: readonly StampCatalogEntry[] = [CATALOG[0]];
+    const { rerender } = render(
+      <StampFacePicker catalog={CATALOG} value="a.png" onChange={vi.fn()} />
+    );
+    const trigger = getTrigger("笑顔");
+    await userEvent.click(trigger);
+    await userEvent.keyboard("{ArrowDown}");
+    const secondOption = screen.getByRole("option", { name: /爆笑/ });
+    expect(trigger).toHaveAttribute("aria-activedescendant", secondOption.id);
+
+    rerender(<StampFacePicker catalog={shortCatalog} value="a.png" onChange={vi.fn()} />);
+    const onlyOption = screen.getByRole("option", { name: /笑顔/ });
+    expect(trigger).toHaveAttribute("aria-activedescendant", onlyOption.id);
+  });
+
   it("開いている間に catalog が空になったら一覧を閉じる", async () => {
     const { rerender } = render(
       <StampFacePicker catalog={CATALOG} value="a.png" onChange={vi.fn()} />

@@ -33,6 +33,12 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
   /** listbox 内 option 要素の id（aria-activedescendant 用） */
   const getOptionId = (index: number) => `${listboxId}-option-${index}`;
 
+  /** catalog 長に合わせて activeIndex をクランプする */
+  const clampActiveIndex = (index: number, length: number) => {
+    if (length <= 0) return 0;
+    return Math.min(index, length - 1);
+  };
+
   useEffect(() => {
     activeIndexRef.current = activeIndex;
   }, [activeIndex]);
@@ -55,14 +61,14 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
   useEffect(() => {
     if (!open) return;
 
-    const handlePointerDown = (event: MouseEvent) => {
+    const handlePointerDown = (event: PointerEvent) => {
       if (containerRef.current?.contains(event.target as Node)) return;
       setOpen(false);
     };
 
-    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("pointerdown", handlePointerDown);
     return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
     };
   }, [open]);
 
@@ -133,7 +139,12 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
 
   if (catalog.length === 0) return null;
 
-  const activeOptionId = getOptionId(activeIndex);
+  const resolvedActiveIndex = clampActiveIndex(activeIndex, catalog.length);
+  if (open && activeIndex !== resolvedActiveIndex) {
+    setActiveIndex(resolvedActiveIndex);
+  }
+
+  const activeOptionId = getOptionId(resolvedActiveIndex);
 
   return (
     <div ref={containerRef} className={clsx("relative shrink-0", open && "z-50")}>
@@ -193,8 +204,8 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
                 className={clsx([
                   "flex cursor-pointer items-center gap-2 bg-white px-2 py-2 text-sm text-zinc-700",
                   entry.fileName === value && "bg-blue-50",
-                  index === activeIndex && entry.fileName !== value && "bg-zinc-100",
-                  index === activeIndex && entry.fileName === value && "bg-blue-100",
+                  index === resolvedActiveIndex && entry.fileName !== value && "bg-zinc-100",
+                  index === resolvedActiveIndex && entry.fileName === value && "bg-blue-100",
                 ])}
                 onMouseEnter={() => {
                   activeIndexRef.current = index;
