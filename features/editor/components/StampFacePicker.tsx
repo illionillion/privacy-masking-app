@@ -108,7 +108,7 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
   if (catalog.length === 0) return null;
 
   return (
-    <div ref={containerRef} className="relative shrink-0">
+    <div ref={containerRef} className={clsx("relative shrink-0", open && "z-50")}>
       <button
         type="button"
         aria-haspopup="listbox"
