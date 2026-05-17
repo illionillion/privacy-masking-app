@@ -40,8 +40,8 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
   };
 
   useEffect(() => {
-    activeIndexRef.current = activeIndex;
-  }, [activeIndex]);
+    activeIndexRef.current = clampActiveIndex(activeIndex, catalog.length);
+  }, [activeIndex, catalog.length]);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -62,7 +62,8 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
     if (!open) return;
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (containerRef.current?.contains(event.target as Node)) return;
+      const target = event.target;
+      if (target instanceof Node && containerRef.current?.contains(target)) return;
       setOpen(false);
     };
 
@@ -74,9 +75,10 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
 
   useEffect(() => {
     if (!open || !listRef.current) return;
-    const option = listRef.current.querySelector<HTMLElement>(`[data-index="${activeIndex}"]`);
+    const index = clampActiveIndex(activeIndex, catalog.length);
+    const option = listRef.current.querySelector<HTMLElement>(`[data-index="${index}"]`);
     option?.scrollIntoView?.({ block: "nearest" });
-  }, [activeIndex, open]);
+  }, [activeIndex, open, catalog.length]);
 
   const handleSelect = useCallback(
     (fileName: string) => {
@@ -128,7 +130,9 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
       }
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        const entry = catalogRef.current[activeIndexRef.current];
+        const index = clampActiveIndex(activeIndexRef.current, length);
+        activeIndexRef.current = index;
+        const entry = catalogRef.current[index];
         if (!entry) return;
         onChangeRef.current(entry.fileName);
         setOpen(false);
@@ -140,10 +144,6 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
   if (catalog.length === 0) return null;
 
   const resolvedActiveIndex = clampActiveIndex(activeIndex, catalog.length);
-  if (open && activeIndex !== resolvedActiveIndex) {
-    setActiveIndex(resolvedActiveIndex);
-  }
-
   const activeOptionId = getOptionId(resolvedActiveIndex);
 
   return (
