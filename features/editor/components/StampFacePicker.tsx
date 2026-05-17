@@ -22,13 +22,33 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const activeIndexRef = useRef(activeIndex);
+  const onChangeRef = useRef(onChange);
+  const catalogRef = useRef(catalog);
   const listboxId = useId();
 
   const selectedIndex = catalog.findIndex((entry) => entry.fileName === value);
   const selected = catalog[selectedIndex >= 0 ? selectedIndex : 0];
 
+  /** listbox 内 option 要素の id（aria-activedescendant 用） */
+  const getOptionId = (index: number) => `${listboxId}-option-${index}`;
+
+  useEffect(() => {
+    activeIndexRef.current = activeIndex;
+  }, [activeIndex]);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    catalogRef.current = catalog;
+  }, [catalog]);
+
   const openList = useCallback(() => {
-    setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
+    const index = selectedIndex >= 0 ? selectedIndex : 0;
+    activeIndexRef.current = index;
+    setActiveIndex(index);
     setOpen(true);
   }, [selectedIndex]);
 
@@ -57,19 +77,29 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
       }
       if (event.key === "ArrowDown") {
         event.preventDefault();
-        setActiveIndex((index) => (index + 1) % catalog.length);
+        const { length } = catalogRef.current;
+        setActiveIndex((index) => {
+          const next = (index + 1) % length;
+          activeIndexRef.current = next;
+          return next;
+        });
         return;
       }
       if (event.key === "ArrowUp") {
         event.preventDefault();
-        setActiveIndex((index) => (index - 1 + catalog.length) % catalog.length);
+        const { length } = catalogRef.current;
+        setActiveIndex((index) => {
+          const next = (index - 1 + length) % length;
+          activeIndexRef.current = next;
+          return next;
+        });
         return;
       }
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        const entry = catalog[activeIndex];
+        const entry = catalogRef.current[activeIndexRef.current];
         if (!entry) return;
-        onChange(entry.fileName);
+        onChangeRef.current(entry.fileName);
         setOpen(false);
       }
     };
@@ -78,7 +108,7 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open, activeIndex, catalog, onChange]);
+  }, [open]);
 
   useEffect(() => {
     if (!open || !listRef.current) return;
@@ -107,13 +137,18 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
 
   if (catalog.length === 0) return null;
 
+  const activeOptionId = getOptionId(activeIndex);
+
   return (
     <div ref={containerRef} className={clsx("relative shrink-0", open && "z-50")}>
       <button
         type="button"
+        role="combobox"
+        aria-autocomplete="list"
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listboxId : undefined}
+        aria-activedescendant={open ? activeOptionId : undefined}
         aria-label={selected ? `スタンプ: ${selected.label}` : "スタンプ画像"}
         onClick={() => {
           if (open) {
@@ -155,16 +190,20 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
             {catalog.map((entry, index) => (
               <li
                 key={entry.fileName}
+                id={getOptionId(index)}
                 role="option"
-                aria-selected={entry.fileName === value}
                 data-index={index}
+                aria-selected={entry.fileName === value}
                 className={clsx([
                   "flex cursor-pointer items-center gap-2 bg-white px-2 py-2 text-sm text-zinc-700",
                   entry.fileName === value && "bg-blue-50",
                   index === activeIndex && entry.fileName !== value && "bg-zinc-100",
                   index === activeIndex && entry.fileName === value && "bg-blue-100",
                 ])}
-                onMouseEnter={() => setActiveIndex(index)}
+                onMouseEnter={() => {
+                  activeIndexRef.current = index;
+                  setActiveIndex(index);
+                }}
                 onClick={() => handleSelect(entry.fileName)}
               >
                 <span className="text-lg leading-none" aria-hidden="true">
