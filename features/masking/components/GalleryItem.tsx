@@ -264,8 +264,8 @@ export function GalleryItem({
             : `顔: ${image.detections.length} 件 / テキスト: ${image.ocrRegions.length} 件`}
       </p>
 
-      {/* エディタUI */}
-      <div className="relative mt-3 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
+      {/* エディタUI（ツールバーのポップオーバーがキャンバスに隠れないよう overflow はキャンバス側のみ） */}
+      <div className="relative mt-3 rounded-xl border border-zinc-200 bg-zinc-50">
         {image.isProcessing ? (
           <div className="flex justify-center p-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -292,7 +292,7 @@ export function GalleryItem({
         ) : (
           /* PC 常時 / SP 編集中: ツールバー + Konva Canvas */
           <>
-            <div className="relative z-10 p-2">
+            <div className="relative z-20 p-2">
               <EditorToolbar
                 mode={editor.mode}
                 selectedStampType={editor.selectedStampType}
@@ -309,7 +309,7 @@ export function GalleryItem({
               />
             </div>
 
-            <div className="relative z-10 px-2 pb-2">
+            <div className="relative z-10 overflow-hidden px-2 pb-2">
               {imageNaturalWidth > 0 && imageNaturalHeight > 0 && (
                 <EditorCanvas
                   key={image.id}
