@@ -47,6 +47,13 @@ const markdownComponents: Components = {
         </Link>
       );
     }
+    if (href?.startsWith("#")) {
+      return (
+        <a href={href} className={LINK_CLASS}>
+          {children}
+        </a>
+      );
+    }
     return (
       <a href={href} className={LINK_CLASS} target="_blank" rel="noopener noreferrer">
         {children}

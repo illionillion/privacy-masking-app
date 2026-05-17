@@ -24,11 +24,23 @@ export function assertFrontmatter(
     );
   }
 
+  const canonicalPath = data.canonicalPath as string;
+  if (canonicalPath.startsWith("/")) {
+    throw new Error(
+      `content/legal/${slug}.md: canonicalPath must not start with "/": ${canonicalPath}`
+    );
+  }
+  if (canonicalPath !== slug) {
+    throw new Error(
+      `content/legal/${slug}.md: canonicalPath must be "${slug}", got "${canonicalPath}"`
+    );
+  }
+
   return {
     title: data.title as string,
     pageTitle: data.pageTitle as string,
     description: data.description as string,
-    canonicalPath: data.canonicalPath as string,
+    canonicalPath,
     lastUpdated: data.lastUpdated as string,
   };
 }

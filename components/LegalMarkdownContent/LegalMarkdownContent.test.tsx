@@ -20,6 +20,16 @@ describe("LegalMarkdownContent", () => {
     expect(githubLink).toHaveAttribute("rel", "noopener noreferrer");
   });
 
+  it("ページ内アンカーは同一タブで開き target を付けない", () => {
+    render(<LegalMarkdownContent content="[第1条](#第1条適用)" />);
+
+    const anchorLink = screen.getByRole("link", { name: "第1条" });
+    expect(anchorLink.getAttribute("href")).toMatch(/^#/);
+    expect(decodeURIComponent(anchorLink.getAttribute("href") ?? "")).toBe("#第1条適用");
+    expect(anchorLink).not.toHaveAttribute("target");
+    expect(anchorLink).not.toHaveAttribute("rel");
+  });
+
   it("h2 に id を付与する", () => {
     render(<LegalMarkdownContent content="## 第1条（適用）" />);
 

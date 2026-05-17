@@ -23,6 +23,36 @@ describe("assertFrontmatter", () => {
     ).toThrow("content/legal/privacy.md: missing or empty frontmatter: pageTitle");
   });
 
+  it("canonicalPath が / で始まるときエラーを投げる", () => {
+    expect(() =>
+      assertFrontmatter(
+        {
+          title: "利用規約",
+          pageTitle: "利用規約 | 伏せ太郎",
+          description: "説明",
+          canonicalPath: "/terms",
+          lastUpdated: "2026年5月12日",
+        },
+        "terms"
+      )
+    ).toThrow('content/legal/terms.md: canonicalPath must not start with "/": /terms');
+  });
+
+  it("canonicalPath が slug と一致しないときエラーを投げる", () => {
+    expect(() =>
+      assertFrontmatter(
+        {
+          title: "利用規約",
+          pageTitle: "利用規約 | 伏せ太郎",
+          description: "説明",
+          canonicalPath: "privacy",
+          lastUpdated: "2026年5月12日",
+        },
+        "terms"
+      )
+    ).toThrow('content/legal/terms.md: canonicalPath must be "terms", got "privacy"');
+  });
+
   it("必須キーが揃っているとき frontmatter を返す", () => {
     const result = assertFrontmatter(
       {
