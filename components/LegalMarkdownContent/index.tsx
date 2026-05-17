@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -10,7 +11,7 @@ type LegalMarkdownContentProps = {
   content: string;
 };
 
-function getHeadingText(children: React.ReactNode): string {
+function getHeadingText(children: ReactNode): string {
   if (typeof children === "string") {
     return children;
   }
@@ -18,7 +19,7 @@ function getHeadingText(children: React.ReactNode): string {
     return children.map(getHeadingText).join("");
   }
   if (children && typeof children === "object" && "props" in children) {
-    const props = children.props as { children?: React.ReactNode };
+    const props = children.props as { children?: ReactNode };
     return getHeadingText(props.children ?? "");
   }
   return "";
