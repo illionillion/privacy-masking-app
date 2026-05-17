@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { exportEditorCanvas } from "./exportCanvas";
-import type { FillRegion, PaintStroke, StampRegion } from "../types";
+import type { PaintStroke, StampRegion } from "../types";
 
 /** テスト用の最小 HTMLImageElement モック */
 function makeImageElement(width = 100, height = 100): HTMLImageElement {
@@ -95,7 +95,7 @@ describe("exportEditorCanvas", () => {
         source: "manual",
       },
     ];
-    await exportEditorCanvas(img, stampRegions, [], [], new Map());
+    await exportEditorCanvas(img, stampRegions, [], new Map());
     expect(ctxMock.ctx.fillStyle).toBe("#000000");
     expect(ctxMock.fillRectCalls.some(([x]) => x === 10)).toBe(true);
   });
@@ -114,7 +114,7 @@ describe("exportEditorCanvas", () => {
         source: "manual",
       },
     ];
-    await exportEditorCanvas(img, stampRegions, [], [], new Map());
+    await exportEditorCanvas(img, stampRegions, [], new Map());
     expect(ctxMock.getImageDataCalls.length).toBeGreaterThan(0);
   });
 
@@ -132,7 +132,7 @@ describe("exportEditorCanvas", () => {
         source: "manual",
       },
     ];
-    await exportEditorCanvas(img, stampRegions, [], [], new Map());
+    await exportEditorCanvas(img, stampRegions, [], new Map());
     expect(ctxMock.saveRestoreCalls).toContain("save");
     expect(ctxMock.saveRestoreCalls).toContain("restore");
   });
@@ -159,45 +159,47 @@ describe("exportEditorCanvas", () => {
       ["b.png", stampB],
     ]);
 
-    await exportEditorCanvas(img, stampRegions, [], [], stampImages);
+    await exportEditorCanvas(img, stampRegions, [], stampImages);
     const drawImageCalls = vi.mocked(ctxMock.ctx.drawImage).mock.calls;
     // 1回目は背景画像描画、2回目がスタンプ描画
     expect(drawImageCalls[1]?.[0]).toBe(stampB);
   });
 
-  it("無効な（isEnabled=false）領域はスキップされる", async () => {
+  it("無効な（isEnabled=false）マスキング領域はスキップされる", async () => {
     const img = makeImageElement(200, 200);
-    const fillRegions: FillRegion[] = [
+    const stampRegions: StampRegion[] = [
       {
         id: "f1",
         x: 0,
         y: 0,
         width: 100,
         height: 100,
+        stampType: "fill-black",
         isEnabled: false,
-        source: "manual",
+        source: "ocr",
       },
     ];
     const initialDrawCount = ctxMock.fillRectCalls.length;
-    await exportEditorCanvas(img, [], fillRegions, [], new Map());
+    await exportEditorCanvas(img, stampRegions, [], new Map());
     expect(ctxMock.fillRectCalls.length).toBe(initialDrawCount);
   });
 
-  it("有効な塗りつぶし領域を黒矩形で描画する", async () => {
+  it("OCR 由来の fill-black 領域を黒矩形で描画する", async () => {
     const img = makeImageElement(200, 200);
-    const fillRegions: FillRegion[] = [
+    const stampRegions: StampRegion[] = [
       {
         id: "f2",
         x: 5,
         y: 5,
         width: 40,
         height: 40,
+        stampType: "fill-black",
         isEnabled: true,
         source: "ocr",
         text: "test@test.com",
       },
     ];
-    await exportEditorCanvas(img, [], fillRegions, [], new Map());
+    await exportEditorCanvas(img, stampRegions, [], new Map());
     expect(ctxMock.fillRectCalls.some(([x]) => x === 5)).toBe(true);
   });
 
@@ -215,7 +217,7 @@ describe("exportEditorCanvas", () => {
         isEnabled: true,
       },
     ];
-    await exportEditorCanvas(img, [], [], paintStrokes, new Map());
+    await exportEditorCanvas(img, [], paintStrokes, new Map());
     expect(ctxMock.strokeCalls.length).toBeGreaterThan(0);
   });
 
@@ -229,7 +231,7 @@ describe("exportEditorCanvas", () => {
         isEnabled: true,
       },
     ];
-    await exportEditorCanvas(img, [], [], paintStrokes, new Map());
+    await exportEditorCanvas(img, [], paintStrokes, new Map());
     expect(ctxMock.strokeCalls.length).toBe(0);
   });
 });

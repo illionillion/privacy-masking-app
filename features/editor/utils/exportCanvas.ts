@@ -1,5 +1,5 @@
 import { MAX_CANVAS_DIMENSION } from "@/lib/canvas";
-import type { FillRegion, PaintStroke, StampRegion } from "../types";
+import type { PaintStroke, StampRegion } from "../types";
 
 /** モザイクブロックの最小サイズ（px） */
 const MIN_MOSAIC_BLOCK_SIZE = 3;
@@ -122,8 +122,7 @@ function applyBlur(
  * Canvas の最大辺が MAX_CANVAS_DIMENSION を超える場合はスケールダウンする。
  *
  * @param imageElement - 元画像の HTMLImageElement
- * @param stampRegions - スタンプ領域の配列
- * @param fillRegions - 塗りつぶし領域の配列
+ * @param stampRegions - マスキング領域の配列
  * @param paintStrokes - ペイントストロークの配列
  * @param stampImages - ファイル名をキーにした画像マップ（stamp-face 用）
  * @returns PNG の Blob URL
@@ -131,7 +130,6 @@ function applyBlur(
 export async function exportEditorCanvas(
   imageElement: HTMLImageElement,
   stampRegions: StampRegion[],
-  fillRegions: FillRegion[],
   paintStrokes: PaintStroke[],
   stampImages: Map<string, HTMLImageElement>
 ): Promise<string> {
@@ -153,19 +151,7 @@ export async function exportEditorCanvas(
 
   ctx.drawImage(imageElement, 0, 0, canvasWidth, canvasHeight);
 
-  /** 有効な塗りつぶし領域を黒矩形で描画 */
-  for (const region of fillRegions) {
-    if (!region.isEnabled) continue;
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(
-      Math.round(region.x * scaleX),
-      Math.round(region.y * scaleY),
-      Math.round(region.width * scaleX),
-      Math.round(region.height * scaleY)
-    );
-  }
-
-  /** 有効なスタンプ領域をマスキング種別に応じて描画 */
+  /** 有効なマスキング領域を種別に応じて描画 */
   for (const region of stampRegions) {
     if (!region.isEnabled) continue;
     const sx = Math.round(region.x * scaleX);

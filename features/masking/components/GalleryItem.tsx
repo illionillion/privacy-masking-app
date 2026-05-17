@@ -142,13 +142,7 @@ export function GalleryItem({
     if (!imageElement || image.isProcessing || image.processingError) return;
     let cancelled = false;
 
-    void exportEditorCanvas(
-      imageElement,
-      editor.stampRegions,
-      editor.fillRegions,
-      editor.paintStrokes,
-      stampImages
-    )
+    void exportEditorCanvas(imageElement, editor.stampRegions, editor.paintStrokes, stampImages)
       .then((blobUrl) => {
         if (cancelled) {
           URL.revokeObjectURL(blobUrl);
@@ -172,7 +166,6 @@ export function GalleryItem({
     image.isProcessing,
     image.processingError,
     editor.stampRegions,
-    editor.fillRegions,
     editor.paintStrokes,
     stampImages,
   ]);
@@ -302,13 +295,11 @@ export function GalleryItem({
             <div className="relative z-10 p-2">
               <EditorToolbar
                 mode={editor.mode}
-                rectTarget={editor.rectTarget}
                 selectedStampType={editor.selectedStampType}
                 brushSize={editor.brushSize}
                 selectedId={editor.selectedId}
                 isStampSelected={selectedStampRegion !== undefined}
                 onChangeMode={editor.onChangeMode}
-                onRectTargetChange={editor.setRectTarget}
                 onStampTypeChange={editor.setSelectedStampType}
                 onStampFileNameChange={editor.setSelectedStampFileName}
                 onBrushSizeChange={editor.setBrushSize}
@@ -326,19 +317,15 @@ export function GalleryItem({
                   imageNaturalWidth={imageNaturalWidth}
                   imageNaturalHeight={imageNaturalHeight}
                   stampRegions={editor.stampRegions}
-                  fillRegions={editor.fillRegions}
                   paintStrokes={editor.paintStrokes}
                   selectedId={editor.selectedId}
                   mode={editor.mode}
                   selectedStampType={editor.selectedStampType}
-                  rectTarget={editor.rectTarget}
                   brushSize={editor.brushSize}
                   onSelectItem={editor.selectItem}
                   onAddStampRegion={editor.addStampRegion}
-                  onAddFillRegion={editor.addFillRegion}
                   onAddPaintStroke={editor.addPaintStroke}
                   onUpdateStampRegion={editor.updateStampRegion}
-                  onUpdateFillRegion={editor.updateFillRegion}
                   onUpdatePaintStroke={editor.updatePaintStroke}
                   stampImages={stampImages}
                   selectedStampFileName={editor.selectedStampFileName}

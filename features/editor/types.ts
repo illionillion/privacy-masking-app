@@ -4,10 +4,10 @@ export type StampType = "mosaic" | "blur" | "stamp-face" | "fill-black";
 /** エディタの操作モード */
 export type EditorMode = "select" | "rect" | "paint";
 
-/** 矩形追加時のターゲット種別 */
-export type RectAddTarget = "fill" | "stamp";
+/** マスキング領域の発生源 */
+export type StampRegionSource = "face-detection" | "ocr" | "manual";
 
-/** スタンプ（顔検出など）のマスキング領域 */
+/** マスキング領域（顔検出・OCR・手動追加を共通で表現） */
 export interface StampRegion {
   /** 一意のID */
   id: string;
@@ -26,26 +26,8 @@ export interface StampRegion {
   /** 有効/無効フラグ */
   isEnabled: boolean;
   /** 領域の発生源 */
-  source: "face-detection" | "manual";
-}
-
-/** テキスト塗りつぶし領域 */
-export interface FillRegion {
-  /** 一意のID */
-  id: string;
-  /** X座標（元画像ピクセル空間） */
-  x: number;
-  /** Y座標（元画像ピクセル空間） */
-  y: number;
-  /** 幅（元画像ピクセル空間） */
-  width: number;
-  /** 高さ（元画像ピクセル空間） */
-  height: number;
-  /** 有効/無効フラグ */
-  isEnabled: boolean;
-  /** 領域の発生源 */
-  source: "ocr" | "manual";
-  /** 検出テキスト（OCR由来の場合） */
+  source: StampRegionSource;
+  /** 検出テキスト（OCR 由来の場合） */
   text?: string;
 }
 
