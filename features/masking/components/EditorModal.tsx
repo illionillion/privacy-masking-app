@@ -7,7 +7,7 @@ import { STAMP_CATALOG, STAMP_FILE_NAMES } from "@/features/editor/constants";
 import { useEditorState } from "@/features/editor/hooks/useEditorState";
 import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
 import { getOrCreateEditorSnapshot } from "../lib/getOrCreateEditorSnapshot";
-import { setImageEditorSnapshot } from "../lib/imageEditorCache";
+import { persistImageEditorSnapshot, setImageEditorSnapshot } from "../lib/imageEditorCache";
 import type { MaskingImageItem } from "../types";
 
 /** Konva は window を module ロード時に参照するため SSR を無効化して動的インポートする */
@@ -47,6 +47,12 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
     hydratedRef.current = false;
   }, [image.id]);
 
+  /** 閉じるときは選択状態をキャッシュに残さない（完了・ESC・オーバーレイ共通） */
+  const closeModal = useCallback(() => {
+    persistImageEditorSnapshot(image.id, editor.getSnapshot());
+    onClose();
+  }, [editor, image.id, onClose]);
+
   /** モーダル表示時のスクロールロックとフォーカス */
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
@@ -73,13 +79,13 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
         e.preventDefault();
         return;
       }
-      onClose();
+      closeModal();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [editor.selectedId, editor.selectItem, onClose]);
+  }, [editor.selectedId, editor.selectItem, closeModal]);
 
   /** Tab フォーカストラップ */
   const handleKeyDownDialog = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -122,7 +128,7 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
   useLayoutEffect(() => {
     if (image.isProcessing) return;
     const snapshot = getOrCreateEditorSnapshot(image);
-    editor.restoreSnapshot(snapshot);
+    editor.restoreSnapshot({ ...snapshot, selectedId: null });
     hydratedRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [image.id, image.isProcessing, image.detections, image.ocrRegions]);
@@ -177,9 +183,8 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
   ]);
 
   const handleDone = useCallback(() => {
-    setImageEditorSnapshot(image.id, editor.getSnapshot());
-    onClose();
-  }, [editor, image.id, onClose]);
+    closeModal();
+  }, [closeModal]);
 
   return (
     <div
@@ -190,7 +195,7 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
         type="button"
         className="absolute inset-0 cursor-default bg-black/50"
         aria-label="編集を閉じる"
-        onClick={onClose}
+        onClick={closeModal}
       />
       <div
         ref={dialogRef}

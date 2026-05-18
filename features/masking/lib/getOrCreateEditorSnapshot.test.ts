@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { createEditorSnapshotFromDetections } from "@/features/editor/lib/editorSnapshot";
 import { getOrCreateEditorSnapshot, isEditorSnapshotUsable } from "./getOrCreateEditorSnapshot";
-import { resetImageEditorCacheForTests, setImageEditorSnapshot } from "./imageEditorCache";
+import {
+  getImageEditorSnapshot,
+  persistImageEditorSnapshot,
+  resetImageEditorCacheForTests,
+  setImageEditorSnapshot,
+} from "./imageEditorCache";
 import type { MaskingImageItem } from "../types";
 
 function createImage(overrides: Partial<MaskingImageItem> = {}): MaskingImageItem {
@@ -42,6 +47,20 @@ describe("getOrCreateEditorSnapshot", () => {
 
     const snapshot = getOrCreateEditorSnapshot(createImage());
     expect(snapshot).toBe(valid);
+  });
+});
+
+describe("persistImageEditorSnapshot", () => {
+  it("selectedId を null にしてキャッシュする", () => {
+    const withSelection = createEditorSnapshotFromDetections(
+      [{ x: 0, y: 0, width: 10, height: 10 }],
+      [],
+      "a.png"
+    );
+    withSelection.selectedId = "region-1";
+    persistImageEditorSnapshot("img-1", withSelection);
+    expect(getImageEditorSnapshot("img-1")?.selectedId).toBeNull();
+    expect(getImageEditorSnapshot("img-1")?.stampRegions).toHaveLength(1);
   });
 });
 
