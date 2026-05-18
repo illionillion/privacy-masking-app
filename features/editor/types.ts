@@ -31,6 +31,17 @@ export interface StampRegion {
   text?: string;
 }
 
+/** エディタ状態のスナップショット（モーダル閉鎖後の復元用） */
+export interface EditorStateSnapshot {
+  mode: EditorMode;
+  stampRegions: StampRegion[];
+  paintStrokes: PaintStroke[];
+  selectedId: string | null;
+  selectedStampType: StampType;
+  selectedStampFileName: string;
+  brushSize: number;
+}
+
 /** ペイントストローク */
 export interface PaintStroke {
   /** 一意のID */

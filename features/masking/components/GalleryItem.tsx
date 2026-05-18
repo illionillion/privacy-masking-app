@@ -1,115 +1,58 @@
 "use client";
 
 import clsx from "clsx";
-import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
-import { useEditorState } from "@/features/editor/hooks/useEditorState";
-import { EditorToolbar } from "@/features/editor/components/EditorToolbar";
+import { useEffect, useRef } from "react";
 import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
-import { STAMP_CATALOG, STAMP_FILE_NAMES } from "@/features/editor/constants";
+import { loadStampImagesCached } from "@/features/editor/lib/loadStampImages";
+import { resolveImageEditorSnapshot } from "../lib/resolveImageEditorSnapshot";
 import { type MaskingImageItem, createDownloadFileName } from "../types";
-
-/** Konva は window を module ロード時に参照するため SSR を無効化して動的インポートする */
-const EditorCanvas = dynamic(
-  () => import("@/features/editor/components/EditorCanvas").then((mod) => mod.EditorCanvas),
-  { ssr: false }
-);
 
 interface GalleryItemProps {
   image: MaskingImageItem;
   isActive: boolean;
   /** face-api モデルのロード中フラグ（ロード中は再検出を無効化する） */
   isModelLoading: boolean;
-  /** Tailwind `md` 未満の狭いビューポートか（親で1回だけ matchMedia を購読する） */
-  isNarrow: boolean;
+  /** エディタキャッシュ更新時にプレビュー再エクスポートを走らせる */
+  editorRevision: number;
   onSelect: (id: string) => void;
+  onOpenEdit: (id: string) => void;
   onRedetect: (id: string) => void | Promise<void>;
   onRendered: (id: string, blobUrl: string) => void;
-}
-
-/** 公開URLのベースパス。サブパス配信時は `NEXT_PUBLIC_BASE_PATH` を設定する。 */
-const PUBLIC_BASE_PATH = (() => {
-  const raw = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  if (raw === "/" || raw.length === 0) return "";
-  return `/${raw.replace(/^\/+|\/+$/g, "")}`;
-})();
-
-/**
- * スタンプ画像を読み込み Map に格納する
- *
- * @returns ファイル名をキーにした HTMLImageElement の Map
- */
-async function loadStampImages(): Promise<Map<string, HTMLImageElement>> {
-  const map = new Map<string, HTMLImageElement>();
-  await Promise.allSettled(
-    STAMP_FILE_NAMES.map(
-      (fileName) =>
-        new Promise<void>((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-            map.set(fileName, img);
-            resolve();
-          };
-          img.onerror = () => resolve();
-          img.src = `${PUBLIC_BASE_PATH}/stamps/${fileName}`;
-        })
-    )
-  );
-  return map;
-}
-
-/** スタンプ画像読み込みの共有キャッシュ（カード間で使い回す） */
-let stampImagesPromise: Promise<Map<string, HTMLImageElement>> | null = null;
-
-function loadStampImagesCached(): Promise<Map<string, HTMLImageElement>> {
-  stampImagesPromise ??= loadStampImages();
-  return stampImagesPromise;
 }
 
 /**
  * ギャラリーの個別画像カードコンポーネント
  *
- * isProcessing が true の間は再検出ボタンをこのカード単体で無効化し、
- * 他カードの操作には影響しない。
- * 検出処理中も元画像を表示し（オーバーレイで処理中インジケータを表示）、
- * 検出完了後にマスク結果のオーバーレイを描画する。
+ * 検出完了後はマスク済みプレビューのみ表示し、編集はモーダルで行う。
  */
 export function GalleryItem({
   image,
   isActive,
   isModelLoading,
-  isNarrow,
+  editorRevision,
   onSelect,
+  onOpenEdit,
   onRedetect,
   onRendered,
 }: GalleryItemProps) {
-  const editor = useEditorState(STAMP_FILE_NAMES[0] ?? "");
-  const selectedStampRegion = editor.stampRegions.find((region) => region.id === editor.selectedId);
-  const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
-  const [imageNaturalWidth, setImageNaturalWidth] = useState(0);
-  const [imageNaturalHeight, setImageNaturalHeight] = useState(0);
-  const [stampImages, setStampImages] = useState<Map<string, HTMLImageElement>>(new Map());
   const exportedBlobUrlRef = useRef<string | null>(null);
-  /** 親の `maskedBlobUrl` が更新されたあとにのみ古い Blob URL を revoke する（同期 revoke だと img がまだ旧 URL 参照中に切れる） */
   const prevMaskedBlobUrlForRevokeRef = useRef<string | null>(null);
   const onRenderedRef = useRef(onRendered);
-  /** SP 時の編集モードフラグ（PC では常に編集 UI を表示するため未使用） */
-  const [isEditing, setIsEditing] = useState(false);
+  const imageElementRef = useRef<HTMLImageElement | null>(null);
+  const stampImagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
 
-  /** SP かつ非編集中のときはプレビュー img を表示し、Konva をマウントしない */
-  const showPreviewOnly = isNarrow && !isEditing;
-  /** SP 編集中は再検出・ダウンロードを無効化する */
-  const isEditingOnSp = isNarrow && isEditing;
-  const isRedetectDisabled = image.isProcessing || isModelLoading || isEditingOnSp;
+  const isRedetectDisabled = image.isProcessing || isModelLoading;
+  const canEdit = !image.isProcessing && !image.processingError;
 
   useEffect(() => {
     onRenderedRef.current = onRendered;
   }, [onRendered]);
 
-  /** スタンプ画像を一度だけ読み込む */
   useEffect(() => {
     void loadStampImagesCached()
-      .then(setStampImages)
+      .then((map) => {
+        stampImagesRef.current = map;
+      })
       .catch((err: unknown) => {
         console.error("スタンプ画像の読み込みに失敗しました", err);
       });
@@ -120,29 +63,25 @@ export function GalleryItem({
     if (!image.imageUrl) return;
     const img = new Image();
     img.onload = () => {
-      setImageElement(img);
-      setImageNaturalWidth(img.naturalWidth);
-      setImageNaturalHeight(img.naturalHeight);
+      imageElementRef.current = img;
     };
     img.src = image.imageUrl;
   }, [image.imageUrl]);
 
-  /** detections/ocrRegions が更新されたらエディタ状態を初期化する */
-  useEffect(() => {
-    if (image.isProcessing) return;
-    editor.initFromDetections(image.detections, image.ocrRegions);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [image.detections, image.ocrRegions, image.isProcessing]);
-
   /**
-   * エディタ状態の変化に応じて自動エクスポートを行い onRendered に通知する
+   * キャッシュ上のエディタ状態からプレビュー用マスクをエクスポートする
    */
   useEffect(() => {
-    /** 親は `processingError` 時に `handleRendered` で `maskedBlobUrl` を更新しないため、Blob がリークしないようエクスポートしない */
-    if (!imageElement || image.isProcessing || image.processingError) return;
+    if (!imageElementRef.current || image.isProcessing || image.processingError) return;
+    const snapshot = resolveImageEditorSnapshot(image);
     let cancelled = false;
 
-    void exportEditorCanvas(imageElement, editor.stampRegions, editor.paintStrokes, stampImages)
+    void exportEditorCanvas(
+      imageElementRef.current,
+      snapshot.stampRegions,
+      snapshot.paintStrokes,
+      stampImagesRef.current
+    )
       .then((blobUrl) => {
         if (cancelled) {
           URL.revokeObjectURL(blobUrl);
@@ -161,20 +100,17 @@ export function GalleryItem({
       cancelled = true;
     };
   }, [
-    imageElement,
     image.id,
     image.isProcessing,
     image.processingError,
-    editor.stampRegions,
-    editor.paintStrokes,
-    stampImages,
+    image.detections,
+    image.ocrRegions,
+    editorRevision,
+    image,
   ]);
 
   /**
    * マスク結果 Blob URL の解放
-   *
-   * `onRendered` 直後に旧 URL を revoke すると、親 state 反映前の img が壊れるため、
-   * `image.maskedBlobUrl` が更新されたタイミングで直前の blob のみ revoke する。
    */
   useEffect(() => {
     const current = image.maskedBlobUrl;
@@ -188,7 +124,6 @@ export function GalleryItem({
     prevMaskedBlobUrlForRevokeRef.current = current;
   }, [image.maskedBlobUrl]);
 
-  /** アンマウント時に Blob URL を解放する */
   useEffect(() => {
     return () => {
       if (exportedBlobUrlRef.current) {
@@ -218,24 +153,17 @@ export function GalleryItem({
           {image.name}
         </p>
         <div className="relative z-10 flex items-center gap-2">
-          {/* SP のみ: 編集 / 完了 ボタン */}
-          {isNarrow && !image.isProcessing && !image.processingError && (
+          {canEdit && (
             <button
               type="button"
-              aria-pressed={isEditing}
-              aria-label={isEditing ? "編集を完了してプレビューを表示" : "画像を編集"}
+              aria-label={`${image.name} を編集`}
               onClick={(e) => {
                 e.stopPropagation();
-                setIsEditing((prev) => !prev);
+                onOpenEdit(image.id);
               }}
-              className={clsx([
-                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                isEditing
-                  ? "bg-zinc-600 text-white hover:bg-zinc-700"
-                  : "bg-emerald-600 text-white hover:bg-emerald-700",
-              ])}
+              className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
             >
-              {isEditing ? "完了" : "編集"}
+              編集
             </button>
           )}
           <button
@@ -264,7 +192,6 @@ export function GalleryItem({
             : `顔: ${image.detections.length} 件 / テキスト: ${image.ocrRegions.length} 件`}
       </p>
 
-      {/* エディタUI（ツールバーのポップオーバーがキャンバスに隠れないよう overflow はキャンバス側のみ） */}
       <div className="relative mt-3 rounded-xl border border-zinc-200 bg-zinc-50">
         {image.isProcessing ? (
           <div className="flex justify-center p-3">
@@ -279,61 +206,23 @@ export function GalleryItem({
           <div className="flex justify-center p-3">
             <p className="text-sm text-red-500">検出に失敗しました。再検出してください。</p>
           </div>
-        ) : showPreviewOnly ? (
-          /* SP・非編集中: マスク適用済みプレビュー img（Konva はマウントしない） */
-          <div className="flex justify-center p-2">
+        ) : (
+          <button
+            type="button"
+            className="relative z-10 flex w-full justify-center p-2"
+            aria-label={`${image.name} のプレビューを編集`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenEdit(image.id);
+            }}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={image.maskedBlobUrl ?? image.imageUrl}
               alt={image.name}
               className="max-h-full max-w-full rounded-lg object-contain"
             />
-          </div>
-        ) : (
-          /* PC 常時 / SP 編集中: ツールバー + Konva Canvas */
-          <>
-            <div className="relative z-20 p-2">
-              <EditorToolbar
-                mode={editor.mode}
-                selectedStampType={editor.selectedStampType}
-                brushSize={editor.brushSize}
-                selectedId={editor.selectedId}
-                isStampSelected={selectedStampRegion !== undefined}
-                onChangeMode={editor.onChangeMode}
-                onStampTypeChange={editor.setSelectedStampType}
-                onStampFileNameChange={editor.setSelectedStampFileName}
-                onBrushSizeChange={editor.setBrushSize}
-                onDeleteSelected={editor.removeSelectedItem}
-                stampCatalog={STAMP_CATALOG}
-                selectedStampFileName={editor.selectedStampFileName}
-              />
-            </div>
-
-            <div className="relative z-10 overflow-hidden px-2 pb-2">
-              {imageNaturalWidth > 0 && imageNaturalHeight > 0 && (
-                <EditorCanvas
-                  key={image.id}
-                  imageUrl={image.imageUrl}
-                  imageNaturalWidth={imageNaturalWidth}
-                  imageNaturalHeight={imageNaturalHeight}
-                  stampRegions={editor.stampRegions}
-                  paintStrokes={editor.paintStrokes}
-                  selectedId={editor.selectedId}
-                  mode={editor.mode}
-                  selectedStampType={editor.selectedStampType}
-                  brushSize={editor.brushSize}
-                  onSelectItem={editor.selectItem}
-                  onAddStampRegion={editor.addStampRegion}
-                  onAddPaintStroke={editor.addPaintStroke}
-                  onUpdateStampRegion={editor.updateStampRegion}
-                  onUpdatePaintStroke={editor.updatePaintStroke}
-                  stampImages={stampImages}
-                  selectedStampFileName={editor.selectedStampFileName}
-                  onDeleteSelected={editor.removeSelectedItem}
-                />
-              )}
-            </div>
-          </>
+          </button>
         )}
 
         {image.isProcessing && (
@@ -347,9 +236,7 @@ export function GalleryItem({
         <p className="text-xs text-zinc-400">{(image.size / 1024 / 1024).toFixed(2)} MB</p>
 
         <div className="flex items-center gap-2">
-          {isEditingOnSp ? (
-            <span className="text-xs text-zinc-400">編集中…</span>
-          ) : image.maskedBlobUrl && !image.isProcessing && !image.processingError ? (
+          {image.maskedBlobUrl && !image.isProcessing && !image.processingError ? (
             <a
               href={image.maskedBlobUrl}
               download={createDownloadFileName(image.name)}
@@ -370,13 +257,7 @@ export function GalleryItem({
           )}
         </div>
       </div>
-      {/*
-        カード全体をクリック可能にする見えないボタン。
-        DOM の最後に配置しつつ z-0 を付けることで、カード全域のクリックを受け取る
-        ベースレイヤーとして扱う。
-        再検出・ダウンロードなどのインタラクティブ要素は relative z-10 で
-        このボタンより前面に出して操作できるようにする。
-      */}
+
       <button
         type="button"
         aria-label={`${image.name} を選択`}

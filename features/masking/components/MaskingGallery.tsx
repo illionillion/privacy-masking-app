@@ -8,9 +8,11 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_FILE_SIZE } from "@/components/ImageUpload/constants";
 import { useFaceDetection } from "@/features/face-detection";
 import { useOcr } from "@/features/ocr";
+import { loadStampImagesCached } from "@/features/editor/lib/loadStampImages";
 import { useConfirmStore } from "@/lib/confirmStore";
-import { useNarrowViewport } from "@/lib/useNarrowViewport";
+import { clearAllImageEditorSnapshots, clearImageEditorSnapshot } from "../lib/imageEditorCache";
 import { type MaskingImageItem, createDownloadFileName } from "../types";
+import { EditorModal } from "./EditorModal";
 import { GalleryItem } from "./GalleryItem";
 
 /**
@@ -34,15 +36,38 @@ const loadImageElement = (src: string): Promise<HTMLImageElement> => {
  * 画像アップロード、顔検出、Canvas表示を統合する。
  */
 export function MaskingGallery() {
-  /** ビューポート幅はギャラリー全体で共通のため、ここで1回だけ matchMedia を購読する */
-  const isNarrow = useNarrowViewport();
   const [images, setImages] = useState<MaskingImageItem[]>([]);
+  const [editingImageId, setEditingImageId] = useState<string | null>(null);
+  const [editorRevisions, setEditorRevisions] = useState<Record<string, number>>({});
+  const [stampImages, setStampImages] = useState<Map<string, HTMLImageElement>>(new Map());
+  const [activeImageId, setActiveImageId] = useState<string | null>(null);
   const imagesRef = useRef(images);
   const isMountedRef = useRef(true);
   useEffect(() => {
     imagesRef.current = images;
   }, [images]);
-  const [activeImageId, setActiveImageId] = useState<string | null>(null);
+
+  useEffect(() => {
+    void loadStampImagesCached()
+      .then(setStampImages)
+      .catch((err: unknown) => {
+        console.error("スタンプ画像の読み込みに失敗しました", err);
+      });
+  }, []);
+
+  const bumpEditorRevision = useCallback((imageId: string) => {
+    setEditorRevisions((prev) => ({
+      ...prev,
+      [imageId]: (prev[imageId] ?? 0) + 1,
+    }));
+  }, []);
+
+  const handleOpenEdit = useCallback((imageId: string) => {
+    const target = imagesRef.current.find((image) => image.id === imageId);
+    if (!target || target.isProcessing || target.processingError) return;
+    setEditingImageId(imageId);
+    setActiveImageId(imageId);
+  }, []);
   const { isModelLoading, isModelError, isDetecting, detectFaces } = useFaceDetection();
   const { isRecognizing, recognizeText } = useOcr();
 
@@ -262,6 +287,9 @@ export function MaskingGallery() {
       const target = images.find((image) => image.id === imageId);
       if (!target || isModelLoading || isModelError || target.isProcessing) return;
 
+      clearImageEditorSnapshot(imageId);
+      setEditingImageId((current) => (current === imageId ? null : current));
+
       setImages((prev) =>
         prev.map((image) =>
           image.id === imageId
@@ -340,8 +368,11 @@ export function MaskingGallery() {
       if (!ok) return;
       if (!isMountedRef.current) return;
       imagesRef.current.forEach((image) => URL.revokeObjectURL(image.imageUrl));
+      clearAllImageEditorSnapshots();
       setImages([]);
       setActiveImageId(null);
+      setEditingImageId(null);
+      setEditorRevisions({});
     } catch (err) {
       const message = err instanceof Error ? err.message : "クリアに失敗しました";
       toast.error(message);
@@ -410,6 +441,9 @@ export function MaskingGallery() {
   const downloadableImagesCount = images.filter(
     (image) => image.maskedBlobUrl && !image.isProcessing
   ).length;
+  const editingImage = editingImageId
+    ? images.find((image) => image.id === editingImageId)
+    : undefined;
 
   return (
     <div className="flex flex-col gap-6">
@@ -460,14 +494,25 @@ export function MaskingGallery() {
                 image={image}
                 isActive={image.id === activeImageId}
                 isModelLoading={isModelLoading}
-                isNarrow={isNarrow}
+                editorRevision={editorRevisions[image.id] ?? 0}
                 onSelect={setActiveImageId}
+                onOpenEdit={handleOpenEdit}
                 onRedetect={handleRedetect}
                 onRendered={handleRendered}
               />
             ))}
           </div>
         </div>
+      )}
+
+      {editingImage && (
+        <EditorModal
+          image={editingImage}
+          stampImages={stampImages}
+          onClose={() => setEditingImageId(null)}
+          onRendered={handleRendered}
+          onEditorChange={() => bumpEditorRevision(editingImage.id)}
+        />
       )}
     </div>
   );
