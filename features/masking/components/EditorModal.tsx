@@ -1,13 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { EditorToolbar } from "@/features/editor/components/EditorToolbar";
 import { STAMP_CATALOG, STAMP_FILE_NAMES } from "@/features/editor/constants";
 import { useEditorState } from "@/features/editor/hooks/useEditorState";
-import { createEditorSnapshotFromDetections } from "@/features/editor/lib/editorSnapshot";
 import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
-import { getImageEditorSnapshot, setImageEditorSnapshot } from "../lib/imageEditorCache";
+import { getOrCreateEditorSnapshot } from "../lib/getOrCreateEditorSnapshot";
+import { setImageEditorSnapshot } from "../lib/imageEditorCache";
 import type { MaskingImageItem } from "../types";
 
 /** Konva は window を module ロード時に参照するため SSR を無効化して動的インポートする */
@@ -37,9 +37,15 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
   const [imageNaturalWidth, setImageNaturalWidth] = useState(0);
   const [imageNaturalHeight, setImageNaturalHeight] = useState(0);
   const onRenderedRef = useRef(onRendered);
+  /** 初期 restore 完了前はキャッシュ同期しない（空 state でキャッシュを汚染しない） */
+  const hydratedRef = useRef(false);
   useEffect(() => {
     onRenderedRef.current = onRendered;
   }, [onRendered]);
+
+  useEffect(() => {
+    hydratedRef.current = false;
+  }, [image.id]);
 
   /** モーダル表示時のスクロールロックとフォーカス */
   useEffect(() => {
@@ -103,31 +109,19 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
   }, [image.imageUrl]);
 
   /**
-   * モーダル表示時: キャッシュ復元、未キャッシュなら検出結果からスナップショット生成
-   *
-   * `initFromDetections` 直後の `getSnapshot()` は state 未反映で空になるため、
-   * `createEditorSnapshotFromDetections` で同期的に生成する。
+   * モーダル表示時: 検出結果付きスナップショットを同期的に restore（paint 前に反映）
    */
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (image.isProcessing) return;
-    const cached = getImageEditorSnapshot(image.id);
-    if (cached) {
-      editor.restoreSnapshot(cached);
-      return;
-    }
-    const snapshot = createEditorSnapshotFromDetections(
-      image.detections,
-      image.ocrRegions,
-      STAMP_FILE_NAMES[0] ?? ""
-    );
+    const snapshot = getOrCreateEditorSnapshot(image);
     editor.restoreSnapshot(snapshot);
-    setImageEditorSnapshot(image.id, snapshot);
+    hydratedRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [image.id, image.isProcessing, image.detections, image.ocrRegions]);
 
-  /** 編集内容をキャッシュへ反映（モーダル閉鎖後の復元用） */
+  /** 編集内容をキャッシュへ反映（初期 restore 後のみ） */
   useEffect(() => {
-    if (image.isProcessing || image.processingError) return;
+    if (!hydratedRef.current || image.isProcessing || image.processingError) return;
     setImageEditorSnapshot(image.id, editor.getSnapshot());
   }, [
     image.id,
