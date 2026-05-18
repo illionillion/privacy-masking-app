@@ -175,68 +175,76 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
 
   return (
     <div
-      ref={dialogRef}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="editor-modal-title"
-      className="fixed inset-0 z-50 flex flex-col bg-white"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
       onKeyDown={handleKeyDownDialog}
     >
-      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-zinc-200 px-4 py-3">
-        <h2 id="editor-modal-title" className="min-w-0 truncate text-sm font-medium text-zinc-800">
-          {image.name}
-        </h2>
-        <button
-          ref={doneButtonRef}
-          type="button"
-          onClick={handleDone}
-          className="shrink-0 rounded-lg bg-zinc-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
-        >
-          完了
-        </button>
-      </header>
+      <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="editor-modal-title"
+        className="relative z-10 flex max-h-[min(90dvh,56rem)] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-xl"
+      >
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-zinc-200 px-4 py-3">
+          <h2
+            id="editor-modal-title"
+            className="min-w-0 truncate text-sm font-medium text-zinc-800"
+          >
+            {image.name}
+          </h2>
+          <button
+            ref={doneButtonRef}
+            type="button"
+            onClick={handleDone}
+            className="shrink-0 rounded-lg bg-zinc-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+          >
+            完了
+          </button>
+        </header>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-zinc-200 p-2">
-          <EditorToolbar
-            mode={editor.mode}
-            selectedStampType={editor.selectedStampType}
-            brushSize={editor.brushSize}
-            selectedId={editor.selectedId}
-            isStampSelected={selectedStampRegion !== undefined}
-            onChangeMode={editor.onChangeMode}
-            onStampTypeChange={editor.setSelectedStampType}
-            onStampFileNameChange={editor.setSelectedStampFileName}
-            onBrushSizeChange={editor.setBrushSize}
-            onDeleteSelected={editor.removeSelectedItem}
-            stampCatalog={STAMP_CATALOG}
-            selectedStampFileName={editor.selectedStampFileName}
-          />
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-auto p-2">
-          {imageNaturalWidth > 0 && imageNaturalHeight > 0 && (
-            <EditorCanvas
-              key={image.id}
-              imageUrl={image.imageUrl}
-              imageNaturalWidth={imageNaturalWidth}
-              imageNaturalHeight={imageNaturalHeight}
-              stampRegions={editor.stampRegions}
-              paintStrokes={editor.paintStrokes}
-              selectedId={editor.selectedId}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="shrink-0 border-b border-zinc-200 p-2">
+            <EditorToolbar
               mode={editor.mode}
               selectedStampType={editor.selectedStampType}
               brushSize={editor.brushSize}
-              onSelectItem={editor.selectItem}
-              onAddStampRegion={editor.addStampRegion}
-              onAddPaintStroke={editor.addPaintStroke}
-              onUpdateStampRegion={editor.updateStampRegion}
-              onUpdatePaintStroke={editor.updatePaintStroke}
-              stampImages={stampImages}
-              selectedStampFileName={editor.selectedStampFileName}
+              selectedId={editor.selectedId}
+              isStampSelected={selectedStampRegion !== undefined}
+              onChangeMode={editor.onChangeMode}
+              onStampTypeChange={editor.setSelectedStampType}
+              onStampFileNameChange={editor.setSelectedStampFileName}
+              onBrushSizeChange={editor.setBrushSize}
               onDeleteSelected={editor.removeSelectedItem}
+              stampCatalog={STAMP_CATALOG}
+              selectedStampFileName={editor.selectedStampFileName}
             />
-          )}
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-auto p-2">
+            {imageNaturalWidth > 0 && imageNaturalHeight > 0 && (
+              <EditorCanvas
+                key={image.id}
+                imageUrl={image.imageUrl}
+                imageNaturalWidth={imageNaturalWidth}
+                imageNaturalHeight={imageNaturalHeight}
+                stampRegions={editor.stampRegions}
+                paintStrokes={editor.paintStrokes}
+                selectedId={editor.selectedId}
+                mode={editor.mode}
+                selectedStampType={editor.selectedStampType}
+                brushSize={editor.brushSize}
+                onSelectItem={editor.selectItem}
+                onAddStampRegion={editor.addStampRegion}
+                onAddPaintStroke={editor.addPaintStroke}
+                onUpdateStampRegion={editor.updateStampRegion}
+                onUpdatePaintStroke={editor.updatePaintStroke}
+                stampImages={stampImages}
+                selectedStampFileName={editor.selectedStampFileName}
+                onDeleteSelected={editor.removeSelectedItem}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
