@@ -5,6 +5,8 @@ import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Minus, Plus } from "
 import type { ViewportDirection } from "../hooks/useEditorViewport";
 
 interface EditorViewportControlsProps {
+  /** ルート要素に追加するクラス（モーダル内 sticky など） */
+  className?: string;
   canPan: boolean;
   canZoomOut: boolean;
   canZoomIn: boolean;
@@ -22,6 +24,7 @@ interface EditorViewportControlsProps {
  * 描画ロジックとは分離し、ボタン構成とレスポンシブレイアウトだけを担当する。
  */
 export function EditorViewportControls({
+  className,
   canPan,
   canZoomOut,
   canZoomIn,
@@ -33,7 +36,12 @@ export function EditorViewportControls({
   onZoomIn,
 }: EditorViewportControlsProps) {
   return (
-    <div className="flex flex-col gap-1 border-b border-zinc-200 bg-zinc-50 px-2 py-1.5">
+    <div
+      className={clsx([
+        "flex flex-col gap-1 border-b border-zinc-200 bg-zinc-50 px-2 py-1.5",
+        className,
+      ])}
+    >
       <span className="text-xs text-zinc-600">表示ズーム</span>
       <div className="flex w-full flex-wrap items-start gap-2 md:items-center">
         {canPan && (

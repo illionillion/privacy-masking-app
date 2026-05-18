@@ -8,5 +8,9 @@ import { getOrCreateEditorSnapshot } from "./getOrCreateEditorSnapshot";
  * @param image - マスキング画像
  */
 export function resolveImageEditorSnapshot(image: MaskingImageItem): EditorStateSnapshot {
-  return getOrCreateEditorSnapshot(image);
+  return getOrCreateEditorSnapshot({
+    id: image.id,
+    detections: image.detections,
+    ocrRegions: image.ocrRegions,
+  });
 }

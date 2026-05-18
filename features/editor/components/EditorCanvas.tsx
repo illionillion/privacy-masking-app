@@ -40,6 +40,8 @@ interface EditorCanvasProps {
   selectedStampFileName: string;
   /** 選択中アイテムを削除するコールバック */
   onDeleteSelected: () => void;
+  /** true のとき表示ズームバーをスクロール領域上端に固定する（モーダル編集向け） */
+  pinViewportControls?: boolean;
 }
 
 /** 描画中の矩形プレビュー用状態 */
@@ -128,6 +130,7 @@ export function EditorCanvas({
   stampImages,
   selectedStampFileName,
   onDeleteSelected,
+  pinViewportControls = false,
 }: EditorCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
@@ -557,6 +560,9 @@ export function EditorCanvas({
   return (
     <div ref={containerRef} className="w-full overflow-hidden rounded-xl border border-zinc-200">
       <EditorViewportControls
+        className={
+          pinViewportControls ? "sticky top-0 z-10 border-b border-zinc-200 shadow-sm" : undefined
+        }
         canPan={canPan}
         canZoomOut={canZoomOut}
         canZoomIn={canZoomIn}
