@@ -30,7 +30,28 @@ interface EditorModalProps {
  */
 export function EditorModal({ image, stampImages, onClose, onRendered }: EditorModalProps) {
   const editor = useEditorState(STAMP_FILE_NAMES[0] ?? "");
-  const selectedStampRegion = editor.stampRegions.find((region) => region.id === editor.selectedId);
+  const {
+    mode,
+    stampRegions,
+    paintStrokes,
+    selectedId,
+    selectedStampType,
+    selectedStampFileName,
+    brushSize,
+    onChangeMode,
+    setSelectedStampType,
+    setSelectedStampFileName,
+    setBrushSize,
+    selectItem,
+    restoreSnapshot,
+    getSnapshot,
+    addStampRegion,
+    addPaintStroke,
+    updateStampRegion,
+    updatePaintStroke,
+    removeSelectedItem,
+  } = editor;
+  const selectedStampRegion = stampRegions.find((region) => region.id === selectedId);
   const dialogRef = useRef<HTMLDivElement>(null);
   const doneButtonRef = useRef<HTMLButtonElement>(null);
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
@@ -39,6 +60,7 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
   const onRenderedRef = useRef(onRendered);
   /** 初期 restore 完了前はキャッシュ同期しない（空 state でキャッシュを汚染しない） */
   const hydratedRef = useRef(false);
+
   useEffect(() => {
     onRenderedRef.current = onRendered;
   }, [onRendered]);
@@ -49,9 +71,9 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
 
   /** 閉じるときは選択状態をキャッシュに残さない（完了・ESC・オーバーレイ共通） */
   const closeModal = useCallback(() => {
-    persistImageEditorSnapshot(image.id, editor.getSnapshot());
+    persistImageEditorSnapshot(image.id, getSnapshot());
     onClose();
-  }, [editor, image.id, onClose]);
+  }, [getSnapshot, image.id, onClose]);
 
   /** モーダル表示時のスクロールロックとフォーカス */
   useEffect(() => {
@@ -74,8 +96,8 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      if (editor.selectedId !== null) {
-        editor.selectItem(null);
+      if (selectedId !== null) {
+        selectItem(null);
         e.preventDefault();
         return;
       }
@@ -85,7 +107,7 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [editor.selectedId, editor.selectItem, closeModal]);
+  }, [selectedId, selectItem, closeModal]);
 
   /** Tab フォーカストラップ */
   const handleKeyDownDialog = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -128,34 +150,24 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
   useLayoutEffect(() => {
     if (image.isProcessing) return;
     const snapshot = getOrCreateEditorSnapshot(image);
-    editor.restoreSnapshot({ ...snapshot, selectedId: null });
+    restoreSnapshot({ ...snapshot, selectedId: null });
     hydratedRef.current = true;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [image.id, image.isProcessing, image.detections, image.ocrRegions]);
+    // image 全体は maskedBlobUrl 更新で参照が変わるため、検出結果のフィールドのみ依存に含める
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- getOrCreateEditorSnapshot(image)
+  }, [image.id, image.isProcessing, image.detections, image.ocrRegions, restoreSnapshot]);
 
   /** 編集内容をキャッシュへ反映（初期 restore 後のみ） */
   useEffect(() => {
     if (!hydratedRef.current || image.isProcessing || image.processingError) return;
-    setImageEditorSnapshot(image.id, editor.getSnapshot());
-  }, [
-    image.id,
-    image.isProcessing,
-    image.processingError,
-    editor.stampRegions,
-    editor.paintStrokes,
-    editor.mode,
-    editor.selectedId,
-    editor.selectedStampType,
-    editor.selectedStampFileName,
-    editor.brushSize,
-  ]);
+    setImageEditorSnapshot(image.id, getSnapshot());
+  }, [image.id, image.isProcessing, image.processingError, getSnapshot]);
 
   /** エディタ状態に応じてマスク画像をエクスポート */
   useEffect(() => {
     if (!imageElement || image.isProcessing || image.processingError) return;
     let cancelled = false;
 
-    void exportEditorCanvas(imageElement, editor.stampRegions, editor.paintStrokes, stampImages)
+    void exportEditorCanvas(imageElement, stampRegions, paintStrokes, stampImages)
       .then((blobUrl) => {
         if (cancelled) {
           URL.revokeObjectURL(blobUrl);
@@ -177,8 +189,8 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
     image.id,
     image.isProcessing,
     image.processingError,
-    editor.stampRegions,
-    editor.paintStrokes,
+    stampRegions,
+    paintStrokes,
     stampImages,
   ]);
 
@@ -224,18 +236,18 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="shrink-0 border-b border-zinc-200 p-2">
             <EditorToolbar
-              mode={editor.mode}
-              selectedStampType={editor.selectedStampType}
-              brushSize={editor.brushSize}
-              selectedId={editor.selectedId}
+              mode={mode}
+              selectedStampType={selectedStampType}
+              brushSize={brushSize}
+              selectedId={selectedId}
               isStampSelected={selectedStampRegion !== undefined}
-              onChangeMode={editor.onChangeMode}
-              onStampTypeChange={editor.setSelectedStampType}
-              onStampFileNameChange={editor.setSelectedStampFileName}
-              onBrushSizeChange={editor.setBrushSize}
-              onDeleteSelected={editor.removeSelectedItem}
+              onChangeMode={onChangeMode}
+              onStampTypeChange={setSelectedStampType}
+              onStampFileNameChange={setSelectedStampFileName}
+              onBrushSizeChange={setBrushSize}
+              onDeleteSelected={removeSelectedItem}
               stampCatalog={STAMP_CATALOG}
-              selectedStampFileName={editor.selectedStampFileName}
+              selectedStampFileName={selectedStampFileName}
             />
           </div>
 
@@ -246,20 +258,20 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
                 imageUrl={image.imageUrl}
                 imageNaturalWidth={imageNaturalWidth}
                 imageNaturalHeight={imageNaturalHeight}
-                stampRegions={editor.stampRegions}
-                paintStrokes={editor.paintStrokes}
-                selectedId={editor.selectedId}
-                mode={editor.mode}
-                selectedStampType={editor.selectedStampType}
-                brushSize={editor.brushSize}
-                onSelectItem={editor.selectItem}
-                onAddStampRegion={editor.addStampRegion}
-                onAddPaintStroke={editor.addPaintStroke}
-                onUpdateStampRegion={editor.updateStampRegion}
-                onUpdatePaintStroke={editor.updatePaintStroke}
+                stampRegions={stampRegions}
+                paintStrokes={paintStrokes}
+                selectedId={selectedId}
+                mode={mode}
+                selectedStampType={selectedStampType}
+                brushSize={brushSize}
+                onSelectItem={selectItem}
+                onAddStampRegion={addStampRegion}
+                onAddPaintStroke={addPaintStroke}
+                onUpdateStampRegion={updateStampRegion}
+                onUpdatePaintStroke={updatePaintStroke}
                 stampImages={stampImages}
-                selectedStampFileName={editor.selectedStampFileName}
-                onDeleteSelected={editor.removeSelectedItem}
+                selectedStampFileName={selectedStampFileName}
+                onDeleteSelected={removeSelectedItem}
               />
             )}
           </div>
