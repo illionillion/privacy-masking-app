@@ -60,18 +60,26 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
     };
   }, []);
 
-  /** ESC で閉じる */
+  /**
+   * ESC: 選択中なら選択解除を優先、未選択ならモーダルを閉じる
+   *
+   * EditorCanvas 側にも Escape ハンドラがあるが、document で先に処理する。
+   */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
+      if (e.key !== "Escape") return;
+      if (editor.selectedId !== null) {
+        editor.selectItem(null);
+        e.preventDefault();
+        return;
       }
+      onClose();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose]);
+  }, [editor.selectedId, editor.selectItem, onClose]);
 
   /** Tab フォーカストラップ */
   const handleKeyDownDialog = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -178,7 +186,12 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
       onKeyDown={handleKeyDownDialog}
     >
-      <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default bg-black/50"
+        aria-label="編集を閉じる"
+        onClick={onClose}
+      />
       <div
         ref={dialogRef}
         role="dialog"
