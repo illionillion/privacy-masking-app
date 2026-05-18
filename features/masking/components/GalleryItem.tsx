@@ -12,8 +12,6 @@ interface GalleryItemProps {
   isActive: boolean;
   /** face-api モデルのロード中フラグ（ロード中は再検出を無効化する） */
   isModelLoading: boolean;
-  /** エディタキャッシュ更新時にプレビュー再エクスポートを走らせる */
-  editorRevision: number;
   onSelect: (id: string) => void;
   onOpenEdit: (id: string) => void;
   onRedetect: (id: string) => void | Promise<void>;
@@ -29,7 +27,6 @@ export function GalleryItem({
   image,
   isActive,
   isModelLoading,
-  editorRevision,
   onSelect,
   onOpenEdit,
   onRedetect,
@@ -105,7 +102,6 @@ export function GalleryItem({
     image.processingError,
     image.detections,
     image.ocrRegions,
-    editorRevision,
     image,
   ]);
 

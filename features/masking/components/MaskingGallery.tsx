@@ -38,7 +38,6 @@ const loadImageElement = (src: string): Promise<HTMLImageElement> => {
 export function MaskingGallery() {
   const [images, setImages] = useState<MaskingImageItem[]>([]);
   const [editingImageId, setEditingImageId] = useState<string | null>(null);
-  const [editorRevisions, setEditorRevisions] = useState<Record<string, number>>({});
   const [stampImages, setStampImages] = useState<Map<string, HTMLImageElement>>(new Map());
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
   const imagesRef = useRef(images);
@@ -53,13 +52,6 @@ export function MaskingGallery() {
       .catch((err: unknown) => {
         console.error("スタンプ画像の読み込みに失敗しました", err);
       });
-  }, []);
-
-  const bumpEditorRevision = useCallback((imageId: string) => {
-    setEditorRevisions((prev) => ({
-      ...prev,
-      [imageId]: (prev[imageId] ?? 0) + 1,
-    }));
   }, []);
 
   const handleOpenEdit = useCallback((imageId: string) => {
@@ -372,7 +364,6 @@ export function MaskingGallery() {
       setImages([]);
       setActiveImageId(null);
       setEditingImageId(null);
-      setEditorRevisions({});
     } catch (err) {
       const message = err instanceof Error ? err.message : "クリアに失敗しました";
       toast.error(message);
@@ -494,7 +485,6 @@ export function MaskingGallery() {
                 image={image}
                 isActive={image.id === activeImageId}
                 isModelLoading={isModelLoading}
-                editorRevision={editorRevisions[image.id] ?? 0}
                 onSelect={setActiveImageId}
                 onOpenEdit={handleOpenEdit}
                 onRedetect={handleRedetect}
@@ -511,7 +501,6 @@ export function MaskingGallery() {
           stampImages={stampImages}
           onClose={() => setEditingImageId(null)}
           onRendered={handleRendered}
-          onEditorChange={() => bumpEditorRevision(editingImage.id)}
         />
       )}
     </div>

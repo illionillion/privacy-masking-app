@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { EditorToolbar } from "@/features/editor/components/EditorToolbar";
 import { STAMP_CATALOG, STAMP_FILE_NAMES } from "@/features/editor/constants";
 import { useEditorState } from "@/features/editor/hooks/useEditorState";
+import { createEditorSnapshotFromDetections } from "@/features/editor/lib/editorSnapshot";
 import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
 import { getImageEditorSnapshot, setImageEditorSnapshot } from "../lib/imageEditorCache";
 import type { MaskingImageItem } from "../types";
@@ -20,8 +21,6 @@ interface EditorModalProps {
   stampImages: Map<string, HTMLImageElement>;
   onClose: () => void;
   onRendered: (id: string, blobUrl: string) => void;
-  /** エディタ状態が変わったとき親のプレビュー用エクスポートを促す */
-  onEditorChange: () => void;
 }
 
 /**
@@ -29,13 +28,7 @@ interface EditorModalProps {
  *
  * 1 枚の Konva キャンバスとツールバーを表示する。閉じてもスナップショットはキャッシュに残す。
  */
-export function EditorModal({
-  image,
-  stampImages,
-  onClose,
-  onRendered,
-  onEditorChange,
-}: EditorModalProps) {
+export function EditorModal({ image, stampImages, onClose, onRendered }: EditorModalProps) {
   const editor = useEditorState(STAMP_FILE_NAMES[0] ?? "");
   const selectedStampRegion = editor.stampRegions.find((region) => region.id === editor.selectedId);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -44,14 +37,9 @@ export function EditorModal({
   const [imageNaturalWidth, setImageNaturalWidth] = useState(0);
   const [imageNaturalHeight, setImageNaturalHeight] = useState(0);
   const onRenderedRef = useRef(onRendered);
-  const onEditorChangeRef = useRef(onEditorChange);
   useEffect(() => {
     onRenderedRef.current = onRendered;
   }, [onRendered]);
-
-  useEffect(() => {
-    onEditorChangeRef.current = onEditorChange;
-  }, [onEditorChange]);
 
   /** モーダル表示時のスクロールロックとフォーカス */
   useEffect(() => {
@@ -114,34 +102,33 @@ export function EditorModal({
     img.src = image.imageUrl;
   }, [image.imageUrl]);
 
-  /** モーダル表示時: キャッシュ復元または検出結果から初期化 */
+  /**
+   * モーダル表示時: キャッシュ復元、未キャッシュなら検出結果からスナップショット生成
+   *
+   * `initFromDetections` 直後の `getSnapshot()` は state 未反映で空になるため、
+   * `createEditorSnapshotFromDetections` で同期的に生成する。
+   */
   useEffect(() => {
     if (image.isProcessing) return;
     const cached = getImageEditorSnapshot(image.id);
     if (cached) {
       editor.restoreSnapshot(cached);
-    } else {
-      editor.initFromDetections(image.detections, image.ocrRegions);
-      setImageEditorSnapshot(image.id, editor.getSnapshot());
+      return;
     }
+    const snapshot = createEditorSnapshotFromDetections(
+      image.detections,
+      image.ocrRegions,
+      STAMP_FILE_NAMES[0] ?? ""
+    );
+    editor.restoreSnapshot(snapshot);
+    setImageEditorSnapshot(image.id, snapshot);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [image.id]);
+  }, [image.id, image.isProcessing, image.detections, image.ocrRegions]);
 
-  /** 再検出完了後（キャッシュ削除済み）にエディタを再初期化 */
-  useEffect(() => {
-    if (image.isProcessing) return;
-    const cached = getImageEditorSnapshot(image.id);
-    if (cached) return;
-    editor.initFromDetections(image.detections, image.ocrRegions);
-    setImageEditorSnapshot(image.id, editor.getSnapshot());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [image.detections, image.ocrRegions, image.isProcessing]);
-
-  /** エディタ変更をキャッシュへ反映しプレビュー更新を促す */
+  /** 編集内容をキャッシュへ反映（モーダル閉鎖後の復元用） */
   useEffect(() => {
     if (image.isProcessing || image.processingError) return;
     setImageEditorSnapshot(image.id, editor.getSnapshot());
-    onEditorChangeRef.current();
   }, [
     image.id,
     image.isProcessing,
@@ -153,7 +140,6 @@ export function EditorModal({
     editor.selectedStampType,
     editor.selectedStampFileName,
     editor.brushSize,
-    editor,
   ]);
 
   /** エディタ状態に応じてマスク画像をエクスポート */
