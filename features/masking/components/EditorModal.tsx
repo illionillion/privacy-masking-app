@@ -90,11 +90,12 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
             />
           </div>
 
-          <div className="min-h-0 flex-1 overflow-auto p-1.5 sm:p-2">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-1.5 sm:p-2">
             {imageNaturalWidth > 0 && imageNaturalHeight > 0 && (
               <EditorCanvas
                 key={image.id}
                 pinViewportControls
+                className="min-h-0 flex-1"
                 imageUrl={image.imageUrl}
                 imageNaturalWidth={imageNaturalWidth}
                 imageNaturalHeight={imageNaturalHeight}
