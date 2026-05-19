@@ -63,9 +63,35 @@ export function useEditorModal({
   const baselineSnapshotRef = useRef<EditorStateSnapshot | null>(null);
 
   const saveAndCloseModal = useCallback(() => {
-    persistImageEditorSnapshot(image.id, getSnapshot());
-    onClose();
-  }, [getSnapshot, image.id, onClose]);
+    void (async () => {
+      const snapshot = getSnapshot();
+      persistImageEditorSnapshot(image.id, snapshot);
+
+      if (imageElement && !image.isProcessing && !image.processingError) {
+        try {
+          const blobUrl = await exportEditorCanvas(
+            imageElement,
+            snapshot.stampRegions,
+            snapshot.paintStrokes,
+            stampImages
+          );
+          onRenderedRef.current(image.id, blobUrl);
+        } catch (err: unknown) {
+          console.error("完了時のエクスポートに失敗しました", err);
+        }
+      }
+
+      onClose();
+    })();
+  }, [
+    getSnapshot,
+    image.id,
+    image.isProcessing,
+    image.processingError,
+    imageElement,
+    stampImages,
+    onClose,
+  ]);
 
   const requestCancelModal = useCallback(() => {
     const baseline = baselineSnapshotRef.current;

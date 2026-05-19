@@ -47,11 +47,17 @@ export function MaskingGallery() {
   }, [images]);
 
   useEffect(() => {
+    let cancelled = false;
     void loadStampImagesCached()
-      .then(setStampImages)
+      .then((map) => {
+        if (!cancelled) setStampImages(map);
+      })
       .catch((err: unknown) => {
-        console.error("スタンプ画像の読み込みに失敗しました", err);
+        if (!cancelled) console.error("スタンプ画像の読み込みに失敗しました", err);
       });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleOpenEdit = useCallback((imageId: string) => {
