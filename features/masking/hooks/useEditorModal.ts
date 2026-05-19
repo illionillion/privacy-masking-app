@@ -17,7 +17,7 @@ import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
 import { useConfirmStore } from "@/lib/confirmStore";
 import { hasEditorContentChanges } from "../lib/editorSnapshotDirty";
 import { getOrCreateEditorSnapshot } from "../lib/getOrCreateEditorSnapshot";
-import { persistImageEditorSnapshot, setImageEditorSnapshot } from "../lib/imageEditorCache";
+import { persistImageEditorSnapshot, syncImageEditorSnapshot } from "../lib/imageEditorCache";
 import type { MaskingImageItem } from "../types";
 
 interface UseEditorModalParams {
@@ -163,13 +163,18 @@ export function useEditorModal({
 
   useEffect(() => {
     if (!image.imageUrl) return;
+    let cancelled = false;
     const img = new Image();
     img.onload = () => {
+      if (cancelled) return;
       setImageElement(img);
       setImageNaturalWidth(img.naturalWidth);
       setImageNaturalHeight(img.naturalHeight);
     };
     img.src = image.imageUrl;
+    return () => {
+      cancelled = true;
+    };
   }, [image.imageUrl]);
 
   useLayoutEffect(() => {
@@ -187,7 +192,7 @@ export function useEditorModal({
 
   useEffect(() => {
     if (!hydratedRef.current || image.isProcessing || image.processingError) return;
-    setImageEditorSnapshot(image.id, getSnapshot());
+    syncImageEditorSnapshot(image.id, getSnapshot());
   }, [image.id, image.isProcessing, image.processingError, getSnapshot]);
 
   useEffect(() => {

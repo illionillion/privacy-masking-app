@@ -66,7 +66,13 @@ describe("GalleryItem", () => {
 
   it("プレビュー img のみ表示し Konva はマウントしない", async () => {
     render(
-      <GalleryItem image={createImage()} isActive={false} isModelLoading={false} {...handlers} />
+      <GalleryItem
+        image={createImage()}
+        isActive={false}
+        isModelLoading={false}
+        stampImages={new Map()}
+        {...handlers}
+      />
     );
 
     await waitFor(() => {
@@ -80,7 +86,13 @@ describe("GalleryItem", () => {
 
   it("編集ボタンで onOpenEdit が呼ばれる", async () => {
     render(
-      <GalleryItem image={createImage()} isActive={false} isModelLoading={false} {...handlers} />
+      <GalleryItem
+        image={createImage()}
+        isActive={false}
+        isModelLoading={false}
+        stampImages={new Map()}
+        {...handlers}
+      />
     );
 
     fireEvent.click(await screen.findByRole("button", { name: "test.png を編集" }));
@@ -93,6 +105,7 @@ describe("GalleryItem", () => {
         image={createImage({ processingError: true })}
         isActive={false}
         isModelLoading={false}
+        stampImages={new Map()}
         {...handlers}
       />
     );

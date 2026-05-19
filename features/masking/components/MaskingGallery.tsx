@@ -485,6 +485,7 @@ export function MaskingGallery() {
                 image={image}
                 isActive={image.id === activeImageId}
                 isModelLoading={isModelLoading}
+                stampImages={stampImages}
                 onSelect={setActiveImageId}
                 onOpenEdit={handleOpenEdit}
                 onRedetect={handleRedetect}

@@ -2,7 +2,12 @@ import { STAMP_FILE_NAMES } from "@/features/editor/constants";
 import { createEditorSnapshotFromDetections } from "@/features/editor/lib/editorSnapshot";
 import type { EditorStateSnapshot } from "@/features/editor/types";
 import type { DetectedFace, DetectedTextRegion } from "../types";
-import { getImageEditorSnapshot, setImageEditorSnapshot } from "./imageEditorCache";
+import {
+  getImageEditorSnapshot,
+  isImageEditorInitialized,
+  markImageEditorInitialized,
+  setImageEditorSnapshot,
+} from "./imageEditorCache";
 
 const DEFAULT_STAMP_FILE_NAME = STAMP_FILE_NAMES[0] ?? "";
 
@@ -27,6 +32,9 @@ export function isEditorSnapshotUsable(
   if (expectedFromDetection === 0) {
     return true;
   }
+  if (isImageEditorInitialized(input.id)) {
+    return true;
+  }
   return snapshot.stampRegions.length > 0;
 }
 
@@ -46,5 +54,6 @@ export function getOrCreateEditorSnapshot(input: EditorSnapshotInput): EditorSta
     DEFAULT_STAMP_FILE_NAME
   );
   setImageEditorSnapshot(input.id, snapshot);
+  markImageEditorInitialized(input.id);
   return snapshot;
 }

@@ -43,10 +43,9 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
       className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-3"
       onKeyDown={handleKeyDownDialog}
     >
-      <button
-        type="button"
+      <div
+        role="presentation"
         className="absolute inset-0 cursor-default bg-black/50"
-        aria-label="編集をキャンセル"
         onClick={requestCancelModal}
       />
       <div

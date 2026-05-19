@@ -1,10 +1,9 @@
 "use client";
 
 import clsx from "clsx";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
-import { loadStampImagesCached } from "@/features/editor/lib/loadStampImages";
-import { resolveImageEditorSnapshot } from "../lib/resolveImageEditorSnapshot";
+import { getOrCreateEditorSnapshot } from "../lib/getOrCreateEditorSnapshot";
 import { type MaskingImageItem, createDownloadFileName } from "../types";
 
 interface GalleryItemProps {
@@ -12,6 +11,7 @@ interface GalleryItemProps {
   isActive: boolean;
   /** face-api モデルのロード中フラグ（ロード中は再検出を無効化する） */
   isModelLoading: boolean;
+  stampImages: Map<string, HTMLImageElement>;
   onSelect: (id: string) => void;
   onOpenEdit: (id: string) => void;
   onRedetect: (id: string) => void | Promise<void>;
@@ -27,6 +27,7 @@ export function GalleryItem({
   image,
   isActive,
   isModelLoading,
+  stampImages,
   onSelect,
   onOpenEdit,
   onRedetect,
@@ -36,7 +37,7 @@ export function GalleryItem({
   const prevMaskedBlobUrlForRevokeRef = useRef<string | null>(null);
   const onRenderedRef = useRef(onRendered);
   const imageElementRef = useRef<HTMLImageElement | null>(null);
-  const stampImagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
+  const [imageReadyVersion, setImageReadyVersion] = useState(0);
 
   const isRedetectDisabled = image.isProcessing || isModelLoading;
   const canEdit = !image.isProcessing && !image.processingError;
@@ -45,24 +46,20 @@ export function GalleryItem({
     onRenderedRef.current = onRendered;
   }, [onRendered]);
 
-  useEffect(() => {
-    void loadStampImagesCached()
-      .then((map) => {
-        stampImagesRef.current = map;
-      })
-      .catch((err: unknown) => {
-        console.error("スタンプ画像の読み込みに失敗しました", err);
-      });
-  }, []);
-
   /** imageUrl が変わったら HTMLImageElement を再生成する */
   useEffect(() => {
     if (!image.imageUrl) return;
+    let cancelled = false;
     const img = new Image();
     img.onload = () => {
+      if (cancelled) return;
       imageElementRef.current = img;
+      setImageReadyVersion((v) => v + 1);
     };
     img.src = image.imageUrl;
+    return () => {
+      cancelled = true;
+    };
   }, [image.imageUrl]);
 
   /**
@@ -70,14 +67,18 @@ export function GalleryItem({
    */
   useEffect(() => {
     if (!imageElementRef.current || image.isProcessing || image.processingError) return;
-    const snapshot = resolveImageEditorSnapshot(image);
+    const snapshot = getOrCreateEditorSnapshot({
+      id: image.id,
+      detections: image.detections,
+      ocrRegions: image.ocrRegions,
+    });
     let cancelled = false;
 
     void exportEditorCanvas(
       imageElementRef.current,
       snapshot.stampRegions,
       snapshot.paintStrokes,
-      stampImagesRef.current
+      stampImages
     )
       .then((blobUrl) => {
         if (cancelled) {
@@ -102,7 +103,8 @@ export function GalleryItem({
     image.processingError,
     image.detections,
     image.ocrRegions,
-    image,
+    stampImages,
+    imageReadyVersion,
   ]);
 
   /**
