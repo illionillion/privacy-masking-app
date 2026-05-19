@@ -27,7 +27,8 @@ interface EditorModalProps {
 export function EditorModal({ image, stampImages, onClose, onRendered }: EditorModalProps) {
   const {
     editor,
-    closeModal,
+    saveAndCloseModal,
+    requestCancelModal,
     dialogRef,
     doneButtonRef,
     imageNaturalWidth,
@@ -45,8 +46,8 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
       <button
         type="button"
         className="absolute inset-0 cursor-default bg-black/50"
-        aria-label="編集を閉じる"
-        onClick={closeModal}
+        aria-label="編集をキャンセル"
+        onClick={requestCancelModal}
       />
       <div
         ref={dialogRef}
@@ -62,14 +63,23 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
           >
             {image.name}
           </h2>
-          <button
-            ref={doneButtonRef}
-            type="button"
-            onClick={closeModal}
-            className="shrink-0 rounded-lg bg-zinc-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
-          >
-            完了
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={requestCancelModal}
+              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+            >
+              キャンセル
+            </button>
+            <button
+              ref={doneButtonRef}
+              type="button"
+              onClick={saveAndCloseModal}
+              className="rounded-lg bg-zinc-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+            >
+              完了
+            </button>
+          </div>
         </header>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">

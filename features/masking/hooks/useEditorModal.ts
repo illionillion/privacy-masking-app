@@ -12,7 +12,10 @@ import {
 import { STAMP_FILE_NAMES } from "@/features/editor/constants";
 import { useEditorState } from "@/features/editor/hooks/useEditorState";
 import type { UseEditorStateReturn } from "@/features/editor/hooks/useEditorState";
+import type { EditorStateSnapshot } from "@/features/editor/types";
 import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
+import { useConfirmStore } from "@/lib/confirmStore";
+import { hasEditorContentChanges } from "../lib/editorSnapshotDirty";
 import { getOrCreateEditorSnapshot } from "../lib/getOrCreateEditorSnapshot";
 import { persistImageEditorSnapshot, setImageEditorSnapshot } from "../lib/imageEditorCache";
 import type { MaskingImageItem } from "../types";
@@ -26,13 +29,16 @@ interface UseEditorModalParams {
 
 interface UseEditorModalReturn {
   editor: UseEditorStateReturn;
-  closeModal: () => void;
+  saveAndCloseModal: () => void;
+  requestCancelModal: () => void;
   dialogRef: RefObject<HTMLDivElement | null>;
   doneButtonRef: RefObject<HTMLButtonElement | null>;
   imageNaturalWidth: number;
   imageNaturalHeight: number;
   handleKeyDownDialog: (e: KeyboardEvent<HTMLDivElement>) => void;
 }
+
+const CANCEL_CONFIRM_MESSAGE = "編集内容は保存されません。キャンセルしますか？";
 
 /**
  * 編集モーダルのエディタ state・キャッシュ・エクスポート・キーボード操作をまとめる
@@ -54,11 +60,54 @@ export function useEditorModal({
   const [imageNaturalHeight, setImageNaturalHeight] = useState(0);
   const onRenderedRef = useRef(onRendered);
   const hydratedRef = useRef(false);
+  const baselineSnapshotRef = useRef<EditorStateSnapshot | null>(null);
 
-  const closeModal = useCallback(() => {
+  const saveAndCloseModal = useCallback(() => {
     persistImageEditorSnapshot(image.id, getSnapshot());
     onClose();
   }, [getSnapshot, image.id, onClose]);
+
+  const requestCancelModal = useCallback(() => {
+    const baseline = baselineSnapshotRef.current;
+    if (!baseline) {
+      onClose();
+      return;
+    }
+
+    void (async () => {
+      const current = getSnapshot();
+      if (hasEditorContentChanges(current, baseline)) {
+        const confirmed = await useConfirmStore.getState().open(CANCEL_CONFIRM_MESSAGE);
+        if (!confirmed) return;
+      }
+
+      persistImageEditorSnapshot(image.id, baseline);
+
+      if (imageElement && !image.isProcessing && !image.processingError) {
+        try {
+          const blobUrl = await exportEditorCanvas(
+            imageElement,
+            baseline.stampRegions,
+            baseline.paintStrokes,
+            stampImages
+          );
+          onRenderedRef.current(image.id, blobUrl);
+        } catch (err: unknown) {
+          console.error("キャンセル時のプレビュー復元に失敗しました", err);
+        }
+      }
+
+      onClose();
+    })();
+  }, [
+    getSnapshot,
+    image.id,
+    image.isProcessing,
+    image.processingError,
+    imageElement,
+    stampImages,
+    onClose,
+  ]);
 
   useEffect(() => {
     onRenderedRef.current = onRendered;
@@ -87,11 +136,11 @@ export function useEditorModal({
         e.preventDefault();
         return;
       }
-      closeModal();
+      requestCancelModal();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedId, selectItem, closeModal]);
+  }, [selectedId, selectItem, requestCancelModal]);
 
   const handleKeyDownDialog = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== "Tab") return;
@@ -130,7 +179,9 @@ export function useEditorModal({
       detections: image.detections,
       ocrRegions: image.ocrRegions,
     });
-    restoreSnapshot({ ...snapshot, selectedId: null });
+    const opened = { ...snapshot, selectedId: null };
+    restoreSnapshot(opened);
+    baselineSnapshotRef.current = opened;
     hydratedRef.current = true;
   }, [image.id, image.isProcessing, image.detections, image.ocrRegions, restoreSnapshot]);
 
@@ -168,7 +219,8 @@ export function useEditorModal({
 
   return {
     editor,
-    closeModal,
+    saveAndCloseModal,
+    requestCancelModal,
     dialogRef,
     doneButtonRef,
     imageNaturalWidth,
