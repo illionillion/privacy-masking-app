@@ -74,7 +74,13 @@ export function MaskingGallery() {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      imagesRef.current.forEach((image) => URL.revokeObjectURL(image.imageUrl));
+      imagesRef.current.forEach((image) => {
+        URL.revokeObjectURL(image.imageUrl);
+        if (image.maskedBlobUrl?.startsWith("blob:")) {
+          URL.revokeObjectURL(image.maskedBlobUrl);
+        }
+      });
+      clearAllImageEditorSnapshots();
     };
   }, []);
 

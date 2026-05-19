@@ -60,7 +60,6 @@ export function useEditorModal({
   const [imageNaturalWidth, setImageNaturalWidth] = useState(0);
   const [imageNaturalHeight, setImageNaturalHeight] = useState(0);
   const onRenderedRef = useRef(onRendered);
-  const hydratedRef = useRef(false);
   const baselineSnapshotRef = useRef<EditorStateSnapshot | null>(null);
   const closeInFlightRef = useRef(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -175,10 +174,6 @@ export function useEditorModal({
   }, [onRendered]);
 
   useEffect(() => {
-    hydratedRef.current = false;
-  }, [image.id]);
-
-  useEffect(() => {
     const prevOverflow = document.body.style.overflow;
     const prevFocusedElement = document.activeElement as HTMLElement | null;
     doneButtonRef.current?.focus();
@@ -249,7 +244,6 @@ export function useEditorModal({
     const opened = { ...snapshot, selectedId: null };
     restoreSnapshot(opened);
     baselineSnapshotRef.current = opened;
-    hydratedRef.current = true;
   }, [image.id, image.isProcessing, image.detections, image.ocrRegions, restoreSnapshot]);
 
   useEffect(() => {
