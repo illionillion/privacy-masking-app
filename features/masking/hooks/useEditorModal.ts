@@ -17,7 +17,7 @@ import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
 import { useConfirmStore } from "@/lib/confirmStore";
 import { hasEditorContentChanges } from "../lib/editorSnapshotDirty";
 import { getOrCreateEditorSnapshot } from "../lib/getOrCreateEditorSnapshot";
-import { persistImageEditorSnapshot, syncImageEditorSnapshot } from "../lib/imageEditorCache";
+import { persistImageEditorSnapshot } from "../lib/imageEditorCache";
 import type { MaskingImageItem } from "../types";
 
 interface UseEditorModalParams {
@@ -31,6 +31,7 @@ interface UseEditorModalReturn {
   editor: UseEditorStateReturn;
   saveAndCloseModal: () => void;
   requestCancelModal: () => void;
+  isClosing: boolean;
   dialogRef: RefObject<HTMLDivElement | null>;
   doneButtonRef: RefObject<HTMLButtonElement | null>;
   imageNaturalWidth: number;
@@ -61,29 +62,52 @@ export function useEditorModal({
   const onRenderedRef = useRef(onRendered);
   const hydratedRef = useRef(false);
   const baselineSnapshotRef = useRef<EditorStateSnapshot | null>(null);
+  const closeInFlightRef = useRef(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  /** 完了・キャンセルの二重実行を防ぐ */
+  const beginCloseAction = useCallback((): boolean => {
+    if (closeInFlightRef.current) return false;
+    closeInFlightRef.current = true;
+    setIsClosing(true);
+    return true;
+  }, []);
+
+  const abortCloseAction = useCallback(() => {
+    closeInFlightRef.current = false;
+    setIsClosing(false);
+  }, []);
 
   const saveAndCloseModal = useCallback(() => {
+    if (!beginCloseAction()) return;
+
     void (async () => {
-      const snapshot = getSnapshot();
-      persistImageEditorSnapshot(image.id, snapshot);
+      try {
+        const snapshot = getSnapshot();
+        persistImageEditorSnapshot(image.id, snapshot);
 
-      if (imageElement && !image.isProcessing && !image.processingError) {
-        try {
-          const blobUrl = await exportEditorCanvas(
-            imageElement,
-            snapshot.stampRegions,
-            snapshot.paintStrokes,
-            stampImages
-          );
-          onRenderedRef.current(image.id, blobUrl);
-        } catch (err: unknown) {
-          console.error("完了時のエクスポートに失敗しました", err);
+        if (imageElement && !image.isProcessing && !image.processingError) {
+          try {
+            const blobUrl = await exportEditorCanvas(
+              imageElement,
+              snapshot.stampRegions,
+              snapshot.paintStrokes,
+              stampImages
+            );
+            onRenderedRef.current(image.id, blobUrl);
+          } catch (err: unknown) {
+            console.error("完了時のエクスポートに失敗しました", err);
+          }
         }
-      }
 
-      onClose();
+        onClose();
+      } catch {
+        abortCloseAction();
+      }
     })();
   }, [
+    beginCloseAction,
+    abortCloseAction,
     getSnapshot,
     image.id,
     image.isProcessing,
@@ -94,6 +118,8 @@ export function useEditorModal({
   ]);
 
   const requestCancelModal = useCallback(() => {
+    if (!beginCloseAction()) return;
+
     const baseline = baselineSnapshotRef.current;
     if (!baseline) {
       onClose();
@@ -101,31 +127,40 @@ export function useEditorModal({
     }
 
     void (async () => {
-      const current = getSnapshot();
-      if (hasEditorContentChanges(current, baseline)) {
-        const confirmed = await useConfirmStore.getState().open(CANCEL_CONFIRM_MESSAGE);
-        if (!confirmed) return;
-      }
-
-      persistImageEditorSnapshot(image.id, baseline);
-
-      if (imageElement && !image.isProcessing && !image.processingError) {
-        try {
-          const blobUrl = await exportEditorCanvas(
-            imageElement,
-            baseline.stampRegions,
-            baseline.paintStrokes,
-            stampImages
-          );
-          onRenderedRef.current(image.id, blobUrl);
-        } catch (err: unknown) {
-          console.error("キャンセル時のプレビュー復元に失敗しました", err);
+      try {
+        const current = getSnapshot();
+        if (hasEditorContentChanges(current, baseline)) {
+          const confirmed = await useConfirmStore.getState().open(CANCEL_CONFIRM_MESSAGE);
+          if (!confirmed) {
+            abortCloseAction();
+            return;
+          }
         }
-      }
 
-      onClose();
+        persistImageEditorSnapshot(image.id, baseline);
+
+        if (imageElement && !image.isProcessing && !image.processingError) {
+          try {
+            const blobUrl = await exportEditorCanvas(
+              imageElement,
+              baseline.stampRegions,
+              baseline.paintStrokes,
+              stampImages
+            );
+            onRenderedRef.current(image.id, blobUrl);
+          } catch (err: unknown) {
+            console.error("キャンセル時のプレビュー復元に失敗しました", err);
+          }
+        }
+
+        onClose();
+      } catch {
+        abortCloseAction();
+      }
     })();
   }, [
+    beginCloseAction,
+    abortCloseAction,
     getSnapshot,
     image.id,
     image.isProcessing,
@@ -157,6 +192,7 @@ export function useEditorModal({
   useEffect(() => {
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
       if (e.key !== "Escape") return;
+      if (closeInFlightRef.current) return;
       if (selectedId !== null) {
         selectItem(null);
         e.preventDefault();
@@ -217,11 +253,6 @@ export function useEditorModal({
   }, [image.id, image.isProcessing, image.detections, image.ocrRegions, restoreSnapshot]);
 
   useEffect(() => {
-    if (!hydratedRef.current || image.isProcessing || image.processingError) return;
-    syncImageEditorSnapshot(image.id, getSnapshot());
-  }, [image.id, image.isProcessing, image.processingError, getSnapshot]);
-
-  useEffect(() => {
     if (!imageElement || image.isProcessing || image.processingError) return;
     let cancelled = false;
     void exportEditorCanvas(imageElement, stampRegions, paintStrokes, stampImages)
@@ -252,6 +283,7 @@ export function useEditorModal({
     editor,
     saveAndCloseModal,
     requestCancelModal,
+    isClosing,
     dialogRef,
     doneButtonRef,
     imageNaturalWidth,

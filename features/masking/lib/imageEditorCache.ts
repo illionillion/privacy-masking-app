@@ -44,17 +44,6 @@ export function setImageEditorSnapshot(imageId: string, snapshot: EditorStateSna
 }
 
 /**
- * 編集内容をキャッシュへ同期する（モーダル編集中の随時保存）
- *
- * @param imageId - 画像 ID
- * @param snapshot - 保存するスナップショット
- */
-export function syncImageEditorSnapshot(imageId: string, snapshot: EditorStateSnapshot): void {
-  setImageEditorSnapshot(imageId, snapshot);
-  markImageEditorInitialized(imageId);
-}
-
-/**
  * モーダル閉鎖時にキャッシュへ保存する（再オープン時に選択枠が残らないよう selectedId を外す）
  *
  * @param imageId - 画像 ID
