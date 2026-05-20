@@ -15,6 +15,7 @@ import type { UseEditorStateReturn } from "@/features/editor/hooks/useEditorStat
 import type { EditorStateSnapshot } from "@/features/editor/types";
 import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
 import { useConfirmStore } from "@/lib/confirmStore";
+import { toast } from "sonner";
 import { hasEditorContentChanges } from "../lib/editorSnapshotDirty";
 import { getOrCreateEditorSnapshot } from "../lib/getOrCreateEditorSnapshot";
 import { persistImageEditorSnapshot } from "../lib/imageEditorCache";
@@ -96,6 +97,10 @@ export function useEditorModal({
             onRenderedRef.current(image.id, blobUrl);
           } catch (err: unknown) {
             console.error("完了時のエクスポートに失敗しました", err);
+            const detail = err instanceof Error ? err.message : "不明なエラー";
+            toast.error(`マスク画像の出力に失敗しました: ${detail}`);
+            abortCloseAction();
+            return;
           }
         }
 

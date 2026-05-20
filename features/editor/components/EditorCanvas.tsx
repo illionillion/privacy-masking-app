@@ -575,8 +575,20 @@ export function EditorCanvas({
     />
   );
 
+  /** モーダル内: 選択モードは縦スクロールを優先、描画モードはタッチ操作をキャンバスに取る */
+  const stageTouchAction =
+    pinViewportControls && (mode === "paint" || mode === "rect")
+      ? "none"
+      : pinViewportControls
+        ? "pan-y"
+        : "none";
+
   const stageArea = (
-    <div className="[&_.konvajs-content]:touch-none [&_canvas]:touch-none">
+    <div
+      className={
+        pinViewportControls ? undefined : "[&_.konvajs-content]:touch-none [&_canvas]:touch-none"
+      }
+    >
       <Stage
         width={stageWidth}
         height={stageHeight}
@@ -586,7 +598,7 @@ export function EditorCanvas({
         onTouchStart={handlePointerDown}
         onTouchMove={handlePointerMove}
         onTouchEnd={handlePointerUp}
-        style={{ cursor: MODE_CURSORS[mode], touchAction: "none" }}
+        style={{ cursor: MODE_CURSORS[mode], touchAction: stageTouchAction }}
       >
         <Layer>
           <Group
