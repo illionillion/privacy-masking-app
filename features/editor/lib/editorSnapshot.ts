@@ -1,10 +1,4 @@
-import type {
-  EditorMode,
-  EditorStateSnapshot,
-  PaintStroke,
-  StampRegion,
-  StampType,
-} from "../types";
+import type { EditorStateSnapshot, StampRegion, StampType } from "../types";
 import { generateUUID } from "./generateUUID";
 
 /**
@@ -45,23 +39,6 @@ export function createEditorSnapshotFromDetections(
     mode: "select",
     stampRegions: [...faceRegions, ...ocrMaskRegions],
     paintStrokes: [],
-    selectedId: null,
-    selectedStampType: "stamp-face",
-    selectedStampFileName: initialStampFileName,
-    brushSize: 20,
-  };
-}
-
-/**
- * 空のエディタスナップショットを返す
- *
- * @param initialStampFileName - stamp-face の初期ファイル名
- */
-export function createEmptyEditorSnapshot(initialStampFileName: string): EditorStateSnapshot {
-  return {
-    mode: "select" as EditorMode,
-    stampRegions: [],
-    paintStrokes: [] as PaintStroke[],
     selectedId: null,
     selectedStampType: "stamp-face",
     selectedStampFileName: initialStampFileName,
