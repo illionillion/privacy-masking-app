@@ -78,7 +78,7 @@ describe("GalleryItem", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "test.png を編集" })).toBeInTheDocument();
     });
-    expect(screen.queryByTestId("mock-editor-canvas")).not.toBeInTheDocument();
+    expect(screen.queryByText("表示ズーム")).not.toBeInTheDocument();
 
     const previewImg = screen.getByRole("img", { name: "test.png" });
     expect(previewImg).toHaveAttribute("src", "blob:masked-preview");
