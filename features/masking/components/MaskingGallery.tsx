@@ -371,7 +371,12 @@ export function MaskingGallery() {
       const ok = await useConfirmStore.getState().open("すべての画像と編集内容をクリアしますか？");
       if (!ok) return;
       if (!isMountedRef.current) return;
-      imagesRef.current.forEach((image) => URL.revokeObjectURL(image.imageUrl));
+      imagesRef.current.forEach((image) => {
+        URL.revokeObjectURL(image.imageUrl);
+        if (image.maskedBlobUrl?.startsWith("blob:")) {
+          URL.revokeObjectURL(image.maskedBlobUrl);
+        }
+      });
       clearAllImageEditorSnapshots();
       setImages([]);
       setActiveImageId(null);
