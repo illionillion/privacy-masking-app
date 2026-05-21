@@ -52,8 +52,7 @@ export function useEditorModal({
   onRendered,
 }: UseEditorModalParams): UseEditorModalReturn {
   const editor = useEditorState(STAMP_FILE_NAMES[0] ?? "");
-  const { selectedId, selectItem, restoreSnapshot, getSnapshot, stampRegions, paintStrokes } =
-    editor;
+  const { selectedId, selectItem, restoreSnapshot, getSnapshot } = editor;
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const doneButtonRef = useRef<HTMLButtonElement>(null);
@@ -63,7 +62,15 @@ export function useEditorModal({
   const onRenderedRef = useRef(onRendered);
   const baselineSnapshotRef = useRef<EditorStateSnapshot | null>(null);
   const closeInFlightRef = useRef(false);
+  const isMountedRef = useRef(true);
   const [isClosing, setIsClosing] = useState(false);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   /** 完了・キャンセルの二重実行を防ぐ */
   const beginCloseAction = useCallback((): boolean => {
@@ -94,19 +101,24 @@ export function useEditorModal({
               snapshot.paintStrokes,
               stampImages
             );
+            if (!isMountedRef.current) {
+              URL.revokeObjectURL(blobUrl);
+              return;
+            }
             onRenderedRef.current(image.id, blobUrl);
           } catch (err: unknown) {
             console.error("完了時のエクスポートに失敗しました", err);
             const detail = err instanceof Error ? err.message : "不明なエラー";
             toast.error(`マスク画像の出力に失敗しました: ${detail}`);
-            abortCloseAction();
+            if (isMountedRef.current) abortCloseAction();
             return;
           }
         }
 
+        if (!isMountedRef.current) return;
         onClose();
       } catch {
-        abortCloseAction();
+        if (isMountedRef.current) abortCloseAction();
       }
     })();
   }, [
@@ -135,6 +147,7 @@ export function useEditorModal({
         const current = getSnapshot();
         if (hasEditorContentChanges(current, baseline)) {
           const confirmed = await useConfirmStore.getState().open(CANCEL_CONFIRM_MESSAGE);
+          if (!isMountedRef.current) return;
           if (!confirmed) {
             abortCloseAction();
             return;
@@ -151,15 +164,20 @@ export function useEditorModal({
               baseline.paintStrokes,
               stampImages
             );
+            if (!isMountedRef.current) {
+              URL.revokeObjectURL(blobUrl);
+              return;
+            }
             onRenderedRef.current(image.id, blobUrl);
           } catch (err: unknown) {
             console.error("キャンセル時のプレビュー復元に失敗しました", err);
           }
         }
 
+        if (!isMountedRef.current) return;
         onClose();
       } catch {
-        abortCloseAction();
+        if (isMountedRef.current) abortCloseAction();
       }
     })();
   }, [
@@ -250,33 +268,6 @@ export function useEditorModal({
     restoreSnapshot(opened);
     baselineSnapshotRef.current = opened;
   }, [image.id, image.isProcessing, image.detections, image.ocrRegions, restoreSnapshot]);
-
-  useEffect(() => {
-    if (!imageElement || image.isProcessing || image.processingError) return;
-    let cancelled = false;
-    void exportEditorCanvas(imageElement, stampRegions, paintStrokes, stampImages)
-      .then((blobUrl) => {
-        if (cancelled) {
-          URL.revokeObjectURL(blobUrl);
-          return;
-        }
-        onRenderedRef.current(image.id, blobUrl);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) console.error("エクスポートに失敗しました", err);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    imageElement,
-    image.id,
-    image.isProcessing,
-    image.processingError,
-    stampRegions,
-    paintStrokes,
-    stampImages,
-  ]);
 
   return {
     editor,
