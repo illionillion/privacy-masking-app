@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from "clsx";
 import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useEffect, useRef, useState } from "react";
@@ -40,6 +41,10 @@ interface EditorCanvasProps {
   selectedStampFileName: string;
   /** 選択中アイテムを削除するコールバック */
   onDeleteSelected: () => void;
+  /** true のとき表示ズームバーをキャンバス外に固定し、Stage のみスクロールする（モーダル編集向け） */
+  pinViewportControls?: boolean;
+  /** ルート要素に追加するクラス（モーダル内で flex-1 など） */
+  className?: string;
 }
 
 /** 描画中の矩形プレビュー用状態 */
@@ -128,6 +133,8 @@ export function EditorCanvas({
   stampImages,
   selectedStampFileName,
   onDeleteSelected,
+  pinViewportControls = false,
+  className,
 }: EditorCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
@@ -554,50 +561,83 @@ export function EditorCanvas({
     </>
   );
 
-  return (
-    <div ref={containerRef} className="w-full overflow-hidden rounded-xl border border-zinc-200">
-      <EditorViewportControls
-        canPan={canPan}
-        canZoomOut={canZoomOut}
-        canZoomIn={canZoomIn}
-        viewZoom={viewZoom}
-        onNudgeViewCenter={nudgeViewCenter}
-        onResetViewCenter={resetViewCenter}
-        onZoomOut={zoomOut}
-        onResetViewport={resetViewport}
-        onZoomIn={zoomIn}
-      />
-      {/*
-       * Stage 直下の DOM のみ style が当たり、Konva が差し込む .konvajs-content / canvas には伝わらない。
-       * そのため descendant に touch-none を適用して SP でのドラッグとスクロールの競合を防ぐ。
-       */}
-      <div className="[&_.konvajs-content]:touch-none [&_canvas]:touch-none">
-        <Stage
-          width={stageWidth}
-          height={stageHeight}
-          onMouseDown={handlePointerDown}
-          onMouseMove={handlePointerMove}
-          onMouseUp={handlePointerUp}
-          onTouchStart={handlePointerDown}
-          onTouchMove={handlePointerMove}
-          onTouchEnd={handlePointerUp}
-          // StageWrap のコンテナ側でも指定（親 div と canvas 側のクラス指定と併用）
-          style={{ cursor: MODE_CURSORS[mode], touchAction: "none" }}
-        >
-          <Layer>
-            <Group
-              x={stageWidth / 2}
-              y={stageHeight / 2}
-              offsetX={contentCenter.x}
-              offsetY={contentCenter.y}
-              scaleX={viewZoom}
-              scaleY={viewZoom}
-            >
-              {layerContent}
-            </Group>
-          </Layer>
-        </Stage>
+  const viewportControls = (
+    <EditorViewportControls
+      canPan={canPan}
+      canZoomOut={canZoomOut}
+      canZoomIn={canZoomIn}
+      viewZoom={viewZoom}
+      onNudgeViewCenter={nudgeViewCenter}
+      onResetViewCenter={resetViewCenter}
+      onZoomOut={zoomOut}
+      onResetViewport={resetViewport}
+      onZoomIn={zoomIn}
+    />
+  );
+
+  /** モーダル内: 選択モードは縦スクロールを優先、描画モードはタッチ操作をキャンバスに取る */
+  const stageTouchAction =
+    pinViewportControls && (mode === "paint" || mode === "rect")
+      ? "none"
+      : pinViewportControls
+        ? "pan-y"
+        : "none";
+
+  const stageArea = (
+    <div
+      className={
+        pinViewportControls ? undefined : "[&_.konvajs-content]:touch-none [&_canvas]:touch-none"
+      }
+    >
+      <Stage
+        width={stageWidth}
+        height={stageHeight}
+        onMouseDown={handlePointerDown}
+        onMouseMove={handlePointerMove}
+        onMouseUp={handlePointerUp}
+        onTouchStart={handlePointerDown}
+        onTouchMove={handlePointerMove}
+        onTouchEnd={handlePointerUp}
+        style={{ cursor: MODE_CURSORS[mode], touchAction: stageTouchAction }}
+      >
+        <Layer>
+          <Group
+            x={stageWidth / 2}
+            y={stageHeight / 2}
+            offsetX={contentCenter.x}
+            offsetY={contentCenter.y}
+            scaleX={viewZoom}
+            scaleY={viewZoom}
+          >
+            {layerContent}
+          </Group>
+        </Layer>
+      </Stage>
+    </div>
+  );
+
+  if (pinViewportControls) {
+    return (
+      <div
+        ref={containerRef}
+        className={clsx([
+          "flex min-h-0 w-full flex-col rounded-xl border border-zinc-200",
+          className,
+        ])}
+      >
+        <div className="shrink-0">{viewportControls}</div>
+        <div className="min-h-0 flex-1 overflow-auto">{stageArea}</div>
       </div>
+    );
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className={clsx(["w-full overflow-hidden rounded-xl border border-zinc-200", className])}
+    >
+      {viewportControls}
+      {stageArea}
     </div>
   );
 }

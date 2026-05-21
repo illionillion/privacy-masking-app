@@ -1,32 +1,15 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { EditorMode, PaintStroke, StampRegion, StampType } from "../types";
-
-/**
- * `crypto.randomUUID` 未対応ブラウザ向けのフォールバックを含むUUID生成関数
- *
- * `crypto.randomUUID` → `crypto.getRandomValues` → `Math.random` の順でフォールバックする。
- */
-const generateUUID = (): string => {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
-    const bytes = new Uint8Array(16);
-    crypto.getRandomValues(bytes);
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-  }
-  /** `crypto` が完全に未対応の場合は Math.random ベースの UUID v4 */
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
+import { createEditorSnapshotFromDetections } from "../lib/editorSnapshot";
+import { generateUUID } from "../lib/generateUUID";
+import type {
+  EditorMode,
+  EditorStateSnapshot,
+  PaintStroke,
+  StampRegion,
+  StampType,
+} from "../types";
 
 /** useEditorState フックの戻り値型 */
 export interface UseEditorStateReturn {
@@ -53,6 +36,8 @@ export interface UseEditorStateReturn {
   toggleStampRegion: (id: string) => void;
   removeItem: (id: string) => void;
   removeSelectedItem: () => void;
+  restoreSnapshot: (snapshot: EditorStateSnapshot) => void;
+  getSnapshot: () => EditorStateSnapshot;
 }
 
 /**
@@ -148,36 +133,47 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
    * @param detections - 顔検出結果の配列
    * @param ocrRegions - OCR検出結果の配列
    */
+  const restoreSnapshot = useCallback((snapshot: EditorStateSnapshot) => {
+    setMode(snapshot.mode);
+    setStampRegions(snapshot.stampRegions);
+    setPaintStrokes(snapshot.paintStrokes);
+    setSelectedId(snapshot.selectedId);
+    _setSelectedStampType(snapshot.selectedStampType);
+    _setSelectedStampFileName(snapshot.selectedStampFileName);
+    setBrushSize(snapshot.brushSize);
+  }, []);
+
+  const getSnapshot = useCallback(
+    (): EditorStateSnapshot => ({
+      mode,
+      stampRegions,
+      paintStrokes,
+      selectedId,
+      selectedStampType,
+      selectedStampFileName,
+      brushSize,
+    }),
+    [
+      mode,
+      stampRegions,
+      paintStrokes,
+      selectedId,
+      selectedStampType,
+      selectedStampFileName,
+      brushSize,
+    ]
+  );
+
   const initFromDetections = useCallback(
     (
       detections: Array<{ x: number; y: number; width: number; height: number }>,
       ocrRegions: Array<{ x: number; y: number; width: number; height: number; text: string }>
     ) => {
-      const faceRegions: StampRegion[] = detections.map((det) => ({
-        id: generateUUID(),
-        x: det.x,
-        y: det.y,
-        width: det.width,
-        height: det.height,
-        stampType: "stamp-face" as StampType,
-        isEnabled: true,
-        source: "face-detection" as const,
-      }));
-      const ocrMaskRegions: StampRegion[] = ocrRegions.map((region) => ({
-        id: generateUUID(),
-        x: region.x,
-        y: region.y,
-        width: region.width,
-        height: region.height,
-        stampType: "fill-black" as StampType,
-        isEnabled: true,
-        source: "ocr" as const,
-        text: region.text,
-      }));
-      setStampRegions([...faceRegions, ...ocrMaskRegions]);
-      setSelectedId(null);
+      restoreSnapshot(
+        createEditorSnapshotFromDetections(detections, ocrRegions, selectedStampFileName)
+      );
     },
-    []
+    [restoreSnapshot, selectedStampFileName]
   );
 
   /**
@@ -279,5 +275,7 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
     toggleStampRegion,
     removeItem,
     removeSelectedItem,
+    restoreSnapshot,
+    getSnapshot,
   };
 }
