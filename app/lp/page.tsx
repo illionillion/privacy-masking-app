@@ -1,6 +1,6 @@
 import { buildPageMetadata } from "@/lib/buildPageMetadata";
 import { LP_PAGE_DESCRIPTION, LP_PAGE_TITLE } from "@/lib/siteSeo";
-import { BackToTopButton } from "./_components/BackToTopButton";
+import { BackToTopButton } from "@/components/BackToTopButton";
 import { DemoSection } from "./_components/DemoSection";
 import { FinalCtaSection } from "./_components/FinalCtaSection";
 import { HeroSection } from "./_components/HeroSection";
