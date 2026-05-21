@@ -450,8 +450,8 @@ export function ImageUpload({
         aria-disabled={disabled}
         aria-busy={Boolean(loadingMessage)}
         className={clsx([
-          "hidden w-full md:flex",
-          "cursor-pointer flex-col items-center justify-center gap-3",
+          "relative hidden w-full md:flex",
+          "cursor-pointer flex-col items-center justify-center",
           "rounded-xl border-2 border-dashed px-6 py-12 text-center",
           "transition-colors duration-200",
           isDragOver
@@ -465,22 +465,27 @@ export function ImageUpload({
         onClick={() => !disabled && inputRef.current?.click()}
         onKeyDown={handleDesktopKeyDown}
       >
-        {loadingMessage ? (
-          <div className="flex flex-col items-center gap-2">
+        <div
+          className={clsx(["flex flex-col items-center gap-3", loadingMessage && "opacity-0"])}
+          aria-hidden={Boolean(loadingMessage)}
+        >
+          <ImageIcon className="h-10 w-10 text-zinc-500" aria-hidden="true" />
+          <div className="flex flex-col gap-1">
+            <p className="font-medium text-zinc-700">画像をドラッグ＆ドロップ</p>
+            <p className="text-sm text-zinc-500">
+              または クリックして{multiple ? "ファイルを複数選択" : "ファイルを選択"}
+            </p>
+            <p className="text-xs text-zinc-400">JPEG / PNG / WebP / GIF（最大 20MB）</p>
+          </div>
+        </div>
+        {loadingMessage && (
+          <div
+            className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2"
+            aria-live="polite"
+          >
             <LoaderCircle className="h-10 w-10 animate-spin text-blue-600" aria-hidden="true" />
             <p className="text-sm font-medium text-blue-700">{loadingMessage}</p>
           </div>
-        ) : (
-          <>
-            <ImageIcon className="h-10 w-10 text-zinc-500" aria-hidden="true" />
-            <div className="flex flex-col gap-1">
-              <p className="font-medium text-zinc-700">画像をドラッグ＆ドロップ</p>
-              <p className="text-sm text-zinc-500">
-                または クリックして{multiple ? "ファイルを複数選択" : "ファイルを選択"}
-              </p>
-              <p className="text-xs text-zinc-400">JPEG / PNG / WebP / GIF（最大 20MB）</p>
-            </div>
-          </>
         )}
       </div>
 
