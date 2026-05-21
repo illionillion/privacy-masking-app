@@ -31,6 +31,17 @@ describe("ImageUpload", () => {
     expect(screen.getAllByText(/JPEG \/ PNG \/ WebP \/ GIF/)).toHaveLength(2);
   });
 
+  it("loadingMessage 表示中もドロップゾーンのガイド文言で高さを確保する", () => {
+    render(<ImageUpload onUpload={vi.fn()} loadingMessage="顔検出モデルをロード中…" />);
+    const dropZone = screen.getByRole("button", {
+      name: "画像をアップロード。クリックまたはドラッグ＆ドロップ",
+    });
+    expect(dropZone).toHaveTextContent("顔検出モデルをロード中…");
+    const guideHeading = screen.getByText("画像をドラッグ＆ドロップ");
+    expect(dropZone).toContainElement(guideHeading);
+    expect(guideHeading.closest("[aria-hidden]")).toHaveAttribute("aria-hidden", "true");
+  });
+
   it("disabled時は操作不可になる", () => {
     render(<ImageUpload onUpload={vi.fn()} disabled />);
     const mobileButton = screen.getByRole("button", {
