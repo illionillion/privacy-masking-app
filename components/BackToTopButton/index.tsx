@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { ChevronUp } from "lucide-react";
 
-/** LP 用のトップへ戻るボタン */
+/**
+ * スクロール後に表示する「ページ上部へ戻る」固定ボタン。
+ */
 export function BackToTopButton() {
   const [isVisible, setIsVisible] = useState(false);
 
