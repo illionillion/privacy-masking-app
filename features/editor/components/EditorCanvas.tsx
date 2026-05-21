@@ -17,6 +17,7 @@ import {
 import type { EditorMode, PaintStroke, StampRegion, StampType } from "../types";
 import { stagePointerToContentSpace } from "../lib/viewZoom";
 import { useEditorViewport } from "../hooks/useEditorViewport";
+import { useEditorViewportGestures } from "../hooks/useEditorViewportGestures";
 import { EditorStampRegionNode } from "./EditorStampRegionNode";
 import { EditorViewportControls } from "./EditorViewportControls";
 
@@ -137,6 +138,7 @@ export function EditorCanvas({
   className,
 }: EditorCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const stageContainerRef = useRef<HTMLDivElement>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
   const [stageWidth, setStageWidth] = useState(600);
   const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
@@ -154,32 +156,44 @@ export function EditorCanvas({
     viewCenter,
     contentCenter,
     canPan,
-    canZoomOut,
-    canZoomIn,
-    nudgeViewCenter,
-    resetViewCenter,
-    zoomOut,
     resetViewport,
-    zoomIn,
+    zoomAt,
+    setZoomAt,
+    panByStageDelta,
   } = useEditorViewport(imageNaturalWidth, imageNaturalHeight, scaleX, scaleY);
+
+  const gestures = useEditorViewportGestures({
+    stageContainerRef,
+    stageWidth,
+    stageHeight,
+    viewZoom,
+    mode,
+    canPan,
+    zoomAt,
+    setZoomAt,
+    panByStageDelta,
+  });
 
   /**
    * キーボードショートカット
    *
    * - Escape: 選択解除
    * - Delete / Backspace: 選択中アイテムを削除
+   * - 0: 等倍・中央にリセット
    */
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         onSelectItem(null);
+      } else if (e.key === "0") {
+        resetViewport();
       } else if ((e.key === "Delete" || e.key === "Backspace") && selectedId !== null) {
         onDeleteSelected();
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedId, onSelectItem, onDeleteSelected]);
+  }, [selectedId, onSelectItem, onDeleteSelected, resetViewport]);
 
   /** コンテナの幅変化を ResizeObserver で監視 */
   useEffect(() => {
@@ -246,6 +260,9 @@ export function EditorCanvas({
    * ステージのマウスダウン/タッチスタートハンドラ
    */
   function handlePointerDown(e: KonvaEventObject<MouseEvent> | KonvaEventObject<TouchEvent>) {
+    if (gestures.tryConsumeStagePointerDown(e)) return;
+    if (gestures.isGestureCapturing) return;
+
     const stage = e.target.getStage();
     if (!stage) return;
     const pos = pointerToContentSpace(stage);
@@ -273,6 +290,7 @@ export function EditorCanvas({
    * ステージのマウス移動/タッチ移動ハンドラ
    */
   function handlePointerMove(e: KonvaEventObject<MouseEvent> | KonvaEventObject<TouchEvent>) {
+    if (gestures.tryConsumeStagePointerMove(e)) return;
     if (!isDrawing.current) return;
     // canvas / .konvajs-content は touch-action が継承されないため SP でページスクロールと競合する。
     // Konva が passive:false で登録している touchmove でも念のため抑止する。
@@ -303,6 +321,7 @@ export function EditorCanvas({
    * ステージのマウスアップ/タッチエンドハンドラ
    */
   function handlePointerUp() {
+    if (gestures.tryConsumeStagePointerUp()) return;
     if (!isDrawing.current) return;
     isDrawing.current = false;
 
@@ -562,18 +581,15 @@ export function EditorCanvas({
   );
 
   const viewportControls = (
-    <EditorViewportControls
-      canPan={canPan}
-      canZoomOut={canZoomOut}
-      canZoomIn={canZoomIn}
-      viewZoom={viewZoom}
-      onNudgeViewCenter={nudgeViewCenter}
-      onResetViewCenter={resetViewCenter}
-      onZoomOut={zoomOut}
-      onResetViewport={resetViewport}
-      onZoomIn={zoomIn}
-    />
+    <EditorViewportControls viewZoom={viewZoom} onResetViewport={resetViewport} />
   );
+
+  const stageCursor =
+    gestures.isSpacePanMode && canPan && mode === "select"
+      ? gestures.isGestureCapturing
+        ? "grabbing"
+        : "grab"
+      : MODE_CURSORS[mode];
 
   /** モーダル内: 選択モードは縦スクロールを優先、描画モードはタッチ操作をキャンバスに取る */
   const stageTouchAction =
@@ -585,6 +601,8 @@ export function EditorCanvas({
 
   const stageArea = (
     <div
+      ref={stageContainerRef}
+      {...gestures.stageContainerProps}
       className={
         pinViewportControls ? undefined : "[&_.konvajs-content]:touch-none [&_canvas]:touch-none"
       }
@@ -598,7 +616,7 @@ export function EditorCanvas({
         onTouchStart={handlePointerDown}
         onTouchMove={handlePointerMove}
         onTouchEnd={handlePointerUp}
-        style={{ cursor: MODE_CURSORS[mode], touchAction: stageTouchAction }}
+        style={{ cursor: stageCursor, touchAction: stageTouchAction }}
       >
         <Layer>
           <Group

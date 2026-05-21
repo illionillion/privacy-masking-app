@@ -3,9 +3,12 @@ import {
   VIEW_ZOOM,
   clampViewCenter,
   clampViewZoom,
+  computeViewCenterAfterZoomAt,
   getDefaultViewCenter,
+  panViewCenterByStageDelta,
   roundViewZoomStep,
   stagePointerToContentSpace,
+  wheelDeltaToZoomDelta,
 } from "./viewZoom";
 
 describe("clampViewZoom", () => {
@@ -75,5 +78,57 @@ describe("stagePointerToContentSpace", () => {
     const out = stagePointerToContentSpace({ x: 0, y: 0 }, w, h, z, { x: 150, y: 130 });
     expect(out.x).toBeCloseTo(100);
     expect(out.y).toBeCloseTo(80);
+  });
+});
+
+describe("computeViewCenterAfterZoomAt", () => {
+  it("ズーム後もステージ中心の下の画像点が同じコンテンツ座標に対応する", () => {
+    const w = 200;
+    const h = 100;
+    const scale = 1;
+    const center = { x: 100, y: 50 };
+    const stageCenter = { x: w / 2, y: h / 2 };
+    const before = stagePointerToContentSpace(stageCenter, w, h, 1, {
+      x: center.x * scale,
+      y: center.y * scale,
+    });
+    const afterCenter = computeViewCenterAfterZoomAt(
+      center,
+      stageCenter,
+      w,
+      h,
+      scale,
+      scale,
+      1,
+      2,
+      w,
+      h
+    );
+    const after = stagePointerToContentSpace(stageCenter, w, h, 2, {
+      x: afterCenter.x * scale,
+      y: afterCenter.y * scale,
+    });
+    expect(after.x).toBeCloseTo(before.x);
+    expect(after.y).toBeCloseTo(before.y);
+  });
+});
+
+describe("panViewCenterByStageDelta", () => {
+  it("ステージ右ドラッグで表示中心が左へ移動する", () => {
+    const w = 400;
+    const h = 200;
+    const z = 2;
+    const start = { x: 200, y: 100 };
+    const next = panViewCenterByStageDelta(start, { x: 24, y: 0 }, 1, 1, z, w, h);
+    expect(next.x).toBeCloseTo(start.x - 24 / z);
+    expect(next.y).toBe(start.y);
+  });
+});
+
+describe("wheelDeltaToZoomDelta", () => {
+  it("下スクロールで縮小・上スクロールで拡大", () => {
+    expect(wheelDeltaToZoomDelta(120)).toBe(-VIEW_ZOOM.step);
+    expect(wheelDeltaToZoomDelta(-120)).toBe(VIEW_ZOOM.step);
+    expect(wheelDeltaToZoomDelta(0)).toBe(0);
   });
 });

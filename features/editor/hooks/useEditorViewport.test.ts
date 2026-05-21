@@ -62,4 +62,15 @@ describe("useEditorViewport", () => {
     expect(result.current.canZoomOut).toBe(false);
     expect(result.current.canZoomIn).toBe(true);
   });
+
+  it("zoomAt でポインタ下を保ったまま倍率が変わる", () => {
+    const { result } = renderHook(() => useEditorViewport(200, 100, 1, 1));
+
+    act(() => {
+      result.current.zoomAt({ x: 100, y: 50 }, 200, 100, VIEW_ZOOM.step);
+    });
+
+    expect(result.current.viewZoom).toBeCloseTo(1.1);
+    expect(result.current.viewCenter).toEqual({ x: 100, y: 50 });
+  });
 });

@@ -5,7 +5,9 @@ import {
   VIEW_CENTER_NUDGE_PX,
   VIEW_ZOOM,
   clampViewCenter,
+  computeViewCenterAfterZoomAt,
   getDefaultViewCenter,
+  panViewCenterByStageDelta,
   roundViewZoomStep,
   type ViewCenter,
 } from "../lib/viewZoom";
@@ -27,6 +29,22 @@ export interface UseEditorViewportReturn {
   zoomOut: () => void;
   resetViewport: () => void;
   zoomIn: () => void;
+  /** ステージ上の焦点を保ったまま表示倍率を増減する（ホイール・ピンチ用） */
+  zoomAt: (
+    stagePos: { x: number; y: number },
+    stageWidth: number,
+    stageHeight: number,
+    zoomDelta: number
+  ) => void;
+  /** ステージ上の焦点を保ったまま表示倍率を絶対値で設定する（ピンチ用） */
+  setZoomAt: (
+    stagePos: { x: number; y: number },
+    stageWidth: number,
+    stageHeight: number,
+    absoluteZoom: number
+  ) => void;
+  /** ステージ px のドラッグ量で表示中心を移動する */
+  panByStageDelta: (stageDelta: { x: number; y: number }) => void;
 }
 
 /**
@@ -134,6 +152,106 @@ export function useEditorViewport(
     stepZoom(1);
   }, [stepZoom]);
 
+  /**
+   * ポインタ下の画像点を固定したまま表示倍率を変更する
+   *
+   * @param stagePos - ズームの焦点（ステージ座標）
+   * @param stageWidth - ステージ幅
+   * @param stageHeight - ステージ高さ
+   * @param zoomDelta - 倍率の増減量
+   */
+  const zoomAt = useCallback(
+    (
+      stagePos: { x: number; y: number },
+      stageWidth: number,
+      stageHeight: number,
+      zoomDelta: number
+    ) => {
+      if (zoomDelta === 0) return;
+      setViewZoom((prevZoom) => {
+        const nextZoom = roundViewZoomStep(prevZoom + zoomDelta);
+        if (nextZoom === prevZoom) return prevZoom;
+        setViewCenter((center) =>
+          computeViewCenterAfterZoomAt(
+            center,
+            stagePos,
+            stageWidth,
+            stageHeight,
+            scaleX,
+            scaleY,
+            prevZoom,
+            nextZoom,
+            imageNaturalWidth,
+            imageNaturalHeight
+          )
+        );
+        return nextZoom;
+      });
+    },
+    [imageNaturalWidth, imageNaturalHeight, scaleX, scaleY]
+  );
+
+  /**
+   * ポインタ下の画像点を固定したまま表示倍率を絶対値で設定する
+   *
+   * @param stagePos - ズームの焦点（ステージ座標）
+   * @param stageWidth - ステージ幅
+   * @param stageHeight - ステージ高さ
+   * @param absoluteZoom - 目標倍率
+   */
+  const setZoomAt = useCallback(
+    (
+      stagePos: { x: number; y: number },
+      stageWidth: number,
+      stageHeight: number,
+      absoluteZoom: number
+    ) => {
+      setViewZoom((prevZoom) => {
+        const nextZoom = roundViewZoomStep(absoluteZoom);
+        if (nextZoom === prevZoom) return prevZoom;
+        setViewCenter((center) =>
+          computeViewCenterAfterZoomAt(
+            center,
+            stagePos,
+            stageWidth,
+            stageHeight,
+            scaleX,
+            scaleY,
+            prevZoom,
+            nextZoom,
+            imageNaturalWidth,
+            imageNaturalHeight
+          )
+        );
+        return nextZoom;
+      });
+    },
+    [imageNaturalWidth, imageNaturalHeight, scaleX, scaleY]
+  );
+
+  /**
+   * ステージ上のドラッグ量で表示中心を移動する（viewZoom > 1 のときのみ）
+   *
+   * @param stageDelta - ステージ px での移動量
+   */
+  const panByStageDelta = useCallback(
+    (stageDelta: { x: number; y: number }) => {
+      if (viewZoom <= 1) return;
+      setViewCenter((center) =>
+        panViewCenterByStageDelta(
+          center,
+          stageDelta,
+          scaleX,
+          scaleY,
+          viewZoom,
+          imageNaturalWidth,
+          imageNaturalHeight
+        )
+      );
+    },
+    [imageNaturalWidth, imageNaturalHeight, scaleX, scaleY, viewZoom]
+  );
+
   return {
     viewZoom,
     viewCenter,
@@ -147,5 +265,8 @@ export function useEditorViewport(
     zoomOut,
     resetViewport,
     zoomIn,
+    zoomAt,
+    setZoomAt,
+    panByStageDelta,
   };
 }

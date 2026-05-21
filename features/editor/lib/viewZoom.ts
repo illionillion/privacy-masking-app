@@ -118,3 +118,87 @@ export function stagePointerToContentSpace(
     y: contentCenter.y + (stagePos.y - stageCenterY) / viewZoom,
   };
 }
+
+/**
+ * ホイール／ピンチで倍率を変えたあとも、ポインタ下の画像点が同じステージ位置に留まるよう表示中心を更新する
+ *
+ * @param viewCenter - 現在の表示中心（画像自然座標）
+ * @param stagePos - ズームの焦点（ステージ座標）
+ * @param stageWidth - ステージ幅
+ * @param stageHeight - ステージ高さ
+ * @param scaleX - 画像→ステージ X スケール
+ * @param scaleY - 画像→ステージ Y スケール
+ * @param oldZoom - 変更前の表示倍率
+ * @param newZoom - 変更後の表示倍率
+ * @param imageNaturalWidth - 元画像の幅
+ * @param imageNaturalHeight - 元画像の高さ
+ */
+export function computeViewCenterAfterZoomAt(
+  viewCenter: ViewCenter,
+  stagePos: { x: number; y: number },
+  stageWidth: number,
+  stageHeight: number,
+  scaleX: number,
+  scaleY: number,
+  oldZoom: number,
+  newZoom: number,
+  imageNaturalWidth: number,
+  imageNaturalHeight: number
+): ViewCenter {
+  const stageCenterX = stageWidth / 2;
+  const stageCenterY = stageHeight / 2;
+  const imageX = viewCenter.x + (stagePos.x - stageCenterX) / (oldZoom * scaleX);
+  const imageY = viewCenter.y + (stagePos.y - stageCenterY) / (oldZoom * scaleY);
+  return clampViewCenter(
+    {
+      x: imageX - (stagePos.x - stageCenterX) / (newZoom * scaleX),
+      y: imageY - (stagePos.y - stageCenterY) / (newZoom * scaleY),
+    },
+    imageNaturalWidth,
+    imageNaturalHeight,
+    newZoom
+  );
+}
+
+/**
+ * ステージ上のドラッグ量から表示中心を平行移動する（viewZoom > 1 のときのみ有効）
+ *
+ * @param viewCenter - 現在の表示中心
+ * @param stageDelta - ステージ px での移動量（指の移動方向）
+ * @param scaleX - 画像→ステージ X スケール
+ * @param scaleY - 画像→ステージ Y スケール
+ * @param viewZoom - 表示倍率
+ * @param imageNaturalWidth - 元画像の幅
+ * @param imageNaturalHeight - 元画像の高さ
+ */
+export function panViewCenterByStageDelta(
+  viewCenter: ViewCenter,
+  stageDelta: { x: number; y: number },
+  scaleX: number,
+  scaleY: number,
+  viewZoom: number,
+  imageNaturalWidth: number,
+  imageNaturalHeight: number
+): ViewCenter {
+  const deltaX = scaleX > 0 ? stageDelta.x / (scaleX * viewZoom) : 0;
+  const deltaY = scaleY > 0 ? stageDelta.y / (scaleY * viewZoom) : 0;
+  return clampViewCenter(
+    {
+      x: viewCenter.x - deltaX,
+      y: viewCenter.y - deltaY,
+    },
+    imageNaturalWidth,
+    imageNaturalHeight,
+    viewZoom
+  );
+}
+
+/**
+ * ホイールの deltaY から表示倍率の増減量を求める（下スクロールで縮小）
+ *
+ * @param deltaY - WheelEvent.deltaY
+ */
+export function wheelDeltaToZoomDelta(deltaY: number): number {
+  if (deltaY === 0) return 0;
+  return -Math.sign(deltaY) * VIEW_ZOOM.step;
+}
