@@ -8,7 +8,10 @@ import {
   panViewCenterByStageDelta,
   roundViewZoomStep,
   stagePointerToContentSpace,
-  wheelDeltaToZoomDelta,
+  normalizeWheelDeltaY,
+  wheelEventToZoomDelta,
+  WHEEL_ZOOM_DELTA_CAP,
+  WHEEL_PIXELS_PER_ZOOM_STEP,
 } from "./viewZoom";
 
 describe("clampViewZoom", () => {
@@ -125,10 +128,26 @@ describe("panViewCenterByStageDelta", () => {
   });
 });
 
-describe("wheelDeltaToZoomDelta", () => {
+describe("wheelEventToZoomDelta", () => {
   it("下スクロールで縮小・上スクロールで拡大", () => {
-    expect(wheelDeltaToZoomDelta(120)).toBe(-VIEW_ZOOM.step);
-    expect(wheelDeltaToZoomDelta(-120)).toBe(VIEW_ZOOM.step);
-    expect(wheelDeltaToZoomDelta(0)).toBe(0);
+    expect(wheelEventToZoomDelta(45, 0)).toBeCloseTo(-0.05);
+    expect(wheelEventToZoomDelta(-45, 0)).toBeCloseTo(0.05);
+  });
+
+  it("大きな delta は 1 イベントあたりの上限でクランプする", () => {
+    expect(wheelEventToZoomDelta(500, 0)).toBe(-WHEEL_ZOOM_DELTA_CAP);
+    expect(wheelEventToZoomDelta(-500, 0)).toBe(WHEEL_ZOOM_DELTA_CAP);
+  });
+
+  it("トラックパッドの細かい delta は比例して小さく変化する", () => {
+    const small = wheelEventToZoomDelta(6, 0);
+    expect(small).toBeCloseTo(-6 / WHEEL_PIXELS_PER_ZOOM_STEP / 10);
+    expect(Math.abs(small)).toBeLessThan(WHEEL_ZOOM_DELTA_CAP);
+  });
+});
+
+describe("normalizeWheelDeltaY", () => {
+  it("LINE モードは 16 倍してピクセル相当にする", () => {
+    expect(normalizeWheelDeltaY(3, 1)).toBe(48);
   });
 });

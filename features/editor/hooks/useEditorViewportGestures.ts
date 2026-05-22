@@ -10,7 +10,7 @@ import {
   type RefObject,
 } from "react";
 import type { EditorMode } from "../types";
-import { wheelDeltaToZoomDelta } from "../lib/viewZoom";
+import { wheelEventToZoomDelta } from "../lib/viewZoom";
 
 /** 2 点間の距離（px） */
 function touchDistance(t0: Touch, t1: Touch): number {
@@ -107,7 +107,6 @@ export function useEditorViewportGestures({
     lastClientX: number;
     lastClientY: number;
   } | null>(null);
-
   const hasActivePanSession = useCallback(
     () => panSessionRef.current !== null || dragPanSessionRef.current !== null,
     []
@@ -202,9 +201,11 @@ export function useEditorViewportGestures({
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
+      const zoomDelta = wheelEventToZoomDelta(e.deltaY, e.deltaMode);
+      if (zoomDelta === 0) return;
+
       const stagePos = clientToStagePos(e.clientX, e.clientY);
       if (!stagePos || stageWidth <= 0 || stageHeight <= 0) return;
-      const zoomDelta = wheelDeltaToZoomDelta(e.deltaY);
       zoomAt(stagePos, stageWidth, stageHeight, zoomDelta);
     };
 

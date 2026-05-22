@@ -193,12 +193,45 @@ export function panViewCenterByStageDelta(
   );
 }
 
+/** ピクセル換算でこの量のスクロールで VIEW_ZOOM.step 相当の倍率変化 */
+export const WHEEL_PIXELS_PER_ZOOM_STEP = 90;
+
+/** 1 回の wheel で変えられる倍率の上限（トラックパッド連打・大きなノッチの飛びすぎ防止） */
+export const WHEEL_ZOOM_DELTA_CAP = 0.14;
+
+/** これ未満の変化は無視（トラックパッドの微小ノイズ） */
+export const WHEEL_ZOOM_MIN_DELTA = 0.001;
+
 /**
- * ホイールの deltaY から表示倍率の増減量を求める（下スクロールで縮小）
+ * WheelEvent.deltaY をピクセル相当量に正規化する
  *
  * @param deltaY - WheelEvent.deltaY
+ * @param deltaMode - WheelEvent.deltaMode
  */
-export function wheelDeltaToZoomDelta(deltaY: number): number {
-  if (deltaY === 0) return 0;
-  return -Math.sign(deltaY) * VIEW_ZOOM.step;
+export function normalizeWheelDeltaY(deltaY: number, deltaMode: number): number {
+  if (deltaMode === 1) {
+    return deltaY * 16;
+  }
+  if (deltaMode === 2) {
+    return deltaY * 400;
+  }
+  return deltaY;
+}
+
+/**
+ * ホイール 1 イベント分の表示倍率変化量（下スクロールで縮小）
+ *
+ * delta の大きさに比例させつつ 1 イベントあたりの上限で抑え、トラックパッドは滑らかに・マウスは速すぎない中間にする。
+ *
+ * @param deltaY - WheelEvent.deltaY
+ * @param deltaMode - WheelEvent.deltaMode
+ */
+export function wheelEventToZoomDelta(deltaY: number, deltaMode: number): number {
+  const px = normalizeWheelDeltaY(deltaY, deltaMode);
+  if (px === 0) return 0;
+
+  const raw = (-px / WHEEL_PIXELS_PER_ZOOM_STEP) * VIEW_ZOOM.step;
+  if (Math.abs(raw) < WHEEL_ZOOM_MIN_DELTA) return 0;
+
+  return Math.max(-WHEEL_ZOOM_DELTA_CAP, Math.min(WHEEL_ZOOM_DELTA_CAP, raw));
 }
