@@ -261,7 +261,7 @@ export function EditorCanvas({
    */
   function handlePointerDown(e: KonvaEventObject<MouseEvent> | KonvaEventObject<TouchEvent>) {
     if (gestures.tryConsumeStagePointerDown(e)) return;
-    if (gestures.isGestureCapturing) return;
+    if (gestures.hasActivePanSession() || gestures.isGestureCapturing) return;
 
     const stage = e.target.getStage();
     if (!stage) return;
@@ -585,8 +585,8 @@ export function EditorCanvas({
   );
 
   const stageCursor =
-    gestures.isSpacePanMode && canPan && mode === "select"
-      ? gestures.isGestureCapturing
+    canPan && mode === "select"
+      ? gestures.isGestureCapturing || gestures.hasActivePanSession()
         ? "grabbing"
         : "grab"
       : MODE_CURSORS[mode];

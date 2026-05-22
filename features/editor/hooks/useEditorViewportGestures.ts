@@ -51,8 +51,10 @@ interface UseEditorViewportGesturesParams {
 }
 
 interface UseEditorViewportGesturesReturn {
-  /** ピンチ／Space+パン中は Konva のポインタハンドラを抑止する */
+  /** ピンチ／パン中は Konva のポインタハンドラを抑止する */
   isGestureCapturing: boolean;
+  /** パンセッションが進行中か（state 更新前の同期判定用） */
+  hasActivePanSession: () => boolean;
   /** Space 押下中（パン可能カーソル表示用） */
   isSpacePanMode: boolean;
   /** ステージラッパーに付与するキャプチャ用 props */
@@ -101,10 +103,15 @@ export function useEditorViewportGestures({
     initialZoom: number;
     focalStagePos: { x: number; y: number };
   } | null>(null);
-  const touchPanSessionRef = useRef<{
+  const dragPanSessionRef = useRef<{
     lastClientX: number;
     lastClientY: number;
   } | null>(null);
+
+  const hasActivePanSession = useCallback(
+    () => panSessionRef.current !== null || dragPanSessionRef.current !== null,
+    []
+  );
 
   const clientToStagePos = useCallback(
     (clientX: number, clientY: number): { x: number; y: number } | null => {
@@ -121,7 +128,7 @@ export function useEditorViewportGestures({
 
   const endPanSession = useCallback(() => {
     panSessionRef.current = null;
-    touchPanSessionRef.current = null;
+    dragPanSessionRef.current = null;
     setIsGestureCapturing(false);
   }, []);
 
@@ -175,7 +182,7 @@ export function useEditorViewportGestures({
     };
 
     const onMouseUp = () => {
-      if (panSessionRef.current) {
+      if (panSessionRef.current || dragPanSessionRef.current) {
         endPanSession();
       }
     };
@@ -215,7 +222,7 @@ export function useEditorViewportGestures({
         initialZoom: viewZoomRef.current,
         focalStagePos: stagePos,
       };
-      touchPanSessionRef.current = null;
+      dragPanSessionRef.current = null;
       setIsGestureCapturing(true);
     };
 
@@ -235,7 +242,7 @@ export function useEditorViewportGestures({
         return;
       }
 
-      const touchPan = touchPanSessionRef.current;
+      const touchPan = dragPanSessionRef.current;
       if (touchPan && e.touches.length === 1) {
         const t = e.touches[0];
         if (!t) return;
@@ -305,9 +312,19 @@ export function useEditorViewportGestures({
     },
   };
 
+  const startDragPan = useCallback((clientX: number, clientY: number) => {
+    dragPanSessionRef.current = {
+      lastClientX: clientX,
+      lastClientY: clientY,
+    };
+    setIsGestureCapturing(true);
+  }, []);
+
   const tryConsumeStagePointerDown = useCallback(
     (e: KonvaEventObject<globalThis.MouseEvent> | KonvaEventObject<TouchEvent>): boolean => {
-      if (pinchSessionRef.current || panSessionRef.current) return true;
+      if (pinchSessionRef.current || panSessionRef.current || dragPanSessionRef.current) {
+        return true;
+      }
 
       if ("touches" in e.evt) {
         if (e.evt.touches.length >= 2) return true;
@@ -316,31 +333,55 @@ export function useEditorViewportGestures({
         if (!stage || e.target !== stage) return false;
         const touch = e.evt.touches[0];
         if (!touch) return false;
-        touchPanSessionRef.current = {
-          lastClientX: touch.clientX,
-          lastClientY: touch.clientY,
-        };
-        setIsGestureCapturing(true);
+        startDragPan(touch.clientX, touch.clientY);
         if (e.evt.cancelable) e.evt.preventDefault();
         return true;
       }
 
-      return false;
+      const mouseEvt = e.evt;
+      if (mouseEvt.button !== 0 || mode !== "select" || !canPan) return false;
+
+      if (spacePressedRef.current) {
+        startDragPan(mouseEvt.clientX, mouseEvt.clientY);
+        mouseEvt.preventDefault();
+        return true;
+      }
+
+      const stage = e.target.getStage();
+      if (!stage || e.target !== stage) return false;
+      startDragPan(mouseEvt.clientX, mouseEvt.clientY);
+      mouseEvt.preventDefault();
+      return true;
     },
-    [mode, canPan]
+    [mode, canPan, startDragPan]
   );
 
   const tryConsumeStagePointerMove = useCallback(
     (e: KonvaEventObject<globalThis.MouseEvent> | KonvaEventObject<TouchEvent>): boolean => {
-      const touchPan = touchPanSessionRef.current;
-      if (!touchPan || !("touches" in e.evt)) return false;
-      const touch = e.evt.touches[0];
-      if (!touch) return false;
-      if (e.evt.cancelable) e.evt.preventDefault();
-      const dx = touch.clientX - touchPan.lastClientX;
-      const dy = touch.clientY - touchPan.lastClientY;
-      touchPan.lastClientX = touch.clientX;
-      touchPan.lastClientY = touch.clientY;
+      const dragPan = dragPanSessionRef.current;
+      if (!dragPan) return false;
+
+      if ("touches" in e.evt) {
+        const touch = e.evt.touches[0];
+        if (!touch) return false;
+        if (e.evt.cancelable) e.evt.preventDefault();
+        const dx = touch.clientX - dragPan.lastClientX;
+        const dy = touch.clientY - dragPan.lastClientY;
+        dragPan.lastClientX = touch.clientX;
+        dragPan.lastClientY = touch.clientY;
+        if (dx !== 0 || dy !== 0) {
+          panByStageDelta({ x: dx, y: dy });
+        }
+        return true;
+      }
+
+      const mouseEvt = e.evt;
+      if (mouseEvt.buttons !== 1) return false;
+      mouseEvt.preventDefault();
+      const dx = mouseEvt.clientX - dragPan.lastClientX;
+      const dy = mouseEvt.clientY - dragPan.lastClientY;
+      dragPan.lastClientX = mouseEvt.clientX;
+      dragPan.lastClientY = mouseEvt.clientY;
       if (dx !== 0 || dy !== 0) {
         panByStageDelta({ x: dx, y: dy });
       }
@@ -350,7 +391,7 @@ export function useEditorViewportGestures({
   );
 
   const tryConsumeStagePointerUp = useCallback((): boolean => {
-    if (touchPanSessionRef.current) {
+    if (dragPanSessionRef.current) {
       endPanSession();
       return true;
     }
@@ -359,6 +400,7 @@ export function useEditorViewportGestures({
 
   return {
     isGestureCapturing,
+    hasActivePanSession,
     isSpacePanMode,
     stageContainerProps,
     tryConsumeStagePointerDown,
