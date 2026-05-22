@@ -10,8 +10,7 @@ import {
   stagePointerToContentSpace,
   normalizeWheelDeltaY,
   wheelEventToZoomDelta,
-  WHEEL_ZOOM_DELTA_CAP,
-  WHEEL_PIXELS_PER_ZOOM_STEP,
+  MOUSE_WHEEL_ZOOM_FACTOR,
 } from "./viewZoom";
 
 describe("clampViewZoom", () => {
@@ -129,20 +128,18 @@ describe("panViewCenterByStageDelta", () => {
 });
 
 describe("wheelEventToZoomDelta", () => {
-  it("下スクロールで縮小・上スクロールで拡大", () => {
-    expect(wheelEventToZoomDelta(45, 0)).toBeCloseTo(-0.05);
-    expect(wheelEventToZoomDelta(-45, 0)).toBeCloseTo(0.05);
+  it("トラックパッド（小さなピクセル delta）は 1 イベント 1 刻み", () => {
+    expect(wheelEventToZoomDelta(8, 0)).toBe(-VIEW_ZOOM.step);
+    expect(wheelEventToZoomDelta(-8, 0)).toBe(VIEW_ZOOM.step);
   });
 
-  it("大きな delta は 1 イベントあたりの上限でクランプする", () => {
-    expect(wheelEventToZoomDelta(500, 0)).toBe(-WHEEL_ZOOM_DELTA_CAP);
-    expect(wheelEventToZoomDelta(-500, 0)).toBe(WHEEL_ZOOM_DELTA_CAP);
+  it("マウスホイール（LINE）はやや弱い 1 刻み", () => {
+    expect(wheelEventToZoomDelta(3, 1)).toBe(-VIEW_ZOOM.step * MOUSE_WHEEL_ZOOM_FACTOR);
+    expect(wheelEventToZoomDelta(-3, 1)).toBe(VIEW_ZOOM.step * MOUSE_WHEEL_ZOOM_FACTOR);
   });
 
-  it("トラックパッドの細かい delta は比例して小さく変化する", () => {
-    const small = wheelEventToZoomDelta(6, 0);
-    expect(small).toBeCloseTo(-6 / WHEEL_PIXELS_PER_ZOOM_STEP / 10);
-    expect(Math.abs(small)).toBeLessThan(WHEEL_ZOOM_DELTA_CAP);
+  it("ピクセルでも大きな一手はマウス扱い", () => {
+    expect(wheelEventToZoomDelta(120, 0)).toBe(-VIEW_ZOOM.step * MOUSE_WHEEL_ZOOM_FACTOR);
   });
 });
 
