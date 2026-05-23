@@ -20,7 +20,7 @@ export function EditorViewportControls({
   onResetViewport,
   pinViewportControls = false,
 }: EditorViewportControlsProps) {
-  const zoomHint = pinViewportControls ? "Ctrl/Cmd+ホイールで拡大" : "ホイールで拡大";
+  const zoomHint = pinViewportControls ? "Ctrl/Cmd+ホイールで拡大/縮小" : "ホイールで拡大/縮小";
 
   return (
     <div
@@ -32,7 +32,7 @@ export function EditorViewportControls({
       <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
         <span className="shrink-0 text-xs text-zinc-600">表示ズーム</span>
         <span className="text-[11px] leading-snug text-zinc-400">
-          {zoomHint} · 空白／Space+ドラッグで移動
+          {zoomHint} · 拡大時: 空白／Space+ドラッグで移動
         </span>
       </div>
       <div className="flex items-center gap-2">

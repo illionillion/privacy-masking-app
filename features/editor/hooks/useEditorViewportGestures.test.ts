@@ -189,6 +189,18 @@ describe("useEditorViewportGestures", () => {
     });
   });
 
+  it("stageWidth が 0 のときは wheel で zoomAt しない", async () => {
+    const { hook, container, zoomAt } = mountGestures({ stageWidth: 0 });
+
+    fireEvent.wheel(container, { deltaY: -120, clientX: 200, clientY: 150 });
+
+    await waitFor(() => {
+      expect(zoomAt).not.toHaveBeenCalled();
+    });
+
+    hook.unmount();
+  });
+
   it("Space+ドラッグ開始時は選択を解除しない", async () => {
     const { hook, onClearSelection } = mountGestures();
 

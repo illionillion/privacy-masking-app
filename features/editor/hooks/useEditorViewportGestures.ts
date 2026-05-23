@@ -222,9 +222,10 @@ export function useEditorViewportGestures({
       const zoomDelta = wheelEventToZoomDelta(e.deltaY, e.deltaMode);
       if (zoomDelta === 0) return;
 
-      e.preventDefault();
       const stagePos = clientToStagePos(e.clientX, e.clientY);
       if (!stagePos || stageWidth <= 0 || stageHeight <= 0) return;
+
+      e.preventDefault();
       zoomAt(stagePos, stageWidth, stageHeight, zoomDelta);
     };
 
@@ -292,7 +293,6 @@ export function useEditorViewportGestures({
     clientToStagePos,
     zoomAt,
     setZoomAt,
-    panByStageDelta,
     endPanSession,
     endPinchSession,
     pinViewportControls,
