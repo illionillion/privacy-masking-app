@@ -190,7 +190,11 @@ export function EditorCanvas({
         onSelectItem(null);
       } else if (e.key === "0" && !isEditableKeyboardTarget(e.target)) {
         resetViewport();
-      } else if ((e.key === "Delete" || e.key === "Backspace") && selectedId !== null) {
+      } else if (
+        (e.key === "Delete" || e.key === "Backspace") &&
+        selectedId !== null &&
+        !isEditableKeyboardTarget(e.target)
+      ) {
         onDeleteSelected();
       }
     }

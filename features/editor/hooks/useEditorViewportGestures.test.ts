@@ -132,6 +132,17 @@ describe("useEditorViewportGestures", () => {
     expect(hook.result.current.isSpacePanMode).toBe(false);
   });
 
+  it("button フォーカス中は Space パンを開始しない", () => {
+    const { hook } = mountGestures();
+    const button = document.createElement("button");
+    document.body.appendChild(button);
+    button.focus();
+
+    fireEvent.keyDown(button, { code: "Space", key: " " });
+
+    expect(hook.result.current.isSpacePanMode).toBe(false);
+  });
+
   it("空白ドラッグで panByStageDelta が呼ばれる", async () => {
     const { hook, panByStageDelta } = mountGestures();
     const stage = { getStage: () => stage, getType: () => "Stage" };
