@@ -20,7 +20,7 @@ export function EditorViewportControls({
   onResetViewport,
   pinViewportControls = false,
 }: EditorViewportControlsProps) {
-  const zoomHint = pinViewportControls ? "Ctrl+ホイールで拡大" : "ホイールで拡大";
+  const zoomHint = pinViewportControls ? "Ctrl/Cmd+ホイールで拡大" : "ホイールで拡大";
 
   return (
     <div

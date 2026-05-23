@@ -219,10 +219,10 @@ export function useEditorViewportGestures({
       if (pinViewportControls && !e.ctrlKey && !e.metaKey) {
         return;
       }
-      e.preventDefault();
       const zoomDelta = wheelEventToZoomDelta(e.deltaY, e.deltaMode);
       if (zoomDelta === 0) return;
 
+      e.preventDefault();
       const stagePos = clientToStagePos(e.clientX, e.clientY);
       if (!stagePos || stageWidth <= 0 || stageHeight <= 0) return;
       zoomAt(stagePos, stageWidth, stageHeight, zoomDelta);
@@ -311,7 +311,6 @@ export function useEditorViewportGestures({
       }
       e.preventDefault();
       e.stopPropagation();
-      onClearSelection();
       panSessionRef.current = {
         lastClientX: e.clientX,
         lastClientY: e.clientY,

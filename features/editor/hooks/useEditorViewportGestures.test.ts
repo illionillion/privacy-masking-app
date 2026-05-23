@@ -172,4 +172,36 @@ describe("useEditorViewportGestures", () => {
       expect(zoomAt).toHaveBeenCalled();
     });
   });
+
+  it("Ctrl+wheel でも deltaY が 0 なら zoomAt しない", async () => {
+    const { container, zoomAt } = mountGestures({ pinViewportControls: true });
+
+    fireEvent.wheel(container, {
+      deltaY: 0,
+      deltaX: 50,
+      clientX: 200,
+      clientY: 150,
+      ctrlKey: true,
+    });
+
+    await waitFor(() => {
+      expect(zoomAt).not.toHaveBeenCalled();
+    });
+  });
+
+  it("Space+ドラッグ開始時は選択を解除しない", async () => {
+    const { hook, onClearSelection } = mountGestures();
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space", bubbles: true }));
+
+    hook.result.current.stageContainerProps.onMouseDownCapture({
+      button: 0,
+      clientX: 50,
+      clientY: 50,
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    } as unknown as ReactMouseEvent<HTMLDivElement>);
+
+    expect(onClearSelection).not.toHaveBeenCalled();
+  });
 });
