@@ -172,6 +172,7 @@ export function EditorCanvas({
     zoomAt,
     setZoomAt,
     panByStageDelta,
+    onClearSelection: () => onSelectItem(null),
   });
 
   /**

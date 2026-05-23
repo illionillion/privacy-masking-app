@@ -27,6 +27,14 @@ function touchCenter(t0: Touch, t1: Touch): { x: number; y: number } {
   };
 }
 
+/** Konva イベントが Stage 空白（背景）へのヒットか */
+function isEmptyStageHit(
+  e: KonvaEventObject<globalThis.MouseEvent> | KonvaEventObject<TouchEvent>
+): boolean {
+  const stage = e.target.getStage();
+  return stage !== null && (e.target === stage || e.target.getType() === "Stage");
+}
+
 interface UseEditorViewportGesturesParams {
   /** ホイール・タッチを受け取るステージラッパー */
   stageContainerRef: RefObject<HTMLDivElement | null>;
@@ -48,6 +56,8 @@ interface UseEditorViewportGesturesParams {
     absoluteZoom: number
   ) => void;
   panByStageDelta: (stageDelta: { x: number; y: number }) => void;
+  /** 空白上でパンを開始するときに選択を外す */
+  onClearSelection: () => void;
 }
 
 interface UseEditorViewportGesturesReturn {
@@ -84,6 +94,7 @@ export function useEditorViewportGestures({
   zoomAt,
   setZoomAt,
   panByStageDelta,
+  onClearSelection,
 }: UseEditorViewportGesturesParams): UseEditorViewportGesturesReturn {
   const [isGestureCapturing, setIsGestureCapturing] = useState(false);
   const [isSpacePanMode, setIsSpacePanMode] = useState(false);
@@ -305,6 +316,7 @@ export function useEditorViewportGestures({
       }
       e.preventDefault();
       e.stopPropagation();
+      onClearSelection();
       panSessionRef.current = {
         lastClientX: e.clientX,
         lastClientY: e.clientY,
@@ -330,10 +342,10 @@ export function useEditorViewportGestures({
       if ("touches" in e.evt) {
         if (e.evt.touches.length >= 2) return true;
         if (mode !== "select" || !canPan) return false;
-        const stage = e.target.getStage();
-        if (!stage || e.target !== stage) return false;
+        if (!isEmptyStageHit(e)) return false;
         const touch = e.evt.touches[0];
         if (!touch) return false;
+        onClearSelection();
         startDragPan(touch.clientX, touch.clientY);
         if (e.evt.cancelable) e.evt.preventDefault();
         return true;
@@ -348,13 +360,13 @@ export function useEditorViewportGestures({
         return true;
       }
 
-      const stage = e.target.getStage();
-      if (!stage || e.target !== stage) return false;
+      if (!isEmptyStageHit(e)) return false;
+      onClearSelection();
       startDragPan(mouseEvt.clientX, mouseEvt.clientY);
       mouseEvt.preventDefault();
       return true;
     },
-    [mode, canPan, startDragPan]
+    [mode, canPan, startDragPan, onClearSelection]
   );
 
   const tryConsumeStagePointerMove = useCallback(
