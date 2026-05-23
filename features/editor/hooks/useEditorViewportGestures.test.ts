@@ -131,4 +131,45 @@ describe("useEditorViewportGestures", () => {
 
     expect(hook.result.current.isSpacePanMode).toBe(false);
   });
+
+  it("空白ドラッグで panByStageDelta が呼ばれる", async () => {
+    const { hook, panByStageDelta } = mountGestures();
+    const stage = { getStage: () => stage, getType: () => "Stage" };
+    const emptyEvent = {
+      evt: { button: 0, clientX: 40, clientY: 40, preventDefault: vi.fn() },
+      target: stage,
+    } as unknown as Parameters<typeof hook.result.current.tryConsumeStagePointerDown>[0];
+
+    expect(hook.result.current.tryConsumeStagePointerDown(emptyEvent)).toBe(true);
+
+    const moveEvent = {
+      evt: { buttons: 1, clientX: 60, clientY: 55, preventDefault: vi.fn() },
+    } as unknown as Parameters<typeof hook.result.current.tryConsumeStagePointerMove>[0];
+
+    expect(hook.result.current.tryConsumeStagePointerMove(moveEvent)).toBe(true);
+
+    await waitFor(() => {
+      expect(panByStageDelta).toHaveBeenCalledWith({ x: 20, y: 15 });
+    });
+  });
+
+  it("pinViewportControls 時は修飾キーなし wheel で zoomAt しない", async () => {
+    const { container, zoomAt } = mountGestures({ pinViewportControls: true });
+
+    fireEvent.wheel(container, { deltaY: -120, clientX: 200, clientY: 150 });
+
+    await waitFor(() => {
+      expect(zoomAt).not.toHaveBeenCalled();
+    });
+  });
+
+  it("pinViewportControls 時は Ctrl+wheel で zoomAt する", async () => {
+    const { container, zoomAt } = mountGestures({ pinViewportControls: true });
+
+    fireEvent.wheel(container, { deltaY: -120, clientX: 200, clientY: 150, ctrlKey: true });
+
+    await waitFor(() => {
+      expect(zoomAt).toHaveBeenCalled();
+    });
+  });
 });

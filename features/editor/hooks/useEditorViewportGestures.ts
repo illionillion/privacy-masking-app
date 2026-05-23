@@ -59,6 +59,11 @@ export interface UseEditorViewportGesturesParams {
   panByStageDelta: (stageDelta: { x: number; y: number }) => void;
   /** 空白上でパンを開始するときに選択を外す */
   onClearSelection: () => void;
+  /**
+   * true のときホイールは Ctrl/Cmd+ホイールのみズームし、通常ホイールは親スクロールに任せる
+   * （モーダル内 `overflow-auto` 向け）
+   */
+  pinViewportControls?: boolean;
 }
 
 interface UseEditorViewportGesturesReturn {
@@ -83,7 +88,11 @@ interface UseEditorViewportGesturesReturn {
 }
 
 /**
- * EditorCanvas のホイールズーム・Space+パン・ピンチ・SP 1 本指パンを扱う
+ * EditorCanvas のホイールズーム・パン・ピンチを扱う。
+ *
+ * パン（viewZoom > 1・選択モード）:
+ * - PC: 空白ドラッグ、または Space+ドラッグ（オブジェクト上でも画面移動）
+ * - SP: 空白上の 1 本指ドラッグ
  */
 export function useEditorViewportGestures({
   stageContainerRef,
@@ -96,6 +105,7 @@ export function useEditorViewportGestures({
   setZoomAt,
   panByStageDelta,
   onClearSelection,
+  pinViewportControls = false,
 }: UseEditorViewportGesturesParams): UseEditorViewportGesturesReturn {
   const [isGestureCapturing, setIsGestureCapturing] = useState(false);
   const [isSpacePanMode, setIsSpacePanMode] = useState(false);
@@ -206,6 +216,9 @@ export function useEditorViewportGestures({
     if (!el) return;
 
     const onWheel = (e: WheelEvent) => {
+      if (pinViewportControls && !e.ctrlKey && !e.metaKey) {
+        return;
+      }
       e.preventDefault();
       const zoomDelta = wheelEventToZoomDelta(e.deltaY, e.deltaMode);
       if (zoomDelta === 0) return;
@@ -248,20 +261,6 @@ export function useEditorViewportGestures({
         setZoomAt(stagePos, stageWidth, stageHeight, pinch.initialZoom * ratio);
         return;
       }
-
-      const touchPan = dragPanSessionRef.current;
-      if (touchPan && e.touches.length === 1) {
-        const t = e.touches[0];
-        if (!t) return;
-        if (e.cancelable) e.preventDefault();
-        const dx = t.clientX - touchPan.lastClientX;
-        const dy = t.clientY - touchPan.lastClientY;
-        touchPan.lastClientX = t.clientX;
-        touchPan.lastClientY = t.clientY;
-        if (dx !== 0 || dy !== 0) {
-          panByStageDelta({ x: dx, y: dy });
-        }
-      }
     };
 
     const onTouchEnd = (e: TouchEvent) => {
@@ -296,6 +295,7 @@ export function useEditorViewportGestures({
     panByStageDelta,
     endPanSession,
     endPinchSession,
+    pinViewportControls,
   ]);
 
   const stageContainerProps = {
@@ -355,6 +355,7 @@ export function useEditorViewportGestures({
         return true;
       }
 
+      // PC: 空白ドラッグでもパン（拡大時）。オブジェクト上は Space+ドラッグに限定。
       if (!isEmptyStageHit(e)) return false;
       onClearSelection();
       startDragPan(mouseEvt.clientX, mouseEvt.clientY);

@@ -7,6 +7,8 @@ interface EditorViewportControlsProps {
   className?: string;
   viewZoom: number;
   onResetViewport: () => void;
+  /** true のときホイールはスクロール優先のため Ctrl+ホイール案内を表示 */
+  pinViewportControls?: boolean;
 }
 
 /**
@@ -16,7 +18,10 @@ export function EditorViewportControls({
   className,
   viewZoom,
   onResetViewport,
+  pinViewportControls = false,
 }: EditorViewportControlsProps) {
+  const zoomHint = pinViewportControls ? "Ctrl+ホイールで拡大" : "ホイールで拡大";
+
   return (
     <div
       className={clsx([
@@ -24,7 +29,12 @@ export function EditorViewportControls({
         className,
       ])}
     >
-      <span className="text-xs text-zinc-600">表示ズーム</span>
+      <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+        <span className="shrink-0 text-xs text-zinc-600">表示ズーム</span>
+        <span className="text-[11px] leading-snug text-zinc-400">
+          {zoomHint} · 空白／Space+ドラッグで移動
+        </span>
+      </div>
       <div className="flex items-center gap-2">
         <span className="text-xs tabular-nums text-zinc-500">{Math.round(viewZoom * 100)}%</span>
         <button

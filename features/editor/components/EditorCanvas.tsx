@@ -174,6 +174,7 @@ export function EditorCanvas({
     setZoomAt,
     panByStageDelta,
     onClearSelection: () => onSelectItem(null),
+    pinViewportControls,
   });
 
   /**
@@ -583,9 +584,14 @@ export function EditorCanvas({
   );
 
   const viewportControls = (
-    <EditorViewportControls viewZoom={viewZoom} onResetViewport={resetViewport} />
+    <EditorViewportControls
+      viewZoom={viewZoom}
+      onResetViewport={resetViewport}
+      pinViewportControls={pinViewportControls}
+    />
   );
 
+  /** 拡大時は空白ドラッグでパンできるため grab。Space 押下中も同カーソル */
   const stageCursor =
     canPan && mode === "select"
       ? gestures.isGestureCapturing || gestures.hasActivePanSession()
