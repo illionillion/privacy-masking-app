@@ -15,6 +15,7 @@ import {
   Transformer,
 } from "react-konva";
 import type { EditorMode, PaintStroke, StampRegion, StampType } from "../types";
+import { isEditableKeyboardTarget } from "../lib/isEditableKeyboardTarget";
 import { stagePointerToContentSpace } from "../lib/viewZoom";
 import { useEditorViewport } from "../hooks/useEditorViewport";
 import { useEditorViewportGestures } from "../hooks/useEditorViewportGestures";
@@ -186,7 +187,7 @@ export function EditorCanvas({
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         onSelectItem(null);
-      } else if (e.key === "0") {
+      } else if (e.key === "0" && !isEditableKeyboardTarget(e.target)) {
         resetViewport();
       } else if ((e.key === "Delete" || e.key === "Backspace") && selectedId !== null) {
         onDeleteSelected();

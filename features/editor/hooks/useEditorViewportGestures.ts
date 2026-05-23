@@ -10,6 +10,7 @@ import {
   type RefObject,
 } from "react";
 import type { EditorMode } from "../types";
+import { isEditableKeyboardTarget } from "../lib/isEditableKeyboardTarget";
 import { wheelEventToZoomDelta } from "../lib/viewZoom";
 
 /** 2 点間の距離（px） */
@@ -35,7 +36,7 @@ function isEmptyStageHit(
   return stage !== null && (e.target === stage || e.target.getType() === "Stage");
 }
 
-interface UseEditorViewportGesturesParams {
+export interface UseEditorViewportGesturesParams {
   /** ホイール・タッチを受け取るステージラッパー */
   stageContainerRef: RefObject<HTMLDivElement | null>;
   stageWidth: number;
@@ -149,14 +150,8 @@ export function useEditorViewportGestures({
 
   /** Space キーでパンモード切替 */
   useEffect(() => {
-    const isEditableTarget = (target: EventTarget | null): boolean => {
-      if (!(target instanceof HTMLElement)) return false;
-      const tag = target.tagName;
-      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
-    };
-
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.code !== "Space" || e.repeat || isEditableTarget(e.target)) return;
+      if (e.code !== "Space" || e.repeat || isEditableKeyboardTarget(e.target)) return;
       e.preventDefault();
       spacePressedRef.current = true;
       setIsSpacePanMode(true);
