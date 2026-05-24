@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { ChevronDown } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useNarrowViewport } from "@/lib/useNarrowViewport";
 import type { StampCatalogEntry } from "../constants";
 
 interface StampFacePickerProps {
@@ -18,6 +19,7 @@ interface StampFacePickerProps {
  * トリガーは絵文字のみのコンパクト表示。一覧では絵文字とラベルを表示する。
  */
 export function StampFacePicker({ catalog, value, onChange }: StampFacePickerProps) {
+  const isNarrowViewport = useNarrowViewport();
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -179,7 +181,8 @@ export function StampFacePicker({ catalog, value, onChange }: StampFacePickerPro
       {open && (
         <div
           className={clsx([
-            "absolute top-full left-0 z-50 mt-1 w-56 overflow-hidden rounded-md border border-zinc-200 bg-white shadow-lg",
+            "absolute top-full z-50 mt-1 w-56 max-w-[min(14rem,calc(100vw-2rem))] overflow-hidden rounded-md border border-zinc-200 bg-white shadow-lg",
+            isNarrowViewport ? "right-0" : "left-0",
             /* Safari: スクロール層の背景が透けるのを防ぐ */
             "[transform:translateZ(0)]",
           ])}

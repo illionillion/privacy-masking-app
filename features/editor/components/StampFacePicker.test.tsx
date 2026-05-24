@@ -129,4 +129,27 @@ describe("StampFacePicker", () => {
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
+
+  it("SP では一覧をトリガー右端に揃えて左方向に展開する", async () => {
+    const matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query.includes("max-width"),
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+    vi.stubGlobal("matchMedia", matchMedia);
+
+    render(<StampFacePicker catalog={CATALOG} value="a.png" onChange={vi.fn()} />);
+    await userEvent.click(getTrigger("笑顔"));
+
+    const listbox = screen.getByRole("listbox", { name: "スタンプ画像" });
+    expect(listbox.parentElement).toHaveClass("right-0");
+    expect(listbox.parentElement).not.toHaveClass("left-0");
+
+    vi.unstubAllGlobals();
+  });
 });
