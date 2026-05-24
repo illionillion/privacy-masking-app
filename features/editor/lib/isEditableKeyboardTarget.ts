@@ -11,5 +11,5 @@ export function isEditableKeyboardTarget(target: EventTarget | null): boolean {
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) {
     return true;
   }
-  return target.closest('button, a[href], [role="button"], [role="link"], summary') !== null;
+  return target.closest("button, a[href], [role='button'], [role='link'], summary") !== null;
 }
