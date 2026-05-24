@@ -5,11 +5,15 @@ import { EditorToolbar } from "@/features/editor/components/EditorToolbar";
 import { STAMP_CATALOG } from "@/features/editor/constants";
 import { useEditorModal } from "../hooks/useEditorModal";
 import type { MaskingImageItem } from "../types";
+import { EditorCanvasPlaceholder } from "./EditorCanvasPlaceholder";
 
 /** Konva は window を module ロード時に参照するため SSR を無効化して動的インポートする */
 const EditorCanvas = dynamic(
   () => import("@/features/editor/components/EditorCanvas").then((mod) => mod.EditorCanvas),
-  { ssr: false }
+  {
+    ssr: false,
+    loading: () => <EditorCanvasPlaceholder className="min-h-0 flex-1" />,
+  }
 );
 
 interface EditorModalProps {
@@ -105,7 +109,7 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-1.5 sm:p-2">
-            {imageNaturalWidth > 0 && imageNaturalHeight > 0 && (
+            {imageNaturalWidth > 0 && imageNaturalHeight > 0 ? (
               <EditorCanvas
                 key={image.id}
                 pinViewportControls
@@ -128,6 +132,8 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
                 selectedStampFileName={editor.selectedStampFileName}
                 onDeleteSelected={editor.removeSelectedItem}
               />
+            ) : (
+              <EditorCanvasPlaceholder className="min-h-0 flex-1" />
             )}
           </div>
         </div>

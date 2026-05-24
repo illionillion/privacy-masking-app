@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Circle,
   Group,
@@ -203,6 +203,15 @@ export function EditorCanvas({
   }, [selectedId, onSelectItem, onDeleteSelected, resetViewport]);
 
   /** コンテナの幅変化を ResizeObserver で監視 */
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const w = container.clientWidth;
+    if (w > 0) {
+      setStageWidth(w);
+    }
+  }, [imageNaturalHeight, imageNaturalWidth]);
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
