@@ -115,6 +115,16 @@ export function useEditorViewportGestures({
     viewZoomRef.current = viewZoom;
   }, [viewZoom]);
 
+  const canPanRef = useRef(canPan);
+  useEffect(() => {
+    canPanRef.current = canPan;
+  }, [canPan]);
+
+  const modeRef = useRef(mode);
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+
   const spacePressedRef = useRef(false);
   const panSessionRef = useRef<{
     lastClientX: number;
@@ -162,6 +172,7 @@ export function useEditorViewportGestures({
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code !== "Space" || e.repeat || isEditableKeyboardTarget(e.target)) return;
+      if (!canPanRef.current || modeRef.current !== "select") return;
       e.preventDefault();
       spacePressedRef.current = true;
       setIsSpacePanMode(true);
@@ -237,7 +248,7 @@ export function useEditorViewportGestures({
       const center = touchCenter(t0, t1);
       const stagePos = clientToStagePos(center.x, center.y);
       if (!stagePos) return;
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       pinchSessionRef.current = {
         initialDistance: touchDistance(t0, t1),
         initialZoom: viewZoomRef.current,
@@ -253,7 +264,7 @@ export function useEditorViewportGestures({
         const t0 = e.touches[0];
         const t1 = e.touches[1];
         if (!t0 || !t1) return;
-        e.preventDefault();
+        if (e.cancelable) e.preventDefault();
         const dist = touchDistance(t0, t1);
         if (pinch.initialDistance <= 0) return;
         const center = touchCenter(t0, t1);

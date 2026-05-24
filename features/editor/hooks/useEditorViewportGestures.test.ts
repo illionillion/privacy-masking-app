@@ -143,6 +143,22 @@ describe("useEditorViewportGestures", () => {
     expect(hook.result.current.isSpacePanMode).toBe(false);
   });
 
+  it("canPan が false のとき Space パンを開始しない", () => {
+    const { hook } = mountGestures({ canPan: false, viewZoom: 1 });
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space", bubbles: true }));
+
+    expect(hook.result.current.isSpacePanMode).toBe(false);
+  });
+
+  it("選択モード以外では Space パンを開始しない", () => {
+    const { hook } = mountGestures({ mode: "paint" });
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space", bubbles: true }));
+
+    expect(hook.result.current.isSpacePanMode).toBe(false);
+  });
+
   it("空白ドラッグで panByStageDelta が呼ばれる", async () => {
     const { hook, panByStageDelta } = mountGestures();
     const stage = { getStage: () => stage, getType: () => "Stage" };
