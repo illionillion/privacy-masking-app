@@ -118,3 +118,120 @@ export function stagePointerToContentSpace(
     y: contentCenter.y + (stagePos.y - stageCenterY) / viewZoom,
   };
 }
+
+/**
+ * ホイール／ピンチで倍率を変えたあとも、ポインタ下の画像点が同じステージ位置に留まるよう表示中心を更新する
+ *
+ * @param viewCenter - 現在の表示中心（画像自然座標）
+ * @param stagePos - ズームの焦点（ステージ座標）
+ * @param stageWidth - ステージ幅
+ * @param stageHeight - ステージ高さ
+ * @param scaleX - 画像→ステージ X スケール
+ * @param scaleY - 画像→ステージ Y スケール
+ * @param oldZoom - 変更前の表示倍率
+ * @param newZoom - 変更後の表示倍率
+ * @param imageNaturalWidth - 元画像の幅
+ * @param imageNaturalHeight - 元画像の高さ
+ */
+export function computeViewCenterAfterZoomAt(
+  viewCenter: ViewCenter,
+  stagePos: { x: number; y: number },
+  stageWidth: number,
+  stageHeight: number,
+  scaleX: number,
+  scaleY: number,
+  oldZoom: number,
+  newZoom: number,
+  imageNaturalWidth: number,
+  imageNaturalHeight: number
+): ViewCenter {
+  const stageCenterX = stageWidth / 2;
+  const stageCenterY = stageHeight / 2;
+  const imageX = viewCenter.x + (stagePos.x - stageCenterX) / (oldZoom * scaleX);
+  const imageY = viewCenter.y + (stagePos.y - stageCenterY) / (oldZoom * scaleY);
+  return clampViewCenter(
+    {
+      x: imageX - (stagePos.x - stageCenterX) / (newZoom * scaleX),
+      y: imageY - (stagePos.y - stageCenterY) / (newZoom * scaleY),
+    },
+    imageNaturalWidth,
+    imageNaturalHeight,
+    newZoom
+  );
+}
+
+/**
+ * ステージ上のドラッグ量から表示中心を平行移動する（viewZoom > 1 のときのみ有効）
+ *
+ * @param viewCenter - 現在の表示中心
+ * @param stageDelta - ステージ px での移動量（指の移動方向）
+ * @param scaleX - 画像→ステージ X スケール
+ * @param scaleY - 画像→ステージ Y スケール
+ * @param viewZoom - 表示倍率
+ * @param imageNaturalWidth - 元画像の幅
+ * @param imageNaturalHeight - 元画像の高さ
+ */
+export function panViewCenterByStageDelta(
+  viewCenter: ViewCenter,
+  stageDelta: { x: number; y: number },
+  scaleX: number,
+  scaleY: number,
+  viewZoom: number,
+  imageNaturalWidth: number,
+  imageNaturalHeight: number
+): ViewCenter {
+  const deltaX = scaleX > 0 ? stageDelta.x / (scaleX * viewZoom) : 0;
+  const deltaY = scaleY > 0 ? stageDelta.y / (scaleY * viewZoom) : 0;
+  return clampViewCenter(
+    {
+      x: viewCenter.x - deltaX,
+      y: viewCenter.y - deltaY,
+    },
+    imageNaturalWidth,
+    imageNaturalHeight,
+    viewZoom
+  );
+}
+
+/** マウスホイール 1 ノッチあたりの倍率（VIEW_ZOOM.step よりやや弱め） */
+export const MOUSE_WHEEL_ZOOM_FACTOR = 0.8;
+
+/** ピクセルモードでもこの量以上ならマウスホイール相当とみなす */
+export const MOUSE_WHEEL_PIXEL_THRESHOLD = 40;
+
+/**
+ * WheelEvent.deltaY をピクセル相当量に正規化する
+ *
+ * @param deltaY - WheelEvent.deltaY
+ * @param deltaMode - WheelEvent.deltaMode
+ */
+export function normalizeWheelDeltaY(deltaY: number, deltaMode: number): number {
+  if (deltaMode === 1) {
+    return deltaY * 16;
+  }
+  if (deltaMode === 2) {
+    return deltaY * 400;
+  }
+  return deltaY;
+}
+
+/**
+ * ホイール 1 イベント分の表示倍率変化量（下スクロールで縮小）
+ *
+ * トラックパッドは最初どおり 1 イベント 1 刻み（0.1）。マウスホイールだけやや弱める。
+ *
+ * @param deltaY - WheelEvent.deltaY
+ * @param deltaMode - WheelEvent.deltaMode
+ */
+export function wheelEventToZoomDelta(deltaY: number, deltaMode: number): number {
+  if (deltaY === 0) return 0;
+
+  const step = -Math.sign(deltaY) * VIEW_ZOOM.step;
+  const px = Math.abs(normalizeWheelDeltaY(deltaY, deltaMode));
+  const isMouseLike = deltaMode === 1 || px >= MOUSE_WHEEL_PIXEL_THRESHOLD;
+
+  if (isMouseLike) {
+    return step * MOUSE_WHEEL_ZOOM_FACTOR;
+  }
+  return step;
+}
