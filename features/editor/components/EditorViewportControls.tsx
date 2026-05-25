@@ -1,6 +1,8 @@
 "use client";
 
 import clsx from "clsx";
+import { useNarrowViewport } from "@/lib/useNarrowViewport";
+import { getEditorViewportHintText } from "../lib/editorViewportHintText";
 
 interface EditorViewportControlsProps {
   /** ルート要素に追加するクラス（モーダル内 sticky など） */
@@ -20,7 +22,8 @@ export function EditorViewportControls({
   onResetViewport,
   pinViewportControls = false,
 }: EditorViewportControlsProps) {
-  const zoomHint = pinViewportControls ? "Ctrl/Cmd+ホイールで拡大/縮小" : "ホイールで拡大/縮小";
+  const isNarrowViewport = useNarrowViewport();
+  const hintText = getEditorViewportHintText({ pinViewportControls, isNarrowViewport });
 
   return (
     <div
@@ -31,9 +34,7 @@ export function EditorViewportControls({
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
         <span className="shrink-0 text-xs text-zinc-600">表示ズーム</span>
-        <span className="text-[11px] leading-snug text-zinc-400">
-          {zoomHint} · 拡大時: 空白／Space+ドラッグで移動
-        </span>
+        <span className="text-[11px] leading-snug text-zinc-400">{hintText}</span>
       </div>
       <div className="flex items-center gap-2">
         <span className="text-xs tabular-nums text-zinc-500">{Math.round(viewZoom * 100)}%</span>

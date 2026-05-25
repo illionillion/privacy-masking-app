@@ -57,8 +57,10 @@ export function useEditorModal({
   const dialogRef = useRef<HTMLDivElement>(null);
   const doneButtonRef = useRef<HTMLButtonElement>(null);
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
-  const [imageNaturalWidth, setImageNaturalWidth] = useState(0);
-  const [imageNaturalHeight, setImageNaturalHeight] = useState(0);
+  const [loadedNaturalWidth, setLoadedNaturalWidth] = useState(0);
+  const [loadedNaturalHeight, setLoadedNaturalHeight] = useState(0);
+  const imageNaturalWidth = image.naturalWidth ?? loadedNaturalWidth;
+  const imageNaturalHeight = image.naturalHeight ?? loadedNaturalHeight;
   const onRenderedRef = useRef(onRendered);
   const baselineSnapshotRef = useRef<EditorStateSnapshot | null>(null);
   const closeInFlightRef = useRef(false);
@@ -245,13 +247,20 @@ export function useEditorModal({
     if (!image.imageUrl) return;
     let cancelled = false;
     const img = new Image();
-    img.onload = () => {
+    const applyLoaded = () => {
       if (cancelled) return;
       setImageElement(img);
-      setImageNaturalWidth(img.naturalWidth);
-      setImageNaturalHeight(img.naturalHeight);
+      if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+        setLoadedNaturalWidth(img.naturalWidth);
+        setLoadedNaturalHeight(img.naturalHeight);
+      }
     };
     img.src = image.imageUrl;
+    if (img.complete) {
+      applyLoaded();
+    } else {
+      img.onload = applyLoaded;
+    }
     return () => {
       cancelled = true;
     };

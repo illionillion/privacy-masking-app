@@ -195,7 +195,14 @@ export function MaskingGallery() {
                 setImages((prev) =>
                   prev.map((image) =>
                     image.id === item.id
-                      ? { ...image, detections, ocrRegions, isProcessing: false }
+                      ? {
+                          ...image,
+                          detections,
+                          ocrRegions,
+                          naturalWidth: imageElement.naturalWidth,
+                          naturalHeight: imageElement.naturalHeight,
+                          isProcessing: false,
+                        }
                       : image
                   )
                 );
@@ -321,7 +328,14 @@ export function MaskingGallery() {
           setImages((prev) =>
             prev.map((image) =>
               image.id === imageId
-                ? { ...image, detections, ocrRegions, isProcessing: false }
+                ? {
+                    ...image,
+                    detections,
+                    ocrRegions,
+                    naturalWidth: imageElement.naturalWidth,
+                    naturalHeight: imageElement.naturalHeight,
+                    isProcessing: false,
+                  }
                 : image
             )
           );
@@ -515,6 +529,7 @@ export function MaskingGallery() {
 
       {editingImage && (
         <EditorModal
+          key={editingImage.id}
           image={editingImage}
           stampImages={stampImages}
           onClose={() => setEditingImageId(null)}
