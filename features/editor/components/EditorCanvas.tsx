@@ -202,7 +202,7 @@ export function EditorCanvas({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedId, onSelectItem, onDeleteSelected, resetViewport]);
 
-  /** コンテナの幅変化を ResizeObserver で監視 */
+  /** 初回ペイント前にコンテナ幅を同期し、レイアウトシフトを抑える */
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -212,6 +212,7 @@ export function EditorCanvas({
     }
   }, [imageNaturalHeight, imageNaturalWidth]);
 
+  /** コンテナの幅変化を ResizeObserver で継続的に監視する */
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;

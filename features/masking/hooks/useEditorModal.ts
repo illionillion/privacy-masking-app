@@ -247,7 +247,7 @@ export function useEditorModal({
     if (!image.imageUrl) return;
     let cancelled = false;
     const img = new Image();
-    const onLoad = () => {
+    const applyLoaded = () => {
       if (cancelled) return;
       setImageElement(img);
       if (img.naturalWidth > 0 && img.naturalHeight > 0) {
@@ -255,10 +255,11 @@ export function useEditorModal({
         setLoadedNaturalHeight(img.naturalHeight);
       }
     };
-    img.onload = onLoad;
     img.src = image.imageUrl;
     if (img.complete) {
-      onLoad();
+      applyLoaded();
+    } else {
+      img.onload = applyLoaded;
     }
     return () => {
       cancelled = true;

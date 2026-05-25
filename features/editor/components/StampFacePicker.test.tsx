@@ -143,13 +143,15 @@ describe("StampFacePicker", () => {
     }));
     vi.stubGlobal("matchMedia", matchMedia);
 
-    render(<StampFacePicker catalog={CATALOG} value="a.png" onChange={vi.fn()} />);
-    await userEvent.click(getTrigger("笑顔"));
+    try {
+      render(<StampFacePicker catalog={CATALOG} value="a.png" onChange={vi.fn()} />);
+      await userEvent.click(getTrigger("笑顔"));
 
-    const listbox = screen.getByRole("listbox", { name: "スタンプ画像" });
-    expect(listbox.parentElement).toHaveClass("right-0");
-    expect(listbox.parentElement).not.toHaveClass("left-0");
-
-    vi.unstubAllGlobals();
+      const listbox = screen.getByRole("listbox", { name: "スタンプ画像" });
+      expect(listbox.parentElement).toHaveClass("right-0");
+      expect(listbox.parentElement).not.toHaveClass("left-0");
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
