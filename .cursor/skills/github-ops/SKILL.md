@@ -170,6 +170,7 @@ gh api --paginate "repos/${REPO}/pulls/<PR番号>/reviews?per_page=100" \
 - PRのissueコメント（会話欄コメント）と PR Review本文コメント（`pulls/<PR番号>/reviews`）は review comment のような親子スレッド構造が無いため、コメント単体でマーカー有無を判定する
 - PR Review本文コメントは、本文が空のレビュー（例: APPROVED）を判定対象外とし、本文あり + `COMMENTED` / `CHANGES_REQUESTED` のみを判定対象とする
 - `gh pr view --comments` は補助的に使ってよいが、最終判定は `gh api --paginate` で取得した全件を用い、PR review comment はスレッド単位、issueコメントとReview本文コメントはコメント単体で行う
+- 全件取得したら未対応の判定だけでなく、対応済みスレッド・過去の issue/Review コメントも参照し、同じ箇所・論点で指摘や方針が矛盾していないか確認する（例: 以前 `ignored` / `resolved` した内容と逆の再指摘、スレッド内のやり取れ違い）。矛盾がある場合は精査報告に含める
 
 ### 運用ルール
 
@@ -186,6 +187,9 @@ gh api --paginate "repos/${REPO}/pulls/<PR番号>/reviews?per_page=100" \
 
 - PR本文の修正・対応不要・対応しない理由がある場合など、コミットを伴わない対応はコミットIDの付与は不要で、対応内容の説明のみ返信する
 - これにより次回確認時は、スレッド末尾がマーカー付きのスレッドをスキップし、未対応のみ確認する
+- Copilot / Bugbot 等の自動レビューは、未対応スレッドごとに `path` / `line` のコード・PR diff・`AGENTS.md`（Frontend なら `frontend.mdc`）を照合し、要対応か誤指摘かを判断してから対応する（コメント本文だけで決めない）
+- 「レビュー確認」「精査」— 未対応一覧と要対応/誤指摘の判断・理由をチャットに報告するまで。コミット・返信はユーザーが「対応して」等と明示したときのみ
+- 要対応と判断したものは修正後 `resolved`、誤指摘は根拠を書いて `ignored`（いずれも上記運用ルールの返信・マーカーに従う）
 
 GitHubのWeb UIではなくCLIで確認する。
 
