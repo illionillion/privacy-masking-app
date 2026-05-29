@@ -186,7 +186,7 @@ gh api --paginate "repos/${REPO}/pulls/<PR番号>/reviews?per_page=100" \
 
 - PR本文の修正・対応不要・対応しない理由がある場合など、コミットを伴わない対応はコミットIDの付与は不要で、対応内容の説明のみ返信する
 - これにより次回確認時は、スレッド末尾がマーカー付きのスレッドをスキップし、未対応のみ確認する
-- Copilot / Bugbot 等の自動レビューは、未対応スレッドごとに `path` / `line` のコード・PR diff・`AGENTS.md`（Frontend なら `frontend.mdc`）を照合し、要対応か誤指摘かを判断してから対応する（コメント本文だけで決めない）
+- Copilot / Bugbot 等の自動レビューは、未対応スレッドごとに `path` / `line` のコード・PR diff・`.github/copilot-instructions.md`（Frontend なら `instructions/frontend.instructions.md`）を照合し、要対応か誤指摘かを判断してから対応する（コメント本文だけで決めない）
 - 「レビュー確認」「精査」— 未対応一覧と要対応/誤指摘の判断・理由をチャットに報告するまで。コミット・返信はユーザーが「対応して」等と明示したときのみ
 - 要対応と判断したものは修正後 `resolved`、誤指摘は根拠を書いて `ignored`（いずれも上記運用ルールの返信・マーカーに従う）
 
