@@ -169,7 +169,7 @@ gh api --paginate "repos/${REPO}/pulls/<PR番号>/reviews?per_page=100" \
 - PRのissueコメント（会話欄コメント）と PR Review本文コメント（`pulls/<PR番号>/reviews`）は review comment のような親子スレッド構造が無いため、コメント単体でマーカー有無を判定する
 - PR Review本文コメントは、本文が空のレビュー（例: APPROVED）を判定対象外とし、本文あり + `COMMENTED` / `CHANGES_REQUESTED` のみを判定対象とする
 - `gh pr view --comments` は補助的に使ってよいが、最終判定は `gh api --paginate` で取得した全件を用い、PR review comment はスレッド単位、issueコメントとReview本文コメントはコメント単体で行う
-- 全件取得したら未対応の判定だけでなく、対応済みスレッド・過去の issue/Review コメントも参照し、同じ箇所・論点で指摘や方針が矛盾していないか確認する（例: 以前 `ignored` / `resolved` した内容と逆の再指摘、スレッド内のやり取れ違い）。矛盾がある場合は精査報告に含める
+- 全件取得したら未対応の判定だけでなく、対応済みスレッド・過去の issue/Review コメントも参照し、同じ箇所・論点で指摘や方針が矛盾していないか確認する（例: 以前 `ignored` / `resolved` した内容と逆の再指摘、スレッド内のやり取りの行き違い）。矛盾がある場合は精査報告に含める
 
 ### 運用ルール
 
