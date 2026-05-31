@@ -17,14 +17,11 @@ export function Header() {
           <span className="text-lg font-bold tracking-tight text-zinc-900">伏せ太郎</span>
         </Link>
         <div className="flex flex-row flex-wrap items-center justify-end gap-2 sm:gap-4">
-          <p className="hidden text-sm text-zinc-500 sm:block">
-            画像内の顔・個人情報を安全にマスキング
-          </p>
           <Link
-            href="/lp"
+            href="/app"
             className="text-sm font-medium text-indigo-600 underline-offset-4 transition-colors hover:text-indigo-800 hover:underline"
           >
-            サービス紹介
+            今すぐ使う
           </Link>
           <Link
             href={GITHUB_REPOSITORY_URL}

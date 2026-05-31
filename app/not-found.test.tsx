@@ -24,9 +24,9 @@ describe("NotFound", () => {
     expect(topLink).toHaveAttribute("href", "/");
   });
 
-  it("サービス紹介へのリンクが /lp である", () => {
+  it("マスキングツールへのリンクが /app である", () => {
     render(<NotFound />);
-    const lpLink = screen.getByRole("link", { name: "サービス紹介を見る" });
-    expect(lpLink).toHaveAttribute("href", "/lp");
+    const appLink = screen.getByRole("link", { name: "マスキングツールへ" });
+    expect(appLink).toHaveAttribute("href", "/app");
   });
 });

@@ -20,7 +20,7 @@ describe("SiteFooter", () => {
       "/privacy"
     );
     expect(screen.getByRole("link", { name: "利用規約" })).toHaveAttribute("href", "/terms");
-    expect(screen.getByRole("link", { name: "サービス紹介（LP）" })).toHaveAttribute("href", "/lp");
+    expect(screen.getByRole("link", { name: "マスキングツール" })).toHaveAttribute("href", "/app");
   });
 
   it("GitHub 外部リンクが正しく設定される", () => {

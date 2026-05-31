@@ -44,8 +44,8 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
-              <Link href="/lp" className={footerLinkClass}>
-                サービス紹介（LP）
+              <Link href="/app" className={footerLinkClass}>
+                マスキングツール
               </Link>
             </li>
             <li>

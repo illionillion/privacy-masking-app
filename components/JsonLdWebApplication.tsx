@@ -11,7 +11,7 @@ export function JsonLdWebApplication() {
     "@type": "WebApplication",
     name: "伏せ太郎",
     alternateName: "Fusely",
-    url: getSiteUrl(),
+    url: `${getSiteUrl()}/app`,
     description: SITE_DEFAULT_DESCRIPTION,
     applicationCategory: "MultimediaApplication",
     operatingSystem: "Any",
