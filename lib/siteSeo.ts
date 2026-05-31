@@ -58,3 +58,9 @@ export const APP_PAGE_HEADING = "ブラウザで顔隠し・画像の個人情�
 /** マスキングツール（/app）のリード文 */
 export const APP_PAGE_LEAD =
   "伏せ太郎（Fusely）— 写真やスクショの顔・文字を、ブラウザ内だけでマスキングできる無料ツールです。";
+
+/** マスキングツール（/app）使い例セクションの補足説明 */
+export const APP_PAGE_ABOUT =
+  "イベント写真の顔隠し、社内スクショの個人情報の隠蔽、SNS投稿前の加工などに使えます。" +
+  MANUAL_MASKING_NOTE +
+  "自動マスキングは無料。インストール・会員登録は不要で、画像はサーバーに送信しません。";
