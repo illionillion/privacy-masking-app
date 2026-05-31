@@ -25,7 +25,7 @@ describe("JsonLdWebApplication", () => {
     expect(jsonLd["@type"]).toBe("WebApplication");
     expect(jsonLd.name).toBe("伏せ太郎");
     expect(jsonLd.alternateName).toBe("Fusely");
-    expect(jsonLd.url).toBe(getSiteUrl());
+    expect(jsonLd.url).toBe(`${getSiteUrl()}/app`);
     expect(jsonLd.description).toBe(SITE_DEFAULT_DESCRIPTION);
     expect(jsonLd.featureList).toContain("検出できない部分の手動調整");
   });
