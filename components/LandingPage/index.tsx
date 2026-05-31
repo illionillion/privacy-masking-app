@@ -1,10 +1,10 @@
 import { BackToTopButton } from "@/components/BackToTopButton";
-import { DemoSection } from "@/app/lp/_components/DemoSection";
-import { FinalCtaSection } from "@/app/lp/_components/FinalCtaSection";
-import { HeroSection } from "@/app/lp/_components/HeroSection";
-import { HowToSection } from "@/app/lp/_components/HowToSection";
-import { PrivacySection } from "@/app/lp/_components/PrivacySection";
-import { UseCasesSection } from "@/app/lp/_components/UseCasesSection";
+import { DemoSection } from "@/components/LandingPage/DemoSection";
+import { FinalCtaSection } from "@/components/LandingPage/FinalCtaSection";
+import { HeroSection } from "@/components/LandingPage/HeroSection";
+import { HowToSection } from "@/components/LandingPage/HowToSection";
+import { PrivacySection } from "@/components/LandingPage/PrivacySection";
+import { UseCasesSection } from "@/components/LandingPage/UseCasesSection";
 
 /**
  * サービス紹介ランディングページ本体（トップ `/` 用）

@@ -5,7 +5,7 @@ import { PRIMARY_MASKING_DEMO } from "@/lib/maskingDemoSamples";
 /**
  * マスキングツールページ用のコンパクト Before/After デモ（1 ペアのみ）。
  */
-export function HomeCompactDemo() {
+export function MaskingCompactDemo() {
   const { label, description, beforeSrc, afterSrc, beforeAlt, afterAlt } = PRIMARY_MASKING_DEMO;
 
   return (

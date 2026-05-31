@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BackToTopButton } from "@/components/BackToTopButton";
-import { HomeCompactDemo } from "@/components/HomeCompactDemo";
+import { MaskingCompactDemo } from "@/components/MaskingCompactDemo";
 import { MaskingGallery } from "@/features/masking";
 import { buildPageMetadata } from "@/lib/buildPageMetadata";
 import { APP_PAGE_ABOUT, APP_PAGE_HEADING, APP_PAGE_LEAD } from "@/lib/siteSeo";
@@ -44,7 +44,7 @@ export default function AppPage() {
             説明をもっと見る
           </Link>
         </div>
-        <HomeCompactDemo />
+        <MaskingCompactDemo />
       </section>
 
       <BackToTopButton />
