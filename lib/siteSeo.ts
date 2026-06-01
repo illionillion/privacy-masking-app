@@ -46,12 +46,6 @@ export const HOME_PAGE_DESCRIPTION =
   MANUAL_MASKING_NOTE +
   "写真やスクショをブラウザ内だけで処理し、サーバーに送信しません。無料・ログイン不要の顔隠しWebアプリです。";
 
-/** @deprecated HOME_PAGE_TITLE を使用 */
-export const LP_PAGE_TITLE = HOME_PAGE_TITLE;
-
-/** @deprecated HOME_PAGE_DESCRIPTION を使用 */
-export const LP_PAGE_DESCRIPTION = HOME_PAGE_DESCRIPTION;
-
 /** マスキングツール（/app）の h1 */
 export const APP_PAGE_HEADING = "ブラウザで顔隠し・画像の個人情報マスキング";
 

@@ -1,6 +1,6 @@
 import { serializeJsonLd } from "@/lib/serializeJsonLd";
 import { SITE_DEFAULT_DESCRIPTION } from "@/lib/siteSeo";
-import { getSiteUrl } from "@/lib/siteUrl";
+import { resolveSiteUrl } from "@/lib/siteUrl";
 
 /**
  * WebApplication 向け JSON-LD（検索エンジン向け構造化データ）
@@ -11,7 +11,7 @@ export function JsonLdWebApplication() {
     "@type": "WebApplication",
     name: "伏せ太郎",
     alternateName: "Fusely",
-    url: `${getSiteUrl()}/app`,
+    url: resolveSiteUrl("app"),
     description: SITE_DEFAULT_DESCRIPTION,
     applicationCategory: "MultimediaApplication",
     operatingSystem: "Any",
