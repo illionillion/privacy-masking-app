@@ -3,9 +3,9 @@ import { CheckCircle } from "lucide-react";
 import { PRIMARY_MASKING_DEMO } from "@/lib/maskingDemoSamples";
 
 /**
- * トップページ用のコンパクト Before/After デモ（1 ペアのみ）。
+ * マスキングツールページ用のコンパクト Before/After デモ（1 ペアのみ）。
  */
-export function HomeCompactDemo() {
+export function MaskingCompactDemo() {
   const { label, description, beforeSrc, afterSrc, beforeAlt, afterAlt } = PRIMARY_MASKING_DEMO;
 
   return (

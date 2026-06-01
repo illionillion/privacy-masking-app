@@ -1,36 +1,43 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
-import { PRIMARY_MASKING_DEMO } from "@/lib/maskingDemoSamples";
-import { HOME_PAGE_ABOUT, HOME_PAGE_HEADING, HOME_PAGE_LEAD } from "@/lib/siteSeo";
+import { describe, expect, it } from "vitest";
+import { GITHUB_REPOSITORY_URL } from "@/lib/githubRepositoryUrl";
 import Home from "./page";
 
-vi.mock("@/features/masking", () => ({
-  MaskingGallery: () => <div data-testid="masking-gallery">MaskingGallery</div>,
-}));
-
-describe("Home", () => {
-  it("ページタイトルが表示される", () => {
+describe("Home (LandingPage)", () => {
+  it("サービス名が表示される", () => {
     render(<Home />);
-    expect(screen.getByRole("heading", { level: 1, name: HOME_PAGE_HEADING })).toBeInTheDocument();
+    expect(screen.getAllByText("伏せ太郎").length).toBeGreaterThan(0);
   });
 
-  it("説明テキストが表示される", () => {
+  it("キャッチコピーが表示される", () => {
     render(<Home />);
-    expect(screen.getByText(HOME_PAGE_LEAD)).toBeInTheDocument();
-    expect(screen.getByText(HOME_PAGE_ABOUT)).toBeInTheDocument();
+    expect(screen.getByText(/ブラウザだけで画像の/)).toBeInTheDocument();
   });
 
-  it("コンパクトデモと LP へのリンクが表示される", () => {
+  it("CTAボタンが /app へのリンクになっている", () => {
     render(<Home />);
-    expect(screen.getByRole("heading", { level: 2, name: "使い例" })).toBeInTheDocument();
-    expect(screen.getByAltText(PRIMARY_MASKING_DEMO.beforeAlt)).toBeInTheDocument();
-    expect(screen.getByAltText(PRIMARY_MASKING_DEMO.afterAlt)).toBeInTheDocument();
-    const moreLink = screen.getByRole("link", { name: "説明をもっと見る" });
-    expect(moreLink).toHaveAttribute("href", "/lp");
+    const ctaLinks = screen.getAllByRole("link", { name: /今すぐ使う/ });
+    expect(ctaLinks.length).toBeGreaterThan(0);
+    ctaLinks.forEach((link) => {
+      expect(link).toHaveAttribute("href", "/app");
+    });
   });
 
-  it("MaskingGalleryコンポーネントが表示される", () => {
+  it("GitHubでスター導線が外部リンクになっている", () => {
     render(<Home />);
-    expect(screen.getByTestId("masking-gallery")).toBeInTheDocument();
+    const githubLink = screen.getByRole("link", { name: /GitHubでスター/ });
+    expect(githubLink).toHaveAttribute("href", GITHUB_REPOSITORY_URL);
+    expect(githubLink).toHaveAttribute("target", "_blank");
+    expect(githubLink).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("デモセクションの見出しが表示される", () => {
+    render(<Home />);
+    expect(screen.getByText("こんな感じでマスキングできます")).toBeInTheDocument();
+  });
+
+  it("3ステップセクションの見出しが表示される", () => {
+    render(<Home />);
+    expect(screen.getByText("たった3ステップで完了")).toBeInTheDocument();
   });
 });

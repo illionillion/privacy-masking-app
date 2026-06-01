@@ -36,28 +36,25 @@ export const SITE_DEFAULT_DESCRIPTION =
   MANUAL_MASKING_NOTE +
   "自動マスキングは無料。サーバーへ画像を送らず、インストール・会員登録も不要です。";
 
-/** トップページ（/）の title */
-export const HOME_PAGE_TITLE = "伏せ太郎 | ブラウザで顔隠し・画像の個人情報マスキング（無料）";
-
-/** LP（/lp）の title */
-export const LP_PAGE_TITLE =
+/** トップページ（/）の title — サービス紹介 LP */
+export const HOME_PAGE_TITLE =
   "伏せ太郎 | 顔隠しWebアプリ - 写真・スクショの個人情報をブラウザで隠す";
 
-/** LP（/lp）の description */
-export const LP_PAGE_DESCRIPTION =
+/** トップページ（/）の description */
+export const HOME_PAGE_DESCRIPTION =
   "顔・文字を検出してマスキング。" +
   MANUAL_MASKING_NOTE +
   "写真やスクショをブラウザ内だけで処理し、サーバーに送信しません。無料・ログイン不要の顔隠しWebアプリです。";
 
-/** トップページ h1 */
-export const HOME_PAGE_HEADING = "ブラウザで顔隠し・画像の個人情報マスキング";
+/** マスキングツール（/app）の h1 */
+export const APP_PAGE_HEADING = "ブラウザで顔隠し・画像の個人情報マスキング";
 
-/** トップページ リード文（ヒーロー直下・短め） */
-export const HOME_PAGE_LEAD =
+/** マスキングツール（/app）のリード文 */
+export const APP_PAGE_LEAD =
   "伏せ太郎（Fusely）— 写真やスクショの顔・文字を、ブラウザ内だけでマスキングできる無料ツールです。";
 
-/** トップページ 補足説明（使い例セクション・クローラー向け本文） */
-export const HOME_PAGE_ABOUT =
+/** マスキングツール（/app）使い例セクションの補足説明 */
+export const APP_PAGE_ABOUT =
   "イベント写真の顔隠し、社内スクショの個人情報の隠蔽、SNS投稿前の加工などに使えます。" +
   MANUAL_MASKING_NOTE +
   "自動マスキングは無料。インストール・会員登録は不要で、画像はサーバーに送信しません。";
