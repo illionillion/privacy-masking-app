@@ -1,6 +1,8 @@
+import type { DetectionPrefs } from "@/lib/preferences";
 import type { MaskingImageItem } from "../types";
 import {
   detectImageContent,
+  shouldSkipAllDetection,
   type DetectImageContentDeps,
   type ImageDetectionResult,
 } from "./detectImageContent";
@@ -12,8 +14,10 @@ export const DETECTION_CONCURRENCY = 2;
 export interface RunDetectionForGalleryItemsOptions extends DetectImageContentDeps {
   items: MaskingImageItem[];
   isMounted: () => boolean;
+  detectionSettings: DetectionPrefs;
   concurrency?: number;
   onItemSuccess: (item: MaskingImageItem, result: ImageDetectionResult) => void;
+  onItemSkipped: (item: MaskingImageItem) => void;
   onItemFailure: (item: MaskingImageItem) => void;
 }
 
@@ -38,10 +42,12 @@ export async function runDetectionForGalleryItems(
   const {
     items,
     isMounted,
+    detectionSettings,
     detectFaces,
     recognizeText,
     concurrency = DETECTION_CONCURRENCY,
     onItemSuccess,
+    onItemSkipped,
     onItemFailure,
   } = options;
 
@@ -56,7 +62,19 @@ export async function runDetectionForGalleryItems(
     await Promise.allSettled(
       chunk.map(async (item) => {
         try {
-          const result = await detectImageContent(item.imageUrl, { detectFaces, recognizeText });
+          if (shouldSkipAllDetection(detectionSettings)) {
+            if (isMounted()) {
+              onItemSkipped(item);
+              detectionSucceededCount++;
+            }
+            return;
+          }
+
+          const result = await detectImageContent(
+            item.imageUrl,
+            { detectFaces, recognizeText },
+            { detectionSettings }
+          );
           if (isMounted()) {
             onItemSuccess(item, result);
             detectionSucceededCount++;

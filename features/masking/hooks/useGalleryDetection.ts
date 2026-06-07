@@ -2,8 +2,17 @@
 
 import { useCallback, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { toast } from "sonner";
-import { applyDetectionFailure, applyDetectionSuccess } from "../lib/applyDetectionResult";
-import { detectImageContent } from "../lib/detectImageContent";
+import type { DetectionPrefs } from "@/lib/preferences";
+import {
+  applyDetectionFailure,
+  applyDetectionSkipped,
+  applyDetectionSuccess,
+} from "../lib/applyDetectionResult";
+import { detectImageContent, shouldSkipAllDetection } from "../lib/detectImageContent";
+import {
+  getDetectionBatchCompleteMessage,
+  getDetectionCompleteMessage,
+} from "../lib/detectionMessages";
 import { prepareGalleryItemsFromFiles } from "../lib/prepareGalleryItemsFromFiles";
 import { runDetectionForGalleryItems } from "../lib/runDetectionForGalleryItems";
 import { clearImageEditorSnapshot } from "../lib/imageEditorCache";
@@ -21,6 +30,7 @@ export interface UseGalleryDetectionOptions {
   isModelError: boolean;
   detectFaces: (imageElement: HTMLImageElement) => Promise<MaskingImageItem["detections"]>;
   recognizeText: (imageElement: HTMLImageElement) => Promise<MaskingImageItem["ocrRegions"]>;
+  getDetectionSettings: () => DetectionPrefs;
 }
 
 /** useGalleryDetection の戻り値 */
@@ -50,6 +60,7 @@ export function useGalleryDetection(
     isModelError,
     detectFaces,
     recognizeText,
+    getDetectionSettings,
   } = options;
 
   const isMounted = useCallback(() => isMountedRef.current === true, [isMountedRef]);
@@ -86,9 +97,12 @@ export function useGalleryDetection(
         toast.error(`${blobFailedCount} 件の画像の読み込みに失敗しました`);
       }
 
+      const detectionSettings = getDetectionSettings();
+
       const { detectionSucceededCount, detectionFailedCount } = await runDetectionForGalleryItems({
         items: succeededItems,
         isMounted,
+        detectionSettings,
         detectFaces,
         recognizeText,
         onItemSuccess: (item, result) => {
@@ -97,7 +111,19 @@ export function useGalleryDetection(
               image.id === item.id ? applyDetectionSuccess(image, result) : image
             )
           );
-          toast.success(`${item.name} の検出が完了しました`);
+          const message = getDetectionCompleteMessage(detectionSettings, item.name, "upload");
+          if (message) {
+            toast.success(message);
+          }
+        },
+        onItemSkipped: (item) => {
+          setImages((prev) =>
+            prev.map((image) => (image.id === item.id ? applyDetectionSkipped(image) : image))
+          );
+          const message = getDetectionCompleteMessage(detectionSettings, item.name, "upload");
+          if (message) {
+            toast.success(message);
+          }
         },
         onItemFailure: (item) => {
           setImages((prev) =>
@@ -108,8 +134,12 @@ export function useGalleryDetection(
       });
 
       if (!isMounted()) return;
-      if (detectionSucceededCount > 0) {
-        toast.success(`${detectionSucceededCount} 件の検出が完了しました`);
+      const batchMessage = getDetectionBatchCompleteMessage(
+        detectionSettings,
+        detectionSucceededCount
+      );
+      if (batchMessage) {
+        toast.success(batchMessage);
       }
       if (detectionFailedCount > 0) {
         toast.error(`${detectionFailedCount} 件の検出に失敗しました`);
@@ -123,6 +153,7 @@ export function useGalleryDetection(
       isMounted,
       setImages,
       setActiveImageId,
+      getDetectionSettings,
     ]
   );
 
@@ -130,6 +161,8 @@ export function useGalleryDetection(
     async (imageId: string) => {
       const target = images.find((image) => image.id === imageId);
       if (!target || isModelLoading || isModelError || target.isProcessing) return;
+
+      const detectionSettings = getDetectionSettings();
 
       clearImageEditorSnapshot(imageId);
       setEditingImageId((current) => (current === imageId ? null : current));
@@ -149,8 +182,22 @@ export function useGalleryDetection(
         )
       );
 
+      if (shouldSkipAllDetection(detectionSettings)) {
+        if (isMounted()) {
+          setImages((prev) =>
+            prev.map((image) => (image.id === imageId ? applyDetectionSkipped(image) : image))
+          );
+          toast.info("顔・テキストの自動検出はオフです。検出設定から有効にできます。");
+        }
+        return;
+      }
+
       try {
-        const result = await detectImageContent(target.imageUrl, { detectFaces, recognizeText });
+        const result = await detectImageContent(
+          target.imageUrl,
+          { detectFaces, recognizeText },
+          { detectionSettings }
+        );
 
         if (isMounted()) {
           setImages((prev) =>
@@ -158,7 +205,10 @@ export function useGalleryDetection(
               image.id === imageId ? applyDetectionSuccess(image, result) : image
             )
           );
-          toast.success(`${target.name} の再検出が完了しました`);
+          const message = getDetectionCompleteMessage(detectionSettings, target.name, "redetect");
+          if (message) {
+            toast.success(message);
+          }
         }
       } catch (err) {
         if (isMounted()) {
@@ -179,6 +229,7 @@ export function useGalleryDetection(
       isMounted,
       setImages,
       setEditingImageId,
+      getDetectionSettings,
     ]
   );
 

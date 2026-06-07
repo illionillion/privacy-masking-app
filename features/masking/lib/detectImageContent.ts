@@ -1,3 +1,4 @@
+import type { DetectionPrefs } from "@/lib/preferences";
 import type { DetectedFace, DetectedTextRegion } from "../types";
 import { loadImageElement } from "./loadImageElement";
 
@@ -15,22 +16,40 @@ export interface DetectImageContentDeps {
   recognizeText: (imageElement: HTMLImageElement) => Promise<DetectedTextRegion[]>;
 }
 
+/** detectImageContent のオプション */
+export interface DetectImageContentOptions {
+  /** 検出設定（省略時は両方オン） */
+  detectionSettings?: DetectionPrefs;
+}
+
 /**
- * 画像 URL から HTMLImageElement を読み込み、顔検出と OCR を並行実行する
+ * 画像 URL から HTMLImageElement を読み込み、設定に応じて顔検出・OCR を実行する
  *
  * @param imageUrl - 表示・検出用 Blob URL
  * @param deps - 顔検出・OCR 関数
+ * @param options - 検出設定
  * @returns 検出結果と原画像サイズ
  */
 export async function detectImageContent(
   imageUrl: string,
-  deps: DetectImageContentDeps
+  deps: DetectImageContentDeps,
+  options: DetectImageContentOptions = {}
 ): Promise<ImageDetectionResult> {
+  const settings = options.detectionSettings ?? {
+    autoDetectFace: true,
+    autoDetectOcr: true,
+  };
+
   const imageElement = await loadImageElement(imageUrl);
-  const [detections, ocrRegions] = await Promise.all([
-    deps.detectFaces(imageElement),
-    deps.recognizeText(imageElement),
-  ]);
+
+  const facePromise = settings.autoDetectFace
+    ? deps.detectFaces(imageElement)
+    : Promise.resolve<DetectedFace[]>([]);
+  const ocrPromise = settings.autoDetectOcr
+    ? deps.recognizeText(imageElement)
+    : Promise.resolve<DetectedTextRegion[]>([]);
+
+  const [detections, ocrRegions] = await Promise.all([facePromise, ocrPromise]);
 
   return {
     detections,
@@ -38,4 +57,13 @@ export async function detectImageContent(
     naturalWidth: imageElement.naturalWidth,
     naturalHeight: imageElement.naturalHeight,
   };
+}
+
+/**
+ * 検出 API を呼ばずに処理完了状態へ遷移できるか
+ *
+ * @param settings - 検出設定
+ */
+export function shouldSkipAllDetection(settings: DetectionPrefs): boolean {
+  return !settings.autoDetectFace && !settings.autoDetectOcr;
 }
