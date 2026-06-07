@@ -7,6 +7,7 @@ import { detectImageContent } from "../lib/detectImageContent";
 import { prepareGalleryItemsFromFiles } from "../lib/prepareGalleryItemsFromFiles";
 import { runDetectionForGalleryItems } from "../lib/runDetectionForGalleryItems";
 import { clearImageEditorSnapshot } from "../lib/imageEditorCache";
+import { revokeGalleryItemImageUrls } from "../lib/revokeGalleryItemImageUrls";
 import type { MaskingImageItem } from "../types";
 
 /** useGalleryDetection の依存 */
@@ -64,7 +65,10 @@ export function useGalleryDetection(
         isMounted
       );
 
-      if (!isMounted()) return;
+      if (!isMounted()) {
+        revokeGalleryItemImageUrls(succeededItems);
+        return;
+      }
       if (succeededItems.length > 0) {
         setImages((prev) => [...prev, ...succeededItems]);
         setActiveImageId((prev) => prev ?? succeededItems[0].id);

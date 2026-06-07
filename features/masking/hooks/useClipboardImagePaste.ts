@@ -2,7 +2,11 @@
 
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_FILE_SIZE } from "@/components/ImageUpload/constants";
+import {
+  ACCEPTED_IMAGE_TYPES,
+  ACCEPTED_IMAGE_TYPES_ERROR,
+  MAX_IMAGE_FILE_SIZE,
+} from "@/components/ImageUpload/constants";
 
 /** useClipboardImagePaste のオプション */
 export interface UseClipboardImagePasteOptions {
@@ -39,7 +43,7 @@ export function useClipboardImagePaste(options: UseClipboardImagePasteOptions): 
         if (!file) continue;
 
         if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-          validationError = "JPEG / PNG / WebP / GIF 形式の画像を選択してください";
+          validationError = ACCEPTED_IMAGE_TYPES_ERROR;
           continue;
         }
         if (file.size > MAX_IMAGE_FILE_SIZE) {

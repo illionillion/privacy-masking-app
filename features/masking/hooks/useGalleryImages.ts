@@ -36,15 +36,20 @@ export interface UseGalleryImagesReturn {
  * @returns 画像 state・編集状態・操作ハンドラ
  */
 export function useGalleryImages(): UseGalleryImagesReturn {
-  const [images, setImages] = useState<MaskingImageItem[]>([]);
+  const [images, setImagesState] = useState<MaskingImageItem[]>([]);
   const [editingImageId, setEditingImageId] = useState<string | null>(null);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
   const imagesRef = useRef(images);
   const isMountedRef = useRef(true);
 
-  useEffect(() => {
-    imagesRef.current = images;
-  }, [images]);
+  /** setImages 更新時に imagesRef も即同期し、effect 実行前の stale を防ぐ */
+  const setImages = useCallback((action: SetStateAction<MaskingImageItem[]>) => {
+    setImagesState((prev) => {
+      const next = typeof action === "function" ? action(prev) : action;
+      imagesRef.current = next;
+      return next;
+    });
+  }, []);
 
   /** コンポーネント破棄時に imageUrl の Blob URL をすべて解放し isMountedRef を false にする */
   useEffect(() => {
@@ -68,20 +73,23 @@ export function useGalleryImages(): UseGalleryImagesReturn {
     setActiveImageId(imageId);
   }, []);
 
-  const handleRendered = useCallback((imageId: string, blobUrl: string) => {
-    setImages((prev) =>
-      prev.map((image) => {
-        if (image.id !== imageId || image.maskedBlobUrl === blobUrl || image.processingError) {
-          return image;
-        }
+  const handleRendered = useCallback(
+    (imageId: string, blobUrl: string) => {
+      setImages((prev) =>
+        prev.map((image) => {
+          if (image.id !== imageId || image.maskedBlobUrl === blobUrl || image.processingError) {
+            return image;
+          }
 
-        return {
-          ...image,
-          maskedBlobUrl: blobUrl,
-        };
-      })
-    );
-  }, []);
+          return {
+            ...image,
+            maskedBlobUrl: blobUrl,
+          };
+        })
+      );
+    },
+    [setImages]
+  );
 
   const handleClearAll = useCallback(async () => {
     try {
@@ -102,7 +110,7 @@ export function useGalleryImages(): UseGalleryImagesReturn {
       const message = err instanceof Error ? err.message : "クリアに失敗しました";
       toast.error(message);
     }
-  }, []);
+  }, [setImages]);
 
   const editingImage = editingImageId
     ? images.find((image) => image.id === editingImageId)

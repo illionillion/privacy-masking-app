@@ -45,12 +45,14 @@ export async function runDetectionForGalleryItems(
     onItemFailure,
   } = options;
 
+  const safeConcurrency = Math.max(1, concurrency);
+
   let detectionSucceededCount = 0;
   let detectionFailedCount = 0;
 
-  for (let i = 0; i < items.length; i += concurrency) {
+  for (let i = 0; i < items.length; i += safeConcurrency) {
     if (!isMounted()) break;
-    const chunk = items.slice(i, i + concurrency);
+    const chunk = items.slice(i, i + safeConcurrency);
     await Promise.allSettled(
       chunk.map(async (item) => {
         try {
