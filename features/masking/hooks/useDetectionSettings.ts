@@ -8,7 +8,18 @@ import {
   type DetectionPrefs,
 } from "@/lib/preferences";
 
-let clientSettings: DetectionPrefs | null = null;
+interface DetectionSettingsState {
+  settings: DetectionPrefs;
+  /** クライアントで localStorage 復元済み（SSR・ハイドレーション中は false） */
+  isReady: boolean;
+}
+
+const SERVER_STATE: DetectionSettingsState = {
+  settings: DEFAULT_FUSELY_PREFS.detection,
+  isReady: false,
+};
+
+let clientState: DetectionSettingsState | null = null;
 const listeners = new Set<() => void>();
 
 /**
@@ -25,26 +36,31 @@ function emitChange(): void {
 }
 
 /** クライアント側のキャッシュを取得（初回のみ localStorage から復元） */
-function getClientSettings(): DetectionPrefs {
-  if (clientSettings === null) {
-    clientSettings = loadFuselyPrefs().detection;
+function getClientState(): DetectionSettingsState {
+  if (clientState === null) {
+    clientState = {
+      settings: loadFuselyPrefs().detection,
+      isReady: true,
+    };
   }
-  return clientSettings;
+  return clientState;
 }
 
 /** useSyncExternalStore 用スナップショット（クライアント） */
-function getSnapshot(): DetectionPrefs {
-  return getClientSettings();
+function getSnapshot(): DetectionSettingsState {
+  return getClientState();
 }
 
 /** useSyncExternalStore 用スナップショット（SSR・ハイドレーション） */
-function getServerSnapshot(): DetectionPrefs {
-  return DEFAULT_FUSELY_PREFS.detection;
+function getServerSnapshot(): DetectionSettingsState {
+  return SERVER_STATE;
 }
 
 interface UseDetectionSettingsReturn {
   /** 現在の検出設定 */
   settings: DetectionPrefs;
+  /** クライアントで localStorage 復元済みか（遅延表示のトリガー用。遅延自体は UI 層の責務） */
+  isReady: boolean;
   /** 検出設定を更新して localStorage に保存する */
   updateSettings: (next: DetectionPrefs) => void;
 }
@@ -52,16 +68,16 @@ interface UseDetectionSettingsReturn {
 /**
  * 検出設定（fusely:prefs.detection）の読み書き
  *
- * useSyncExternalStore で SSR とクライアントの初回描画を揃え、ハイドレーション後に localStorage を反映する。
+ * useSyncExternalStore で SSR とハイドレーションを揃え、復元後は即座に settings を利用可能にする。
  */
 export function useDetectionSettings(): UseDetectionSettingsReturn {
-  const settings = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const { settings, isReady } = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const updateSettings = useCallback((next: DetectionPrefs) => {
-    clientSettings = next;
+    clientState = { settings: next, isReady: true };
     saveDetectionPrefs(next);
     emitChange();
   }, []);
 
-  return { settings, updateSettings };
+  return { settings, isReady, updateSettings };
 }
