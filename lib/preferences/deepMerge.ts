@@ -1,3 +1,6 @@
+/** プロトタイプ汚染対策でマージから除外するキー */
+const UNSAFE_MERGE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
 /**
  * プレーンオブジェクトを再帰的にマージする（配列は上書き、null はスキップ）
  *
@@ -11,7 +14,7 @@ export function deepMergeRecords(
   const result: Record<string, unknown> = { ...base };
 
   for (const [key, overrideValue] of Object.entries(override)) {
-    if (overrideValue === undefined || overrideValue === null) {
+    if (UNSAFE_MERGE_KEYS.has(key) || overrideValue === undefined || overrideValue === null) {
       continue;
     }
     const baseValue = result[key];
