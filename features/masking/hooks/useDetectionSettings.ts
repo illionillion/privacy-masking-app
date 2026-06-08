@@ -8,17 +8,7 @@ import {
   type DetectionPrefs,
 } from "@/lib/preferences";
 
-interface DetectionSettingsState {
-  settings: DetectionPrefs;
-  isLoaded: boolean;
-}
-
-const SERVER_STATE: DetectionSettingsState = {
-  settings: DEFAULT_FUSELY_PREFS.detection,
-  isLoaded: false,
-};
-
-let clientState: DetectionSettingsState | null = null;
+let clientSettings: DetectionPrefs | null = null;
 const listeners = new Set<() => void>();
 
 /**
@@ -35,31 +25,26 @@ function emitChange(): void {
 }
 
 /** クライアント側のキャッシュを取得（初回のみ localStorage から復元） */
-function getClientState(): DetectionSettingsState {
-  if (clientState === null) {
-    clientState = {
-      settings: loadFuselyPrefs().detection,
-      isLoaded: true,
-    };
+function getClientSettings(): DetectionPrefs {
+  if (clientSettings === null) {
+    clientSettings = loadFuselyPrefs().detection;
   }
-  return clientState;
+  return clientSettings;
 }
 
 /** useSyncExternalStore 用スナップショット（クライアント） */
-function getSnapshot(): DetectionSettingsState {
-  return getClientState();
+function getSnapshot(): DetectionPrefs {
+  return getClientSettings();
 }
 
 /** useSyncExternalStore 用スナップショット（SSR・ハイドレーション） */
-function getServerSnapshot(): DetectionSettingsState {
-  return SERVER_STATE;
+function getServerSnapshot(): DetectionPrefs {
+  return DEFAULT_FUSELY_PREFS.detection;
 }
 
 interface UseDetectionSettingsReturn {
   /** 現在の検出設定 */
   settings: DetectionPrefs;
-  /** localStorage からの復元が完了したか */
-  isLoaded: boolean;
   /** 検出設定を更新して localStorage に保存する */
   updateSettings: (next: DetectionPrefs) => void;
 }
@@ -67,16 +52,16 @@ interface UseDetectionSettingsReturn {
 /**
  * 検出設定（fusely:prefs.detection）の読み書き
  *
- * SSR 時は未読み込み状態で描画し、クライアントハイドレーション後に localStorage を復元する。
+ * useSyncExternalStore で SSR とクライアントの初回描画を揃え、ハイドレーション後に localStorage を反映する。
  */
 export function useDetectionSettings(): UseDetectionSettingsReturn {
-  const { settings, isLoaded } = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const settings = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const updateSettings = useCallback((next: DetectionPrefs) => {
-    clientState = { settings: next, isLoaded: true };
+    clientSettings = next;
     saveDetectionPrefs(next);
     emitChange();
   }, []);
 
-  return { settings, isLoaded, updateSettings };
+  return { settings, updateSettings };
 }

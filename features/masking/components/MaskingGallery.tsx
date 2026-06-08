@@ -14,7 +14,6 @@ import { useGalleryImages } from "../hooks/useGalleryImages";
 import { useStampImages } from "../hooks/useStampImages";
 import { downloadMaskedImagesAsZip } from "../lib/downloadMaskedImagesAsZip";
 import { formatDetectionSettingsSummary } from "../lib/detectionMessages";
-import { DetectionSettingsBarSkeleton } from "./DetectionSettingsBarSkeleton";
 import { DetectionSettingsModal } from "./DetectionSettingsModal";
 import { EditorModal } from "./EditorModal";
 import { GalleryItem } from "./GalleryItem";
@@ -41,11 +40,8 @@ export function MaskingGallery() {
 
   const { isModelLoading, isModelError, isDetecting, detectFaces } = useFaceDetection();
   const { isRecognizing, recognizeText } = useOcr();
-  const {
-    settings: detectionSettings,
-    isLoaded: isDetectionSettingsLoaded,
-    updateSettings: updateDetectionSettings,
-  } = useDetectionSettings();
+  const { settings: detectionSettings, updateSettings: updateDetectionSettings } =
+    useDetectionSettings();
   const [isDetectionSettingsOpen, setIsDetectionSettingsOpen] = useState(false);
   const [detectionSettingsModalKey, setDetectionSettingsModalKey] = useState(0);
 
@@ -93,40 +89,34 @@ export function MaskingGallery() {
 
   return (
     <div className="flex flex-col gap-6">
-      {!isDetectionSettingsLoaded ? (
-        <DetectionSettingsBarSkeleton />
-      ) : (
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-zinc-600">
-            自動検出: <span className="font-medium text-zinc-800">{detectionSettingsSummary}</span>
-          </p>
-          <button
-            type="button"
-            aria-label="検出設定"
-            onClick={() => {
-              setDetectionSettingsModalKey((key) => key + 1);
-              setIsDetectionSettingsOpen(true);
-            }}
-            className={clsx([
-              "flex items-center gap-2 self-start rounded-lg border border-zinc-300 px-4 py-2",
-              "text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 sm:self-auto",
-            ])}
-          >
-            <Settings className="size-4 shrink-0" aria-hidden="true" />
-            検出設定
-          </button>
-        </div>
-      )}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-zinc-600">
+          自動検出: <span className="font-medium text-zinc-800">{detectionSettingsSummary}</span>
+        </p>
+        <button
+          type="button"
+          aria-label="検出設定"
+          onClick={() => {
+            setDetectionSettingsModalKey((key) => key + 1);
+            setIsDetectionSettingsOpen(true);
+          }}
+          className={clsx([
+            "flex items-center gap-2 self-start rounded-lg border border-zinc-300 px-4 py-2",
+            "text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 sm:self-auto",
+          ])}
+        >
+          <Settings className="size-4 shrink-0" aria-hidden="true" />
+          検出設定
+        </button>
+      </div>
 
-      {isDetectionSettingsLoaded && (
-        <DetectionSettingsModal
-          key={detectionSettingsModalKey}
-          isOpen={isDetectionSettingsOpen}
-          settings={detectionSettings}
-          onClose={() => setIsDetectionSettingsOpen(false)}
-          onSave={updateDetectionSettings}
-        />
-      )}
+      <DetectionSettingsModal
+        key={detectionSettingsModalKey}
+        isOpen={isDetectionSettingsOpen}
+        settings={detectionSettings}
+        onClose={() => setIsDetectionSettingsOpen(false)}
+        onSave={updateDetectionSettings}
+      />
 
       <ImageUpload
         onUpload={handleUpload}

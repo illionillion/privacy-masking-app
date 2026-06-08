@@ -12,7 +12,6 @@ describe("useDetectionSettings", () => {
     const { result } = renderHook(() => useDetectionSettings());
 
     expect(result.current.settings).toEqual(DEFAULT_FUSELY_PREFS.detection);
-    expect(result.current.isLoaded).toBe(true);
   });
 
   it("updateSettings で設定を保存・反映する", () => {
