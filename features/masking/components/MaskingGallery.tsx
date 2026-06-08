@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
+import { Settings } from "lucide-react";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ImageUpload";
 import { useFaceDetection } from "@/features/face-detection";
@@ -94,12 +95,17 @@ export function MaskingGallery() {
         </p>
         <button
           type="button"
+          aria-label="検出設定"
           onClick={() => {
             setDetectionSettingsModalKey((key) => key + 1);
             setIsDetectionSettingsOpen(true);
           }}
-          className="self-start rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 sm:self-auto"
+          className={clsx([
+            "flex items-center gap-2 self-start rounded-lg border border-zinc-300 px-4 py-2",
+            "text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 sm:self-auto",
+          ])}
         >
+          <Settings className="size-4 shrink-0" aria-hidden="true" />
           検出設定
         </button>
       </div>
