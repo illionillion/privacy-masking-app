@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import {
   FUSELY_PREFS_STORAGE_KEY,
   loadFuselyPrefs,
@@ -11,6 +11,10 @@ import { DEFAULT_FUSELY_PREFS } from "./types";
 describe("fuselyPrefs", () => {
   beforeEach(() => {
     window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("未保存時はデフォルトを返す", () => {
@@ -63,6 +67,19 @@ describe("fuselyPrefs", () => {
       version: 1,
       detection: { autoDetectFace: true, autoDetectOcr: false },
     });
+  });
+
+  it("setItem が例外を投げてもクラッシュしない", () => {
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("QuotaExceededError");
+    });
+
+    expect(() =>
+      saveFuselyPrefs({
+        version: 1,
+        detection: { autoDetectFace: false, autoDetectOcr: true },
+      })
+    ).not.toThrow();
   });
 
   it("saveFuselyPrefs で全体を保存できる", () => {

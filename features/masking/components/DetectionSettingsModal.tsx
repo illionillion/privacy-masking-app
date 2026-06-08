@@ -22,6 +22,7 @@ export function DetectionSettingsModal({
 }: DetectionSettingsModalProps) {
   const [draft, setDraft] = useState<DetectionPrefs>(settings);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const firstFocusRef = useRef<HTMLInputElement>(null);
   const titleId = useId();
   const faceId = useId();
   const ocrId = useId();
@@ -30,7 +31,7 @@ export function DetectionSettingsModal({
     const prevOverflow = document.body.style.overflow;
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      dialogRef.current?.focus();
+      firstFocusRef.current?.focus();
     }
     return () => {
       document.body.style.overflow = prevOverflow;
@@ -54,7 +55,7 @@ export function DetectionSettingsModal({
       const last = focusable[focusable.length - 1];
 
       if (e.shiftKey) {
-        if (document.activeElement === first) {
+        if (document.activeElement === first || document.activeElement === dialogRef.current) {
           e.preventDefault();
           last.focus();
         }
@@ -109,6 +110,7 @@ export function DetectionSettingsModal({
             ])}
           >
             <input
+              ref={firstFocusRef}
               id={faceId}
               type="checkbox"
               checked={draft.autoDetectFace}

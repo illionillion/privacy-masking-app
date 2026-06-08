@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { DetectionSettingsModal } from "./DetectionSettingsModal";
 import { DEFAULT_FUSELY_PREFS } from "@/lib/preferences";
@@ -25,6 +25,39 @@ describe("DetectionSettingsModal", () => {
       autoDetectOcr: true,
     });
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("開いたときは最初のチェックボックスにフォーカスする", async () => {
+    render(
+      <DetectionSettingsModal
+        isOpen
+        settings={DEFAULT_FUSELY_PREFS.detection}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("checkbox", { name: /顔を自動検出/ })).toHaveFocus();
+    });
+  });
+
+  it("ダイアログコンテナにフォーカスがあるとき Shift+Tab で最後の要素へ循環する", () => {
+    render(
+      <DetectionSettingsModal
+        isOpen
+        settings={DEFAULT_FUSELY_PREFS.detection}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+      />
+    );
+
+    const dialog = screen.getByRole("dialog");
+    dialog.focus();
+
+    fireEvent.keyDown(dialog, { key: "Tab", shiftKey: true });
+
+    expect(screen.getByRole("button", { name: "保存" })).toHaveFocus();
   });
 
   it("閉じているときは何も表示しない", () => {

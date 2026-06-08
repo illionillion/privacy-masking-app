@@ -76,7 +76,11 @@ export function saveFuselyPrefs(prefs: FuselyPrefs): void {
     },
   });
 
-  window.localStorage.setItem(FUSELY_PREFS_STORAGE_KEY, JSON.stringify(merged));
+  try {
+    window.localStorage.setItem(FUSELY_PREFS_STORAGE_KEY, JSON.stringify(merged));
+  } catch {
+    // プライベートモード・容量不足などで保存できない場合は諦める
+  }
 }
 
 /**
