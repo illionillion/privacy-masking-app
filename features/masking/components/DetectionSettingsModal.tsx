@@ -22,6 +22,7 @@ export function DetectionSettingsModal({
 }: DetectionSettingsModalProps) {
   const [draft, setDraft] = useState<DetectionPrefs>(settings);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
   const faceId = useId();
   const ocrId = useId();
 
@@ -88,11 +89,11 @@ export function DetectionSettingsModal({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="detection-settings-title"
+        aria-labelledby={titleId}
         tabIndex={-1}
         className="relative z-10 w-full max-w-md rounded-xl bg-white px-6 py-5 shadow-xl outline-none"
       >
-        <h2 id="detection-settings-title" className="text-base font-semibold text-zinc-900">
+        <h2 id={titleId} className="text-base font-semibold text-zinc-900">
           検出設定
         </h2>
         <p className="mt-2 text-sm text-zinc-600">

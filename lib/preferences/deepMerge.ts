@@ -11,7 +11,7 @@ export function deepMergeRecords(
   const result: Record<string, unknown> = { ...base };
 
   for (const [key, overrideValue] of Object.entries(override)) {
-    if (overrideValue === undefined) {
+    if (overrideValue === undefined || overrideValue === null) {
       continue;
     }
     const baseValue = result[key];
