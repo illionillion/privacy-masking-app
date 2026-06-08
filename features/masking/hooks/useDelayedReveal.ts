@@ -20,7 +20,10 @@ export function useDelayedReveal(ready: boolean, delayMs: number): boolean {
     }
 
     const id = window.setTimeout(() => setRevealed(true), delayMs);
-    return () => window.clearTimeout(id);
+    return () => {
+      window.clearTimeout(id);
+      setRevealed(false);
+    };
   }, [ready, delayMs]);
 
   return ready && revealed;

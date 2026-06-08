@@ -1,4 +1,4 @@
-import type { DetectionPrefs } from "@/lib/preferences";
+import { DEFAULT_FUSELY_PREFS, type DetectionPrefs } from "@/lib/preferences";
 import type { DetectedFace, DetectedTextRegion } from "../types";
 import { loadImageElement } from "./loadImageElement";
 
@@ -35,10 +35,7 @@ export async function detectImageContent(
   deps: DetectImageContentDeps,
   options: DetectImageContentOptions = {}
 ): Promise<ImageDetectionResult> {
-  const settings = options.detectionSettings ?? {
-    autoDetectFace: true,
-    autoDetectOcr: true,
-  };
+  const settings = options.detectionSettings ?? DEFAULT_FUSELY_PREFS.detection;
 
   const imageElement = await loadImageElement(imageUrl);
 

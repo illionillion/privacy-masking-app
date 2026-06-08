@@ -29,4 +29,22 @@ describe("useDelayedReveal", () => {
     act(() => vi.advanceTimersByTime(200));
     expect(result.current).toBe(true);
   });
+
+  it("ready が false に戻って再度 true になったときも delay 後に visible になる", () => {
+    const { result, rerender } = renderHook(({ ready }) => useDelayedReveal(ready, 200), {
+      initialProps: { ready: true },
+    });
+
+    act(() => vi.advanceTimersByTime(200));
+    expect(result.current).toBe(true);
+
+    rerender({ ready: false });
+    expect(result.current).toBe(false);
+
+    rerender({ ready: true });
+    expect(result.current).toBe(false);
+
+    act(() => vi.advanceTimersByTime(200));
+    expect(result.current).toBe(true);
+  });
 });
