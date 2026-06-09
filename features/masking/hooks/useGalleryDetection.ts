@@ -164,6 +164,11 @@ export function useGalleryDetection(
 
       const detectionSettings = getDetectionSettings();
 
+      if (shouldSkipAllDetection(detectionSettings)) {
+        toast.info("顔・テキストの自動検出はオフです。検出設定から有効にできます。");
+        return;
+      }
+
       clearImageEditorSnapshot(imageId);
       setEditingImageId((current) => (current === imageId ? null : current));
 
@@ -181,16 +186,6 @@ export function useGalleryDetection(
             : image
         )
       );
-
-      if (shouldSkipAllDetection(detectionSettings)) {
-        if (isMounted()) {
-          setImages((prev) =>
-            prev.map((image) => (image.id === imageId ? applyDetectionSkipped(image) : image))
-          );
-          toast.info("顔・テキストの自動検出はオフです。検出設定から有効にできます。");
-        }
-        return;
-      }
 
       try {
         const result = await detectImageContent(
