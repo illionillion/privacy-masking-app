@@ -23,7 +23,21 @@ describe("deepMergeRecords", () => {
     expect(result).toEqual({ version: 1, detection: { autoDetectFace: true } });
   });
 
-  it("__proto__ / constructor / prototype キーはマージしない", () => {
+  it("base 側の __proto__ / constructor / prototype キーは結果に含めない", () => {
+    const result = deepMergeRecords(
+      {
+        version: 1,
+        __proto__: { polluted: true },
+        detection: { autoDetectFace: true, __proto__: { polluted: true } },
+      },
+      {}
+    );
+
+    expect(result).toEqual({ version: 1, detection: { autoDetectFace: true } });
+    expect(Object.prototype).not.toHaveProperty("polluted");
+  });
+
+  it("override 側の __proto__ / constructor / prototype キーはマージしない", () => {
     const result = deepMergeRecords(
       { version: 1, detection: { autoDetectFace: true } },
       {

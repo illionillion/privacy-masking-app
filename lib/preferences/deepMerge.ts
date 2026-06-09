@@ -11,7 +11,7 @@ export function deepMergeRecords(
   base: Record<string, unknown>,
   override: Record<string, unknown>
 ): Record<string, unknown> {
-  const result: Record<string, unknown> = { ...base };
+  const result: Record<string, unknown> = omitUnsafeKeys(base);
 
   for (const [key, overrideValue] of Object.entries(override)) {
     if (UNSAFE_MERGE_KEYS.has(key) || overrideValue === undefined || overrideValue === null) {
@@ -23,6 +23,22 @@ export function deepMergeRecords(
       continue;
     }
     result[key] = overrideValue;
+  }
+
+  return result;
+}
+
+/**
+ * @param record - サニタイズ対象
+ */
+function omitUnsafeKeys(record: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(record)) {
+    if (UNSAFE_MERGE_KEYS.has(key)) {
+      continue;
+    }
+    result[key] = isPlainRecord(value) ? omitUnsafeKeys(value) : value;
   }
 
   return result;
