@@ -37,6 +37,35 @@ describe("detectImageContent", () => {
     });
   });
 
+  it("顔のみオンのときは OCR を呼ばない", async () => {
+    const result = await detectImageContent(
+      "blob:test",
+      {
+        detectFaces: mockDetectFaces,
+        recognizeText: mockRecognizeText,
+      },
+      { detectionSettings: { autoDetectFace: true, autoDetectOcr: false } }
+    );
+
+    expect(mockDetectFaces).toHaveBeenCalledOnce();
+    expect(mockRecognizeText).not.toHaveBeenCalled();
+    expect(result.ocrRegions).toEqual([]);
+  });
+
+  it("OCR のみオンのときは顔検出を呼ばない", async () => {
+    await detectImageContent(
+      "blob:test",
+      {
+        detectFaces: mockDetectFaces,
+        recognizeText: mockRecognizeText,
+      },
+      { detectionSettings: { autoDetectFace: false, autoDetectOcr: true } }
+    );
+
+    expect(mockDetectFaces).not.toHaveBeenCalled();
+    expect(mockRecognizeText).toHaveBeenCalledOnce();
+  });
+
   it("顔検出が失敗した場合はエラーを伝播する", async () => {
     mockDetectFaces.mockRejectedValue(new Error("検出失敗"));
 

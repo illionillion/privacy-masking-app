@@ -23,6 +23,22 @@ export function applyDetectionSuccess(
 }
 
 /**
+ * 自動検出をスキップした状態を MaskingImageItem に反映する
+ *
+ * @param image - 更新対象の画像アイテム
+ * @returns 検出スキップ完了状態の画像アイテム
+ */
+export function applyDetectionSkipped(image: MaskingImageItem): MaskingImageItem {
+  return {
+    ...image,
+    detections: [],
+    ocrRegions: [],
+    isProcessing: false,
+    processingError: false,
+  };
+}
+
+/**
  * 検出失敗状態を MaskingImageItem に反映する
  *
  * @param image - 更新対象の画像アイテム
