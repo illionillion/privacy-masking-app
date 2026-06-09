@@ -42,6 +42,24 @@ describe("DetectionSettingsModal", () => {
     });
   });
 
+  it("ダイアログコンテナにフォーカスがあるとき Tab で最初の要素へ循環する", () => {
+    render(
+      <DetectionSettingsModal
+        isOpen
+        settings={DEFAULT_FUSELY_PREFS.detection}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+      />
+    );
+
+    const dialog = screen.getByRole("dialog");
+    dialog.focus();
+
+    fireEvent.keyDown(dialog, { key: "Tab" });
+
+    expect(screen.getByRole("checkbox", { name: /顔を自動検出/ })).toHaveFocus();
+  });
+
   it("ダイアログコンテナにフォーカスがあるとき Shift+Tab で最後の要素へ循環する", () => {
     render(
       <DetectionSettingsModal

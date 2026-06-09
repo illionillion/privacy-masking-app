@@ -53,13 +53,15 @@ export function DetectionSettingsModal({
 
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      const onContainer = active === dialogRef.current;
 
       if (e.shiftKey) {
-        if (document.activeElement === first || document.activeElement === dialogRef.current) {
+        if (active === first || onContainer) {
           e.preventDefault();
           last.focus();
         }
-      } else if (document.activeElement === last) {
+      } else if (active === last || onContainer) {
         e.preventDefault();
         first.focus();
       }
