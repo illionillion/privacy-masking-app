@@ -265,16 +265,17 @@ export function useOcr(): UseOcrReturn {
   useEffect(() => {
     return () => {
       /** アンマウント時にWorkerを終了してリソースを解放 */
-      if (workerRef.current) {
+      const workerPromise = workerRef.current;
+      workerRef.current = null;
+      if (workerPromise) {
         void (async () => {
           try {
-            const worker = await workerRef.current!;
+            const worker = await workerPromise;
             await worker.terminate();
           } catch {
             /** 終了処理の失敗はアンマウント時のベストエフォート */
           }
         })();
-        workerRef.current = null;
       }
     };
   }, []);

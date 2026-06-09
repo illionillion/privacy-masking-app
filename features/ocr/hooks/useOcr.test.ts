@@ -136,6 +136,23 @@ describe("useOcr", () => {
     expect(mockSetParameters).toHaveBeenCalledTimes(2);
   });
 
+  it("アンマウント時に Worker を terminate する", async () => {
+    mockRecognize.mockResolvedValueOnce(buildMockPage([]));
+
+    const { result, unmount } = renderHook(() => useOcr());
+    const mockImage = document.createElement("img");
+
+    await act(async () => {
+      await result.current.recognizeText(mockImage);
+    });
+
+    unmount();
+
+    await waitFor(() => {
+      expect(mockTerminate).toHaveBeenCalled();
+    });
+  });
+
   it("recognizeText 完了後は isRecognizing が false になる", async () => {
     mockRecognize.mockResolvedValueOnce(buildMockPage([]));
 
