@@ -22,10 +22,10 @@ const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
      * 2. 国内番号（区切りあり）: 080-1234-5678 / 090-1234-5678 / 03-1234-5678 / 0120-123-456
      * 3. 国内番号（ハイフンなし）: 09012345678 / 0312345678
      *
-     * 国内番号は `(?<![0-9])` で直前が数字でない場合のみマッチし、
-     * 〒100-0001 内の 00-0001 など郵便番号の部分文字列への誤検出を防ぐ。
+     * 国内番号の誤検出防止（直前が数字ならスキップ）は detectPersonalInfoInLine 側で行う。
+     * 正規表現の lookbehind は Safari 15 等で SyntaxError になるため使用しない。
      */
-    source: String.raw`\+\d{1,3}[-\s]?\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}|(?<![0-9])0\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}|(?<![0-9])0\d{9,10}`,
+    source: String.raw`\+\d{1,3}[-\s]?\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}|0\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}|0\d{9,10}`,
   },
   {
     type: "postal",
@@ -111,6 +111,19 @@ export function detectPersonalInfoInLine(lineText: string, words: TesseractWord[
       /** 既にマッチ済みの範囲と重複する場合はスキップ */
       const alreadyMatched = matchedRanges.some((r) => r.start < matchEnd && r.end > matchStart);
       if (alreadyMatched) continue;
+
+      /**
+       * 国内電話番号（0始まり）が数字の直後から始まる場合はスキップする。
+       * 例: 〒100-0001 内の 00-0001 への誤マッチを防ぐ（lookbehind の代替）。
+       */
+      if (
+        pattern.type === "phone" &&
+        match[0].startsWith("0") &&
+        matchStart > 0 &&
+        /\d/.test(lineText[matchStart - 1]!)
+      ) {
+        continue;
+      }
 
       /** マッチ範囲と重なる単語のbboxを統合 */
       const overlapping = wordPositions.filter((w) => w.start < matchEnd && w.end > matchStart);
