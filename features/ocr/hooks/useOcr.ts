@@ -22,7 +22,9 @@ const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
      * 2. 国内番号（区切りあり）: 080-1234-5678 / 090-1234-5678 / 03-1234-5678 / 0120-123-456
      * 3. 国内番号（ハイフンなし）: 09012345678 / 0312345678
      *
-     * 国内番号の誤検出防止（直前が数字ならスキップ）は detectPersonalInfoInLine 側で行う。
+     * 国内番号の誤検出防止は detectPersonalInfoInLine 内の isDomesticPhoneFalsePositive で行う:
+     * - 直前が数字ならスキップ（例: 〒100-0001 内の 00-0001）
+     * - 0始まりかつ数字が10桁未満ならスキップ（例: 〒010-0001）
      * 正規表現の lookbehind は Safari 15 等で SyntaxError になるため使用しない。
      */
     source: String.raw`\+\d{1,3}[-\s]?\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}|0\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}|0\d{9,10}`,
