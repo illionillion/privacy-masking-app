@@ -202,8 +202,17 @@ function extractOcrRegions(page: TesseractPage): OcrRegion[] {
 async function initializeTesseractWorker(): Promise<import("tesseract.js").Worker> {
   const { createWorker, OEM, PSM } = await import("tesseract.js");
   const worker = await createWorker(["jpn", "eng"], OEM.LSTM_ONLY);
-  await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO });
-  return worker;
+  try {
+    await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO });
+    return worker;
+  } catch (err) {
+    try {
+      await worker.terminate();
+    } catch {
+      /** 初期化失敗時の terminate はベストエフォート */
+    }
+    throw err;
+  }
 }
 
 /**

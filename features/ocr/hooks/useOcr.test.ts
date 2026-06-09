@@ -117,6 +117,25 @@ describe("useOcr", () => {
     expect(mockSetParameters).toHaveBeenCalledWith({ tessedit_pageseg_mode: PSM.AUTO });
   });
 
+  it("setParameters 失敗時に Worker を terminate し再初期化できる", async () => {
+    mockSetParameters.mockRejectedValueOnce(new Error("setParameters failed"));
+    mockRecognize.mockResolvedValueOnce(buildMockPage([]));
+
+    const { result } = renderHook(() => useOcr());
+    const mockImage = document.createElement("img");
+
+    await act(async () => {
+      await expect(result.current.recognizeText(mockImage)).rejects.toThrow("setParameters failed");
+    });
+    expect(mockTerminate).toHaveBeenCalledTimes(1);
+
+    mockSetParameters.mockResolvedValue(undefined);
+    await act(async () => {
+      await result.current.recognizeText(mockImage);
+    });
+    expect(mockSetParameters).toHaveBeenCalledTimes(2);
+  });
+
   it("recognizeText 完了後は isRecognizing が false になる", async () => {
     mockRecognize.mockResolvedValueOnce(buildMockPage([]));
 
