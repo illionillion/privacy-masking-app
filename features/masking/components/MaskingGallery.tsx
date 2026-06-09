@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import clsx from "clsx";
 import { Settings } from "lucide-react";
 import { toast } from "sonner";
@@ -54,12 +54,7 @@ export function MaskingGallery() {
   const [isDetectionSettingsOpen, setIsDetectionSettingsOpen] = useState(false);
   const [detectionSettingsModalKey, setDetectionSettingsModalKey] = useState(0);
 
-  const detectionSettingsRef = useRef(detectionSettings);
-  useEffect(() => {
-    detectionSettingsRef.current = detectionSettings;
-  }, [detectionSettings]);
-
-  const getDetectionSettings = useCallback(() => detectionSettingsRef.current, []);
+  const getDetectionSettings = useCallback(() => detectionSettings, [detectionSettings]);
 
   const detectionSettingsSummary = useMemo(
     () => formatDetectionSettingsSummary(detectionSettings),
