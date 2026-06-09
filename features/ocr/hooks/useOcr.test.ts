@@ -105,6 +105,7 @@ describe("useOcr", () => {
   });
 
   it("Worker 初期化時に PSM.AUTO を設定する", async () => {
+    const { PSM } = await import("tesseract.js");
     const { result } = renderHook(() => useOcr());
     const mockImage = document.createElement("img");
     mockRecognize.mockResolvedValueOnce(buildMockPage([]));
@@ -113,7 +114,7 @@ describe("useOcr", () => {
       await result.current.recognizeText(mockImage);
     });
 
-    expect(mockSetParameters).toHaveBeenCalledWith({ tessedit_pageseg_mode: 3 });
+    expect(mockSetParameters).toHaveBeenCalledWith({ tessedit_pageseg_mode: PSM.AUTO });
   });
 
   it("recognizeText 完了後は isRecognizing が false になる", async () => {

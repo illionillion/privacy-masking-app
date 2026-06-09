@@ -192,6 +192,21 @@ function extractOcrRegions(page: TesseractPage): OcrRegion[] {
 }
 
 /**
+ * Tesseract Worker を生成し OCR 用パラメータを設定する
+ *
+ * PSM.AUTO: 名刺など散在テキストの行結合ミスを減らし、
+ * 080-1234-5678 等の電話番号の取りこぼしを防ぐ（デフォルト PSM では未検出）。
+ *
+ * @returns 初期化済みの Tesseract Worker
+ */
+async function initializeTesseractWorker(): Promise<import("tesseract.js").Worker> {
+  const { createWorker, OEM, PSM } = await import("tesseract.js");
+  const worker = await createWorker(["jpn", "eng"], OEM.LSTM_ONLY);
+  await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO });
+  return worker;
+}
+
+/**
  * OCRフック
  *
  * Tesseract.js の Web Worker を使用して画像内テキストを認識し、
@@ -227,15 +242,7 @@ export function useOcr(): UseOcrReturn {
        * "Warning: Parameter not found: language_model_ngram_on" が出力されるが、
        * これは既知の無害な警告であり OCR の動作には影響しない。
        */
-      const promise = import("tesseract.js").then(async ({ createWorker, OEM, PSM }) => {
-        const worker = await createWorker(["jpn", "eng"], OEM.LSTM_ONLY);
-        /**
-         * PSM.AUTO: 名刺など散在テキストの行結合ミスを減らし、
-         * 080-1234-5678 等の電話番号の取りこぼしを防ぐ（デフォルト PSM では未検出）。
-         */
-        await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO });
-        return worker;
-      });
+      const promise = initializeTesseractWorker();
       workerRef.current = promise;
       /** reject 時はキャッシュを破棄し、次回呼び出しで再生成できるようにする */
       promise.catch(() => {
@@ -250,7 +257,14 @@ export function useOcr(): UseOcrReturn {
     return () => {
       /** アンマウント時にWorkerを終了してリソースを解放 */
       if (workerRef.current) {
-        void workerRef.current.then((w) => w.terminate()).catch(() => {});
+        void (async () => {
+          try {
+            const worker = await workerRef.current!;
+            await worker.terminate();
+          } catch {
+            /** 終了処理の失敗はアンマウント時のベストエフォート */
+          }
+        })();
         workerRef.current = null;
       }
     };
