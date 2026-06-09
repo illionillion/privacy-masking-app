@@ -79,6 +79,34 @@ interface TesseractPage {
   text?: string;
 }
 
+/** 国内電話番号として扱う最低桁数（郵便番号7桁との誤検出を防ぐ） */
+const MIN_DOMESTIC_PHONE_DIGITS = 10;
+
+/**
+ * 国内電話番号（0始まり）のマッチが郵便番号等への誤検出かどうかを判定する
+ *
+ * @param lineText - OCR結果の行テキスト
+ * @param matchStart - マッチ開始位置
+ * @param matchText - マッチした文字列
+ * @returns 誤検出と判断する場合は true
+ */
+function isDomesticPhoneFalsePositive(
+  lineText: string,
+  matchStart: number,
+  matchText: string
+): boolean {
+  if (!matchText.startsWith("0")) {
+    return false;
+  }
+  /** 直前が数字の場合は郵便番号内の部分文字列（例: 〒100-0001 の 00-0001） */
+  if (matchStart > 0 && /\d/.test(lineText[matchStart - 1]!)) {
+    return true;
+  }
+  /** 数字が10桁未満の場合は郵便番号（7桁）等への誤マッチ（例: 〒010-0001） */
+  const digitCount = matchText.replace(/\D/g, "").length;
+  return digitCount < MIN_DOMESTIC_PHONE_DIGITS;
+}
+
 /**
  * 1行のテキストと単語座標から個人情報領域を検出する
  *
@@ -112,15 +140,10 @@ export function detectPersonalInfoInLine(lineText: string, words: TesseractWord[
       const alreadyMatched = matchedRanges.some((r) => r.start < matchEnd && r.end > matchStart);
       if (alreadyMatched) continue;
 
-      /**
-       * 国内電話番号（0始まり）が数字の直後から始まる場合はスキップする。
-       * 例: 〒100-0001 内の 00-0001 への誤マッチを防ぐ（lookbehind の代替）。
-       */
+      /** 国内電話番号の郵便番号誤検出をスキップ（lookbehind 非使用・桁数チェック） */
       if (
         pattern.type === "phone" &&
-        match[0].startsWith("0") &&
-        matchStart > 0 &&
-        /\d/.test(lineText[matchStart - 1]!)
+        isDomesticPhoneFalsePositive(lineText, matchStart, match[0])
       ) {
         continue;
       }

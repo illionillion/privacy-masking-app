@@ -533,6 +533,14 @@ describe("detectPersonalInfoInLine", () => {
     expect(result.some((r) => r.patternType === "postal")).toBe(true);
   });
 
+  it("0始まりの郵便番号を phone として誤検出しない", () => {
+    const result = detectPersonalInfoInLine("〒010-0001", [
+      { text: "〒010-0001", bbox: { x0: 0, y0: 0, x1: 90, y1: 20 } },
+    ]);
+    expect(result.some((r) => r.patternType === "phone")).toBe(false);
+    expect(result.some((r) => r.patternType === "postal")).toBe(true);
+  });
+
   it("郵便番号（区切りなし）を postal として検出する", () => {
     const result = detectPersonalInfoInLine("1234567", [
       { text: "1234567", bbox: { x0: 0, y0: 0, x1: 70, y1: 20 } },
