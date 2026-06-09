@@ -19,10 +19,13 @@ const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
     /**
      * 3つの表記を `|` で結合して検出する:
      * 1. 国際番号形式: +81-90-1234-5678 / +1-800-555-1234
-     * 2. 国内番号（区切りあり）: 090-1234-5678 / 03-1234-5678 / 0120-123-456
+     * 2. 国内番号（区切りあり）: 080-1234-5678 / 090-1234-5678 / 03-1234-5678 / 0120-123-456
      * 3. 国内番号（ハイフンなし）: 09012345678 / 0312345678
+     *
+     * 国内番号は `(?<![0-9])` で直前が数字でない場合のみマッチし、
+     * 〒100-0001 内の 00-0001 など郵便番号の部分文字列への誤検出を防ぐ。
      */
-    source: String.raw`\+\d{1,3}[-\s]?\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}|0\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}|0\d{9,10}`,
+    source: String.raw`\+\d{1,3}[-\s]?\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}|(?<![0-9])0\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}|(?<![0-9])0\d{9,10}`,
   },
   {
     type: "postal",
@@ -211,9 +214,15 @@ export function useOcr(): UseOcrReturn {
        * "Warning: Parameter not found: language_model_ngram_on" が出力されるが、
        * これは既知の無害な警告であり OCR の動作には影響しない。
        */
-      const promise = import("tesseract.js").then(({ createWorker, OEM }) =>
-        createWorker(["jpn", "eng"], OEM.LSTM_ONLY)
-      );
+      const promise = import("tesseract.js").then(async ({ createWorker, OEM, PSM }) => {
+        const worker = await createWorker(["jpn", "eng"], OEM.LSTM_ONLY);
+        /**
+         * PSM.AUTO: 名刺など散在テキストの行結合ミスを減らし、
+         * 080-1234-5678 等の電話番号の取りこぼしを防ぐ（デフォルト PSM では未検出）。
+         */
+        await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO });
+        return worker;
+      });
       workerRef.current = promise;
       /** reject 時はキャッシュを破棄し、次回呼び出しで再生成できるようにする */
       promise.catch(() => {

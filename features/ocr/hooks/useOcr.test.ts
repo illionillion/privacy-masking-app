@@ -5,9 +5,11 @@ import { useOcr, detectPersonalInfoInLine } from "./useOcr";
 /** テスト用モックWorker */
 const mockTerminate = vi.fn().mockResolvedValue(undefined);
 const mockRecognize = vi.fn();
+const mockSetParameters = vi.fn().mockResolvedValue(undefined);
 const mockWorker = {
   recognize: mockRecognize,
   terminate: mockTerminate,
+  setParameters: mockSetParameters,
 };
 
 vi.mock("tesseract.js", () => ({
@@ -17,6 +19,9 @@ vi.mock("tesseract.js", () => ({
     LSTM_ONLY: 1,
     TESSERACT_LSTM_COMBINED: 2,
     DEFAULT: 3,
+  },
+  PSM: {
+    AUTO: 3,
   },
 }));
 
@@ -97,6 +102,18 @@ describe("useOcr", () => {
     const { result } = renderHook(() => useOcr());
     expect(result.current.isRecognizing).toBe(false);
     expect(result.current.ocrRegions).toHaveLength(0);
+  });
+
+  it("Worker 初期化時に PSM.AUTO を設定する", async () => {
+    const { result } = renderHook(() => useOcr());
+    const mockImage = document.createElement("img");
+    mockRecognize.mockResolvedValueOnce(buildMockPage([]));
+
+    await act(async () => {
+      await result.current.recognizeText(mockImage);
+    });
+
+    expect(mockSetParameters).toHaveBeenCalledWith({ tessedit_pageseg_mode: 3 });
   });
 
   it("recognizeText 完了後は isRecognizing が false になる", async () => {
@@ -379,6 +396,15 @@ describe("detectPersonalInfoInLine", () => {
     expect(result[0].patternType).toBe("phone");
   });
 
+  it("電話番号（携帯・ハイフンあり）を正しく検出する", () => {
+    const result = detectPersonalInfoInLine("080-1234-5678", [
+      { text: "080-1234-5678", bbox: { x0: 0, y0: 0, x1: 110, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("phone");
+    expect(result[0].text).toBe("080-1234-5678");
+  });
+
   it("電話番号（携帯・ハイフンなし）を正しく検出する", () => {
     const result = detectPersonalInfoInLine("09012345678", [
       { text: "09012345678", bbox: { x0: 0, y0: 0, x1: 90, y1: 20 } },
@@ -458,6 +484,16 @@ describe("detectPersonalInfoInLine", () => {
     expect(result).toHaveLength(1);
     expect(result[0].patternType).toBe("postal");
     expect(result[0].text).toBe("〒123-4567");
+  });
+
+  it("郵便番号を phone の部分文字列として誤検出しない", () => {
+    const result = detectPersonalInfoInLine("の 〇 〒100-0001", [
+      { text: "の", bbox: { x0: 0, y0: 0, x1: 20, y1: 20 } },
+      { text: "〇", bbox: { x0: 25, y0: 0, x1: 40, y1: 20 } },
+      { text: "〒100-0001", bbox: { x0: 45, y0: 0, x1: 130, y1: 20 } },
+    ]);
+    expect(result.some((r) => r.patternType === "phone")).toBe(false);
+    expect(result.some((r) => r.patternType === "postal")).toBe(true);
   });
 
   it("郵便番号（区切りなし）を postal として検出する", () => {
