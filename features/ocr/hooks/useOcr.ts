@@ -19,8 +19,13 @@ const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
     /**
      * 3つの表記を `|` で結合して検出する:
      * 1. 国際番号形式: +81-90-1234-5678 / +1-800-555-1234
-     * 2. 国内番号（区切りあり）: 090-1234-5678 / 03-1234-5678 / 0120-123-456
+     * 2. 国内番号（区切りあり）: 080-1234-5678 / 090-1234-5678 / 03-1234-5678 / 0120-123-456
      * 3. 国内番号（ハイフンなし）: 09012345678 / 0312345678
+     *
+     * 国内番号の誤検出防止は detectPersonalInfoInLine 内の isDomesticPhoneFalsePositive で行う:
+     * - 直前が数字ならスキップ（例: 〒100-0001 内の 00-0001）
+     * - 0始まりかつ数字が10桁未満ならスキップ（例: 〒010-0001）
+     * 正規表現の lookbehind は Safari 15 等で SyntaxError になるため使用しない。
      */
     source: String.raw`\+\d{1,3}[-\s]?\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}|0\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}|0\d{9,10}`,
   },
@@ -76,6 +81,34 @@ interface TesseractPage {
   text?: string;
 }
 
+/** 国内電話番号として扱う最低桁数（郵便番号7桁との誤検出を防ぐ） */
+const MIN_DOMESTIC_PHONE_DIGITS = 10;
+
+/**
+ * 国内電話番号（0始まり）のマッチが郵便番号等への誤検出かどうかを判定する
+ *
+ * @param lineText - OCR結果の行テキスト
+ * @param matchStart - マッチ開始位置
+ * @param matchText - マッチした文字列
+ * @returns 誤検出と判断する場合は true
+ */
+function isDomesticPhoneFalsePositive(
+  lineText: string,
+  matchStart: number,
+  matchText: string
+): boolean {
+  if (!matchText.startsWith("0")) {
+    return false;
+  }
+  /** 直前が数字の場合は郵便番号内の部分文字列（例: 〒100-0001 の 00-0001） */
+  if (matchStart > 0 && /\d/.test(lineText[matchStart - 1]!)) {
+    return true;
+  }
+  /** 数字が10桁未満の場合は郵便番号（7桁）等への誤マッチ（例: 〒010-0001） */
+  const digitCount = matchText.replace(/\D/g, "").length;
+  return digitCount < MIN_DOMESTIC_PHONE_DIGITS;
+}
+
 /**
  * 1行のテキストと単語座標から個人情報領域を検出する
  *
@@ -108,6 +141,14 @@ export function detectPersonalInfoInLine(lineText: string, words: TesseractWord[
       /** 既にマッチ済みの範囲と重複する場合はスキップ */
       const alreadyMatched = matchedRanges.some((r) => r.start < matchEnd && r.end > matchStart);
       if (alreadyMatched) continue;
+
+      /** 国内電話番号の郵便番号誤検出をスキップ（lookbehind 非使用・桁数チェック） */
+      if (
+        pattern.type === "phone" &&
+        isDomesticPhoneFalsePositive(lineText, matchStart, match[0])
+      ) {
+        continue;
+      }
 
       /** マッチ範囲と重なる単語のbboxを統合 */
       const overlapping = wordPositions.filter((w) => w.start < matchEnd && w.end > matchStart);
@@ -176,6 +217,30 @@ function extractOcrRegions(page: TesseractPage): OcrRegion[] {
 }
 
 /**
+ * Tesseract Worker を生成し OCR 用パラメータを設定する
+ *
+ * PSM.AUTO: 名刺など散在テキストの行結合ミスを減らし、
+ * 080-1234-5678 等の電話番号の取りこぼしを防ぐ（デフォルト PSM では未検出）。
+ *
+ * @returns 初期化済みの Tesseract Worker
+ */
+async function initializeTesseractWorker(): Promise<import("tesseract.js").Worker> {
+  const { createWorker, OEM, PSM } = await import("tesseract.js");
+  const worker = await createWorker(["jpn", "eng"], OEM.LSTM_ONLY);
+  try {
+    await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO });
+    return worker;
+  } catch (err) {
+    try {
+      await worker.terminate();
+    } catch {
+      /** 初期化失敗時の terminate はベストエフォート */
+    }
+    throw err;
+  }
+}
+
+/**
  * OCRフック
  *
  * Tesseract.js の Web Worker を使用して画像内テキストを認識し、
@@ -211,9 +276,7 @@ export function useOcr(): UseOcrReturn {
        * "Warning: Parameter not found: language_model_ngram_on" が出力されるが、
        * これは既知の無害な警告であり OCR の動作には影響しない。
        */
-      const promise = import("tesseract.js").then(({ createWorker, OEM }) =>
-        createWorker(["jpn", "eng"], OEM.LSTM_ONLY)
-      );
+      const promise = initializeTesseractWorker();
       workerRef.current = promise;
       /** reject 時はキャッシュを破棄し、次回呼び出しで再生成できるようにする */
       promise.catch(() => {
@@ -227,9 +290,17 @@ export function useOcr(): UseOcrReturn {
   useEffect(() => {
     return () => {
       /** アンマウント時にWorkerを終了してリソースを解放 */
-      if (workerRef.current) {
-        void workerRef.current.then((w) => w.terminate()).catch(() => {});
-        workerRef.current = null;
+      const workerPromise = workerRef.current;
+      workerRef.current = null;
+      if (workerPromise) {
+        void (async () => {
+          try {
+            const worker = await workerPromise;
+            await worker.terminate();
+          } catch {
+            /** 終了処理の失敗はアンマウント時のベストエフォート */
+          }
+        })();
       }
     };
   }, []);
