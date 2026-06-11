@@ -25,6 +25,15 @@ export function FinalCtaSection() {
           <ShieldCheck className="mr-1 inline h-4 w-4 text-emerald-400" aria-hidden="true" />
           画像はサーバーに送信されません
         </p>
+        <p className="mt-4 text-sm text-indigo-200">
+          <Link
+            href="/faq"
+            className="font-medium text-white underline-offset-4 transition-colors hover:underline"
+          >
+            よくある質問（FAQ）
+          </Link>
+          もご覧ください
+        </p>
       </div>
     </section>
   );

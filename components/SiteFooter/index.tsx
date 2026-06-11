@@ -44,6 +44,11 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
+              <Link href="/faq" className={footerLinkClass}>
+                よくある質問（FAQ）
+              </Link>
+            </li>
+            <li>
               <Link href="/app" className={footerLinkClass}>
                 マスキングツール
               </Link>

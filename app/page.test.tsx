@@ -40,4 +40,12 @@ describe("Home (LandingPage)", () => {
     render(<Home />);
     expect(screen.getByText("たった3ステップで完了")).toBeInTheDocument();
   });
+
+  it("FAQ へのリンクが表示される", () => {
+    render(<Home />);
+    expect(screen.getByRole("link", { name: "よくある質問（FAQ）" })).toHaveAttribute(
+      "href",
+      "/faq"
+    );
+  });
 });
