@@ -33,11 +33,26 @@ describe("FaqAccordion", () => {
     const user = userEvent.setup();
     render(<FaqAccordion {...defaultProps} />);
 
-    expect(screen.queryByText("回答1の本文です。")).not.toBeVisible();
+    const trigger = screen.getByRole("button", { name: "質問1" });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
 
-    await user.click(screen.getByText("質問1"));
+    await user.click(trigger);
 
-    expect(screen.getByText("回答1の本文です。")).toBeVisible();
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("回答1の本文です。")).toBeInTheDocument();
+  });
+
+  it("アコーディオンを閉じると回答が非表示になる", async () => {
+    const user = userEvent.setup();
+    render(<FaqAccordion {...defaultProps} />);
+
+    const trigger = screen.getByRole("button", { name: "質問1" });
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(document.getElementById("faq-panel-question-1")).toHaveAttribute("aria-hidden", "true");
   });
 
   it("フッターリンクが表示される", () => {

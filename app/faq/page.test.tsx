@@ -40,10 +40,12 @@ describe("FaqPage", () => {
     const user = userEvent.setup();
     render(<FaqPage />);
 
-    expect(screen.queryByText("送信されません。")).not.toBeVisible();
+    const trigger = screen.getByRole("button", { name: "画像はサーバーに送信されますか？" });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
 
-    await user.click(screen.getByText("画像はサーバーに送信されますか？"));
+    await user.click(trigger);
 
-    expect(screen.getByText("送信されません。")).toBeVisible();
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("送信されません。")).toBeInTheDocument();
   });
 });
