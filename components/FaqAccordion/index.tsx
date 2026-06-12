@@ -77,6 +77,7 @@ function FaqAccordionItem({ item, isOpen, onToggle }: FaqAccordionItemProps) {
         role="region"
         aria-labelledby={triggerId}
         aria-hidden={!isOpen}
+        {...(!isOpen ? { inert: true } : {})}
         className={clsx([
           "grid",
           "transition-[grid-template-rows]",

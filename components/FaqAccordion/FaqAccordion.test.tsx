@@ -52,7 +52,9 @@ describe("FaqAccordion", () => {
 
     await user.click(trigger);
     expect(trigger).toHaveAttribute("aria-expanded", "false");
-    expect(document.getElementById("faq-panel-question-1")).toHaveAttribute("aria-hidden", "true");
+    const panel = document.getElementById("faq-panel-question-1");
+    expect(panel).toHaveAttribute("aria-hidden", "true");
+    expect(panel).toHaveAttribute("inert");
   });
 
   it("フッターリンクが表示される", () => {
