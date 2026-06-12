@@ -10,30 +10,27 @@ type FaqAccordionProps = {
 };
 
 /**
- * FAQ ページ用のアコーディオン。`<details>` / `<summary>` でキーボード操作にも対応する。
+ * FAQ ページ用の連結アコーディオン。`<details>` / `<summary>` でキーボード操作にも対応する。
  */
 export function FaqAccordion({ intro, items, footer }: FaqAccordionProps) {
   return (
     <div className="space-y-6">
       {intro.length > 0 && <LegalMarkdownContent content={intro} />}
 
-      <div className="space-y-3" role="list">
+      <div
+        className={clsx([
+          "overflow-hidden",
+          "rounded-xl",
+          "border border-zinc-200",
+          "bg-white",
+          "shadow-sm",
+        ])}
+      >
         {items.map((item) => (
           <details
             key={item.id}
             id={item.id}
-            role="listitem"
-            className={clsx([
-              "group",
-              "overflow-hidden",
-              "rounded-xl",
-              "border border-zinc-200",
-              "bg-white",
-              "shadow-sm",
-              "open:border-indigo-200",
-              "open:ring-1",
-              "open:ring-indigo-100",
-            ])}
+            className={clsx(["group", "border-b border-zinc-200", "last:border-b-0"])}
           >
             <summary
               className={clsx([
@@ -42,14 +39,16 @@ export function FaqAccordion({ intro, items, footer }: FaqAccordionProps) {
                 "list-none",
                 "items-center",
                 "justify-between",
-                "gap-3",
-                "px-4",
-                "py-3.5",
+                "gap-4",
+                "px-5",
+                "py-4",
                 "text-sm",
                 "font-semibold",
                 "text-zinc-900",
                 "transition-colors",
                 "hover:bg-zinc-50",
+                "group-open:bg-indigo-50/70",
+                "group-open:text-indigo-950",
                 "focus-visible:outline",
                 "focus-visible:outline-2",
                 "focus-visible:outline-offset-[-2px]",
@@ -57,7 +56,7 @@ export function FaqAccordion({ intro, items, footer }: FaqAccordionProps) {
                 "[&::-webkit-details-marker]:hidden",
               ])}
             >
-              <span>{item.question}</span>
+              <span className="text-left leading-snug">{item.question}</span>
               <ChevronDown
                 className={clsx([
                   "h-4",
@@ -65,12 +64,25 @@ export function FaqAccordion({ intro, items, footer }: FaqAccordionProps) {
                   "shrink-0",
                   "text-zinc-400",
                   "transition-transform",
+                  "duration-200",
                   "group-open:rotate-180",
+                  "group-open:text-indigo-600",
                 ])}
                 aria-hidden="true"
               />
             </summary>
-            <div className="border-t border-zinc-100 px-4 pb-4 pt-3 text-sm leading-relaxed text-zinc-700">
+            <div
+              className={clsx([
+                "border-t border-zinc-200",
+                "bg-zinc-50/80",
+                "px-5",
+                "pb-5",
+                "pt-4",
+                "text-sm",
+                "leading-relaxed",
+                "text-zinc-700",
+              ])}
+            >
               <LegalMarkdownContent content={item.answer} />
             </div>
           </details>
