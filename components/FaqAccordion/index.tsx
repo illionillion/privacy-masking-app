@@ -46,6 +46,7 @@ export function FaqAccordion({ intro, items, footer }: FaqAccordionProps) {
                 "font-semibold",
                 "text-zinc-900",
                 "transition-colors",
+                "duration-200",
                 "hover:bg-zinc-50",
                 "group-open:bg-indigo-50/70",
                 "group-open:text-indigo-950",
@@ -64,7 +65,9 @@ export function FaqAccordion({ intro, items, footer }: FaqAccordionProps) {
                   "shrink-0",
                   "text-zinc-400",
                   "transition-transform",
-                  "duration-200",
+                  "duration-300",
+                  "ease-in-out",
+                  "motion-reduce:transition-none",
                   "group-open:rotate-180",
                   "group-open:text-indigo-600",
                 ])}
@@ -73,17 +76,31 @@ export function FaqAccordion({ intro, items, footer }: FaqAccordionProps) {
             </summary>
             <div
               className={clsx([
-                "border-t border-zinc-200",
-                "bg-zinc-50/80",
-                "px-5",
-                "pb-5",
-                "pt-4",
-                "text-sm",
-                "leading-relaxed",
-                "text-zinc-700",
+                "grid",
+                "grid-rows-[0fr]",
+                "transition-[grid-template-rows]",
+                "duration-300",
+                "ease-in-out",
+                "motion-reduce:transition-none",
+                "group-open:grid-rows-[1fr]",
               ])}
             >
-              <LegalMarkdownContent content={item.answer} />
+              <div className="overflow-hidden">
+                <div
+                  className={clsx([
+                    "border-t border-zinc-200",
+                    "bg-zinc-50/80",
+                    "px-5",
+                    "pb-5",
+                    "pt-4",
+                    "text-sm",
+                    "leading-relaxed",
+                    "text-zinc-700",
+                  ])}
+                >
+                  <LegalMarkdownContent content={item.answer} />
+                </div>
+              </div>
             </div>
           </details>
         ))}
