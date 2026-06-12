@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/loadFaqDocument", () => ({
@@ -25,18 +26,24 @@ vi.mock("@/lib/loadFaqDocument", () => ({
 import FaqPage from "./page";
 
 describe("FaqPage", () => {
-  it("FAQ の見出しと主要な質問が表示される", () => {
+  it("FAQ の見出しと質問が表示される", () => {
     render(<FaqPage />);
 
     expect(
       screen.getByRole("heading", { level: 1, name: "よくある質問（FAQ）" })
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { level: 2, name: "画像はサーバーに送信されますか？" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { level: 2, name: "対応している画像形式とサイズ上限は？" })
-    ).toBeInTheDocument();
-    expect(screen.getByText("送信されません。")).toBeInTheDocument();
+    expect(screen.getByText("画像はサーバーに送信されますか？")).toBeInTheDocument();
+    expect(screen.getByText("対応している画像形式とサイズ上限は？")).toBeInTheDocument();
+  });
+
+  it("アコーディオンを開くと回答が表示される", async () => {
+    const user = userEvent.setup();
+    render(<FaqPage />);
+
+    expect(screen.queryByText("送信されません。")).not.toBeVisible();
+
+    await user.click(screen.getByText("画像はサーバーに送信されますか？"));
+
+    expect(screen.getByText("送信されません。")).toBeVisible();
   });
 });

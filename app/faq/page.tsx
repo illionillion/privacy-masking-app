@@ -1,9 +1,11 @@
-import { LegalMarkdownContent } from "@/components/LegalMarkdownContent";
+import { FaqAccordion } from "@/components/FaqAccordion";
 import { LegalPageLayout } from "@/components/LegalPageLayout";
 import { buildPageMetadata } from "@/lib/buildPageMetadata";
 import { loadFaqDocument } from "@/lib/loadFaqDocument";
+import { parseFaqContent } from "@/lib/parseFaqContent";
 
 const doc = loadFaqDocument();
+const faq = parseFaqContent(doc.content);
 
 export const metadata = buildPageMetadata({
   title: doc.pageTitle,
@@ -17,7 +19,7 @@ export const metadata = buildPageMetadata({
 export default function FaqPage() {
   return (
     <LegalPageLayout title={doc.title} lastUpdatedLabel={doc.lastUpdated}>
-      <LegalMarkdownContent content={doc.content} />
+      <FaqAccordion intro={faq.intro} items={faq.items} footer={faq.footer} />
     </LegalPageLayout>
   );
 }
