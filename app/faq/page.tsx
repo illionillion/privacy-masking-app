@@ -1,3 +1,4 @@
+import { BackToTopButton } from "@/components/BackToTopButton";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { LegalPageLayout } from "@/components/LegalPageLayout";
 import { buildPageMetadata } from "@/lib/buildPageMetadata";
@@ -18,8 +19,11 @@ export const metadata = buildPageMetadata({
  */
 export default function FaqPage() {
   return (
-    <LegalPageLayout title={doc.title} lastUpdatedLabel={doc.lastUpdated}>
-      <FaqAccordion intro={faq.intro} items={faq.items} footer={faq.footer} />
-    </LegalPageLayout>
+    <>
+      <LegalPageLayout title={doc.title} lastUpdatedLabel={doc.lastUpdated}>
+        <FaqAccordion intro={faq.intro} items={faq.items} footer={faq.footer} />
+      </LegalPageLayout>
+      <BackToTopButton />
+    </>
   );
 }
