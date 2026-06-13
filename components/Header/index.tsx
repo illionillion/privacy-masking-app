@@ -18,6 +18,12 @@ export function Header() {
         </Link>
         <div className="flex flex-row flex-wrap items-center justify-end gap-2 sm:gap-4">
           <Link
+            href="/faq"
+            className="text-sm font-medium text-zinc-600 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline"
+          >
+            FAQ
+          </Link>
+          <Link
             href="/app"
             className="text-sm font-medium text-indigo-600 underline-offset-4 transition-colors hover:text-indigo-800 hover:underline"
           >

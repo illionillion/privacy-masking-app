@@ -20,6 +20,12 @@ describe("Header", () => {
     expect(link).toHaveAttribute("href", "/");
   });
 
+  it("FAQ が /faq へのリンクになっている", () => {
+    render(<Header />);
+    const link = screen.getByRole("link", { name: "FAQ" });
+    expect(link).toHaveAttribute("href", "/faq");
+  });
+
   it("今すぐ使うが /app へのリンクになっている", () => {
     render(<Header />);
     const link = screen.getByRole("link", { name: "今すぐ使う" });

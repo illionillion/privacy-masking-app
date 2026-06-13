@@ -20,6 +20,10 @@ describe("SiteFooter", () => {
       "/privacy"
     );
     expect(screen.getByRole("link", { name: "利用規約" })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: "よくある質問（FAQ）" })).toHaveAttribute(
+      "href",
+      "/faq"
+    );
     expect(screen.getByRole("link", { name: "マスキングツール" })).toHaveAttribute("href", "/app");
   });
 
