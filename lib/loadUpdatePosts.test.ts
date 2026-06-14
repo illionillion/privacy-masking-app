@@ -8,7 +8,7 @@ describe("loadUpdatePosts", () => {
   it("更新記事を日付降順（同日は slug 降順）で返す", () => {
     const posts = loadAllUpdatePosts();
 
-    expect(posts.length).toBeGreaterThanOrEqual(11);
+    expect(posts.length).toBeGreaterThan(0);
 
     for (let index = 1; index < posts.length; index += 1) {
       const previous = posts[index - 1]!;

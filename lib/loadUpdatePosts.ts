@@ -16,7 +16,7 @@ export type { LoadedUpdatePost, UpdatePostFrontmatter } from "@/lib/loadUpdatePo
 const UPDATES_CONTENT_DIR = path.join(process.cwd(), "content", "updates");
 
 /**
- * slug から更新記事の pageTitle を組み立てる。
+ * 記事タイトルから pageTitle を組み立てる。
  */
 function buildUpdatePageTitle(title: string): string {
   return `${title} | 更新情報 | 伏せ太郎（Fusely）`;
