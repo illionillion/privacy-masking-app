@@ -4,13 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/loadUpdatePosts", () => ({
   loadAllUpdatePosts: vi.fn(() => [
     {
-      title: "FAQページを追加",
-      date: "2026-06-13",
-      summary: "FAQ を公開しました",
-      slug: "2026-06-13-faq-page",
-      pageTitle: "FAQページを追加 | 更新情報 | 伏せ太郎（Fusely）",
-      description: "FAQ を公開しました",
-      canonicalPath: "updates/2026-06-13-faq-page",
+      title: "OCRの電話番号検出を改善",
+      date: "2026-06-10",
+      summary: "電話番号の検出精度を改善しました",
+      slug: "2026-06-10-ocr-phone-detection",
+      pageTitle: "OCRの電話番号検出を改善 | 更新情報 | 伏せ太郎（Fusely）",
+      description: "電話番号の検出精度を改善しました",
+      canonicalPath: "updates/2026-06-10-ocr-phone-detection",
       content: "本文",
     },
   ]),
@@ -23,9 +23,9 @@ describe("UpdatesPage", () => {
     render(<UpdatesPage />);
 
     expect(screen.getByRole("heading", { level: 1, name: "更新情報" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "FAQページを追加" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "OCRの電話番号検出を改善" })).toHaveAttribute(
       "href",
-      "/updates/2026-06-13-faq-page"
+      "/updates/2026-06-10-ocr-phone-detection"
     );
   });
 });

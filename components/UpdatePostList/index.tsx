@@ -21,6 +21,7 @@ export function UpdatePostList({ posts }: UpdatePostListProps) {
         <li
           key={post.slug}
           className={clsx([
+            "relative",
             "rounded-xl",
             "border border-zinc-200",
             "bg-white",
@@ -28,6 +29,9 @@ export function UpdatePostList({ posts }: UpdatePostListProps) {
             "shadow-sm",
             "transition-colors",
             "hover:border-indigo-200",
+            "has-[:focus-visible]:ring-2",
+            "has-[:focus-visible]:ring-indigo-500",
+            "has-[:focus-visible]:ring-offset-2",
           ])}
         >
           <time dateTime={post.date} className="text-xs font-medium text-zinc-500">
@@ -36,7 +40,17 @@ export function UpdatePostList({ posts }: UpdatePostListProps) {
           <h2 className="mt-2 text-base font-semibold text-zinc-900">
             <Link
               href={`/updates/${post.slug}`}
-              className="underline-offset-4 transition-colors hover:text-indigo-700 hover:underline"
+              className={clsx([
+                "underline-offset-4",
+                "transition-colors",
+                "hover:text-indigo-700",
+                "hover:underline",
+                "after:absolute",
+                "after:inset-0",
+                "after:rounded-xl",
+                "after:content-['']",
+                "focus-visible:outline-none",
+              ])}
             >
               {post.title}
             </Link>
