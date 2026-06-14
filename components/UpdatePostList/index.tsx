@@ -45,6 +45,8 @@ export function UpdatePostList({ posts }: UpdatePostListProps) {
                 "transition-colors",
                 "hover:text-indigo-700",
                 "hover:underline",
+                "focus-visible:text-indigo-700",
+                "focus-visible:underline",
                 "after:absolute",
                 "after:inset-0",
                 "after:rounded-xl",

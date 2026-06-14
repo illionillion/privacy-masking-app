@@ -24,6 +24,15 @@ function normalizeUpdatePostDate(value: unknown): string | null {
 }
 
 /**
+ * 更新記事 slug が許可パターンに一致するか検証する。
+ */
+export function assertUpdatePostSlug(slug: string): void {
+  if (!UPDATE_SLUG_PATTERN.test(slug)) {
+    throw new Error(`content/updates/${slug}.md: invalid slug "${slug}"`);
+  }
+}
+
+/**
  * 更新記事 MD の frontmatter に必須キーが揃っているか検証する。
  */
 export function assertUpdatePostFrontmatter(
@@ -63,9 +72,7 @@ export function updateSlugFromFilename(filename: string): string {
   }
 
   const slug = filename.slice(0, -".md".length);
-  if (!UPDATE_SLUG_PATTERN.test(slug)) {
-    throw new Error(`content/updates/${filename}: invalid slug "${slug}"`);
-  }
+  assertUpdatePostSlug(slug);
 
   return slug;
 }

@@ -5,13 +5,24 @@ vi.mock("server-only", () => ({}));
 import { loadAllUpdatePosts, loadUpdatePost } from "./loadUpdatePosts";
 
 describe("loadUpdatePosts", () => {
-  it("更新記事を日付降順で返す", () => {
+  it("更新記事を日付降順（同日は slug 降順）で返す", () => {
     const posts = loadAllUpdatePosts();
 
     expect(posts.length).toBeGreaterThanOrEqual(11);
-    expect(posts[0]?.slug).toBe("2026-06-10-ocr-phone-detection");
-    expect(posts[0]?.pageTitle).toContain("更新情報");
-    expect(posts[0]?.canonicalPath).toBe("updates/2026-06-10-ocr-phone-detection");
+
+    for (let index = 1; index < posts.length; index += 1) {
+      const previous = posts[index - 1]!;
+      const current = posts[index]!;
+      const dateCompare = previous.date.localeCompare(current.date);
+
+      expect(dateCompare).toBeGreaterThanOrEqual(0);
+      if (dateCompare === 0) {
+        expect(previous.slug.localeCompare(current.slug)).toBeGreaterThanOrEqual(0);
+      }
+    }
+
+    expect(posts.every((post) => post.pageTitle.includes("更新情報"))).toBe(true);
+    expect(posts.every((post) => post.canonicalPath.startsWith("updates/"))).toBe(true);
   });
 
   it("slug から記事本文と summary を読み込む", () => {
@@ -20,5 +31,9 @@ describe("loadUpdatePosts", () => {
     expect(post.title).toContain("ズーム");
     expect(post.summary.length).toBeGreaterThan(0);
     expect(post.content).toContain("Pull Request #72");
+  });
+
+  it("不正な slug を拒否する", () => {
+    expect(() => loadUpdatePost("../privacy")).toThrow(/invalid slug/);
   });
 });

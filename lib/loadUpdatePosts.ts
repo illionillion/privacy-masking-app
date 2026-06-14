@@ -5,7 +5,11 @@ import path from "node:path";
 import matter from "gray-matter";
 import { substituteLegalDocumentPlaceholders } from "@/lib/legalDocumentPlaceholders";
 import type { LoadedUpdatePost } from "@/lib/loadUpdatePosts.types";
-import { assertUpdatePostFrontmatter, updateSlugFromFilename } from "@/lib/updatePostFrontmatter";
+import {
+  assertUpdatePostFrontmatter,
+  assertUpdatePostSlug,
+  updateSlugFromFilename,
+} from "@/lib/updatePostFrontmatter";
 
 export type { LoadedUpdatePost, UpdatePostFrontmatter } from "@/lib/loadUpdatePosts.types";
 
@@ -29,6 +33,8 @@ function buildUpdateCanonicalPath(slug: string): string {
  * `content/updates/{slug}.md` を読み込む。
  */
 export function loadUpdatePost(slug: string): LoadedUpdatePost {
+  assertUpdatePostSlug(slug);
+
   const filePath = path.join(UPDATES_CONTENT_DIR, `${slug}.md`);
   if (!fs.existsSync(filePath)) {
     throw new Error(`content/updates/${slug}.md: file not found`);
