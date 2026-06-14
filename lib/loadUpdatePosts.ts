@@ -30,6 +30,21 @@ function buildUpdateCanonicalPath(slug: string): string {
 }
 
 /**
+ * `content/updates` 配下の Markdown ファイル名から slug 一覧を返す。
+ */
+function listUpdatePostSlugs(): string[] {
+  if (!fs.existsSync(UPDATES_CONTENT_DIR)) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(UPDATES_CONTENT_DIR)
+    .filter((name) => name.endsWith(".md"))
+    .sort()
+    .map((filename) => updateSlugFromFilename(filename));
+}
+
+/**
  * `content/updates/{slug}.md` を読み込む。
  */
 export function loadUpdatePost(slug: string): LoadedUpdatePost {
@@ -58,19 +73,7 @@ export function loadUpdatePost(slug: string): LoadedUpdatePost {
  * 更新記事を日付降順（同日は slug 降順）で返す。
  */
 export function loadAllUpdatePosts(): LoadedUpdatePost[] {
-  if (!fs.existsSync(UPDATES_CONTENT_DIR)) {
-    return [];
-  }
-
-  const filenames = fs
-    .readdirSync(UPDATES_CONTENT_DIR)
-    .filter((name) => name.endsWith(".md"))
-    .sort();
-
-  const posts = filenames.map((filename) => {
-    const slug = updateSlugFromFilename(filename);
-    return loadUpdatePost(slug);
-  });
+  const posts = listUpdatePostSlugs().map((slug) => loadUpdatePost(slug));
 
   return posts.sort((left, right) => {
     const dateCompare = right.date.localeCompare(left.date);
@@ -85,5 +88,5 @@ export function loadAllUpdatePosts(): LoadedUpdatePost[] {
  * 更新記事の slug 一覧を返す（静的生成用）。
  */
 export function loadUpdatePostSlugs(): string[] {
-  return loadAllUpdatePosts().map((post) => post.slug);
+  return listUpdatePostSlugs();
 }

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { loadAllUpdatePosts, loadUpdatePost } from "./loadUpdatePosts";
+import { loadAllUpdatePosts, loadUpdatePost, loadUpdatePostSlugs } from "./loadUpdatePosts";
 
 describe("loadUpdatePosts", () => {
   it("更新記事を日付降順（同日は slug 降順）で返す", () => {
@@ -35,5 +35,13 @@ describe("loadUpdatePosts", () => {
 
   it("不正な slug を拒否する", () => {
     expect(() => loadUpdatePost("../privacy")).toThrow(/invalid slug/);
+  });
+
+  it("slug 一覧をディレクトリ走査だけで返す", () => {
+    const slugs = loadUpdatePostSlugs();
+    const posts = loadAllUpdatePosts();
+
+    expect(slugs.length).toBe(posts.length);
+    expect(slugs.every((slug) => posts.some((post) => post.slug === slug))).toBe(true);
   });
 });
