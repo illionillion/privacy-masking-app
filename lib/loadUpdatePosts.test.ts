@@ -8,7 +8,7 @@ describe("loadUpdatePosts", () => {
   it("更新記事を日付降順で返す", () => {
     const posts = loadAllUpdatePosts();
 
-    expect(posts.length).toBeGreaterThanOrEqual(5);
+    expect(posts.length).toBeGreaterThanOrEqual(11);
     expect(posts[0]?.slug).toBe("2026-06-10-ocr-phone-detection");
     expect(posts[0]?.pageTitle).toContain("更新情報");
     expect(posts[0]?.canonicalPath).toBe("updates/2026-06-10-ocr-phone-detection");
