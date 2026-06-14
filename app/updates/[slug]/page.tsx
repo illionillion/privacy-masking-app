@@ -49,11 +49,7 @@ export default async function UpdatePostPage({ params }: UpdatePostPageProps) {
   }
 
   return (
-    <LegalPageLayout
-      title={post.title}
-      lastUpdatedLabel={formatUpdateDate(post.date)}
-      dateLabel="公開日"
-    >
+    <LegalPageLayout title={post.title} dateText={formatUpdateDate(post.date)} dateLabel="公開日">
       <LegalMarkdownContent content={post.content} />
       <p className="pt-2">
         <Link

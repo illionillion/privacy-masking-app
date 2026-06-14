@@ -16,7 +16,7 @@ export const metadata = buildPageMetadata({
  */
 export default function TermsPage() {
   return (
-    <LegalPageLayout title={doc.title} lastUpdatedLabel={doc.lastUpdated}>
+    <LegalPageLayout title={doc.title} dateText={doc.lastUpdated}>
       <LegalMarkdownContent content={doc.content} />
     </LegalPageLayout>
   );
