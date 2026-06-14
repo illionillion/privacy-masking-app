@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { loadAllUpdatePosts } from "@/lib/loadUpdatePosts";
 import { getSiteUrl } from "@/lib/siteUrl";
 export const dynamic = "force-static";
 
@@ -7,6 +8,11 @@ export const dynamic = "force-static";
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const siteUrl = getSiteUrl();
+  const updateEntries = loadAllUpdatePosts().map((post) => ({
+    url: `${siteUrl}/updates/${post.slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
 
   return [
     {
@@ -25,6 +31,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
+      url: `${siteUrl}/updates`,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
       url: `${siteUrl}/privacy`,
       changeFrequency: "monthly",
       priority: 0.5,
@@ -34,5 +45,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.5,
     },
+    ...updateEntries,
   ];
 }
