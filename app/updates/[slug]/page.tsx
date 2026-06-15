@@ -4,11 +4,8 @@ import { LegalMarkdownContent } from "@/components/LegalMarkdownContent";
 import { LegalPageLayout } from "@/components/LegalPageLayout";
 import { buildPageMetadata } from "@/lib/buildPageMetadata";
 import { formatUpdateDate } from "@/lib/formatUpdateDate";
-import {
-  isUpdatePostNotFoundError,
-  loadUpdatePost,
-  loadUpdatePostSlugs,
-} from "@/lib/loadUpdatePosts";
+import { isUpdatePostNotFoundError } from "@/lib/updatePostNotFoundError";
+import { loadUpdatePost, loadUpdatePostSlugs } from "@/lib/loadUpdatePosts";
 
 type UpdatePostPageProps = {
   params: Promise<{ slug: string }>;

@@ -1,5 +1,6 @@
 import { isValidUpdateIsoDate } from "@/lib/formatUpdateDate";
 import type { UpdatePostFrontmatter } from "@/lib/loadUpdatePosts.types";
+import { UpdatePostNotFoundError } from "@/lib/updatePostNotFoundError";
 
 const REQUIRED_FRONTMATTER_KEYS: (keyof UpdatePostFrontmatter)[] = ["title", "date", "summary"];
 
@@ -28,7 +29,7 @@ function normalizeUpdatePostDate(value: unknown): string | null {
  */
 export function assertUpdatePostSlug(slug: string): void {
   if (!UPDATE_SLUG_PATTERN.test(slug)) {
-    throw new Error(`content/updates/${slug}.md: invalid slug "${slug}"`);
+    throw new UpdatePostNotFoundError(`content/updates/${slug}.md: invalid slug "${slug}"`);
   }
 }
 

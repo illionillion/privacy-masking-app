@@ -5,6 +5,7 @@ import path from "node:path";
 import matter from "gray-matter";
 import { substituteLegalDocumentPlaceholders } from "@/lib/legalDocumentPlaceholders";
 import type { LoadedUpdatePost } from "@/lib/loadUpdatePosts.types";
+import { UpdatePostNotFoundError } from "@/lib/updatePostNotFoundError";
 import {
   assertUpdatePostFrontmatter,
   assertUpdatePostSlug,
@@ -14,17 +15,6 @@ import {
 export type { LoadedUpdatePost, UpdatePostFrontmatter } from "@/lib/loadUpdatePosts.types";
 
 const UPDATES_CONTENT_DIR = path.join(process.cwd(), "content", "updates");
-
-/**
- * 更新記事が存在しない（404 相当）エラーか判定する。
- */
-export function isUpdatePostNotFoundError(error: unknown): boolean {
-  if (!(error instanceof Error)) {
-    return false;
-  }
-
-  return error.message.includes(": invalid slug") || error.message.includes(": file not found");
-}
 
 /**
  * 記事タイトルから pageTitle を組み立てる。
@@ -63,7 +53,7 @@ export function loadUpdatePost(slug: string): LoadedUpdatePost {
 
   const filePath = path.join(UPDATES_CONTENT_DIR, `${slug}.md`);
   if (!fs.existsSync(filePath)) {
-    throw new Error(`content/updates/${slug}.md: file not found`);
+    throw new UpdatePostNotFoundError(`content/updates/${slug}.md: file not found`);
   }
 
   const raw = fs.readFileSync(filePath, "utf8");

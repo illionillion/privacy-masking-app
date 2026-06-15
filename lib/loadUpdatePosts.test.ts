@@ -2,12 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import {
-  isUpdatePostNotFoundError,
-  loadAllUpdatePosts,
-  loadUpdatePost,
-  loadUpdatePostSlugs,
-} from "./loadUpdatePosts";
+import { loadAllUpdatePosts, loadUpdatePost, loadUpdatePostSlugs } from "./loadUpdatePosts";
+import { UpdatePostNotFoundError } from "./updatePostNotFoundError";
 
 describe("loadUpdatePosts", () => {
   it("更新記事を日付降順（同日は slug 降順）で返す", () => {
@@ -39,7 +35,7 @@ describe("loadUpdatePosts", () => {
   });
 
   it("不正な slug を拒否する", () => {
-    expect(() => loadUpdatePost("../privacy")).toThrow(/invalid slug/);
+    expect(() => loadUpdatePost("../privacy")).toThrow(UpdatePostNotFoundError);
   });
 
   it("slug 一覧をディレクトリ走査だけで返す", () => {
@@ -48,17 +44,5 @@ describe("loadUpdatePosts", () => {
 
     expect(slugs.length).toBe(posts.length);
     expect(slugs.every((slug) => posts.some((post) => post.slug === slug))).toBe(true);
-  });
-
-  it("isUpdatePostNotFoundError が404相当のみ true を返す", () => {
-    expect(isUpdatePostNotFoundError(new Error("content/updates/x.md: file not found"))).toBe(true);
-    expect(isUpdatePostNotFoundError(new Error('content/updates/x.md: invalid slug "x"'))).toBe(
-      true
-    );
-    expect(
-      isUpdatePostNotFoundError(
-        new Error("content/updates/x.md: missing or empty frontmatter: date")
-      )
-    ).toBe(false);
   });
 });
