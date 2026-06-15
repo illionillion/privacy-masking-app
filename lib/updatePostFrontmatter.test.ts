@@ -40,4 +40,17 @@ describe("assertUpdatePostFrontmatter", () => {
       )
     ).toThrow(/missing or empty frontmatter: date/);
   });
+
+  it("date が実在しない暦日のときエラーを投げる", () => {
+    expect(() =>
+      assertUpdatePostFrontmatter(
+        {
+          title: "テスト記事",
+          date: "2026-06-31",
+          summary: "概要",
+        },
+        "2026-06-10-test"
+      )
+    ).toThrow(/valid YYYY-MM-DD calendar date/);
+  });
 });

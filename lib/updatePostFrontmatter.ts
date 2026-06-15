@@ -54,7 +54,9 @@ export function assertUpdatePostFrontmatter(
 
   const date = normalizeUpdatePostDate(data.date)!;
   if (!isValidUpdateIsoDate(date)) {
-    throw new Error(`content/updates/${slug}.md: date must be YYYY-MM-DD: ${date}`);
+    throw new Error(
+      `content/updates/${slug}.md: date must be a valid YYYY-MM-DD calendar date: ${date}`
+    );
   }
 
   return {
