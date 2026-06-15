@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { loadAllUpdatePosts } from "@/lib/loadUpdatePosts";
+import { loadUpdatePostSlugs } from "@/lib/loadUpdatePosts";
 import { getSiteUrl } from "@/lib/siteUrl";
 export const dynamic = "force-static";
 
@@ -8,8 +8,8 @@ export const dynamic = "force-static";
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const siteUrl = getSiteUrl();
-  const updateEntries = loadAllUpdatePosts().map((post) => ({
-    url: `${siteUrl}/updates/${post.slug}`,
+  const updateEntries = loadUpdatePostSlugs().map((slug) => ({
+    url: `${siteUrl}/updates/${slug}`,
     changeFrequency: "monthly" as const,
     priority: 0.6,
   }));
