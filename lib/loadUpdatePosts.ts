@@ -16,6 +16,17 @@ export type { LoadedUpdatePost, UpdatePostFrontmatter } from "@/lib/loadUpdatePo
 const UPDATES_CONTENT_DIR = path.join(process.cwd(), "content", "updates");
 
 /**
+ * 更新記事が存在しない（404 相当）エラーか判定する。
+ */
+export function isUpdatePostNotFoundError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return error.message.includes(": invalid slug") || error.message.includes(": file not found");
+}
+
+/**
  * 記事タイトルから pageTitle を組み立てる。
  */
 function buildUpdatePageTitle(title: string): string {

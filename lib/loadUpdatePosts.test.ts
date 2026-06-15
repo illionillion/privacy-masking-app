@@ -2,7 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { loadAllUpdatePosts, loadUpdatePost, loadUpdatePostSlugs } from "./loadUpdatePosts";
+import {
+  isUpdatePostNotFoundError,
+  loadAllUpdatePosts,
+  loadUpdatePost,
+  loadUpdatePostSlugs,
+} from "./loadUpdatePosts";
 
 describe("loadUpdatePosts", () => {
   it("更新記事を日付降順（同日は slug 降順）で返す", () => {
@@ -43,5 +48,17 @@ describe("loadUpdatePosts", () => {
 
     expect(slugs.length).toBe(posts.length);
     expect(slugs.every((slug) => posts.some((post) => post.slug === slug))).toBe(true);
+  });
+
+  it("isUpdatePostNotFoundError が404相当のみ true を返す", () => {
+    expect(isUpdatePostNotFoundError(new Error("content/updates/x.md: file not found"))).toBe(true);
+    expect(isUpdatePostNotFoundError(new Error('content/updates/x.md: invalid slug "x"'))).toBe(
+      true
+    );
+    expect(
+      isUpdatePostNotFoundError(
+        new Error("content/updates/x.md: missing or empty frontmatter: date")
+      )
+    ).toBe(false);
   });
 });

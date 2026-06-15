@@ -4,7 +4,11 @@ import { LegalMarkdownContent } from "@/components/LegalMarkdownContent";
 import { LegalPageLayout } from "@/components/LegalPageLayout";
 import { buildPageMetadata } from "@/lib/buildPageMetadata";
 import { formatUpdateDate } from "@/lib/formatUpdateDate";
-import { loadUpdatePost, loadUpdatePostSlugs } from "@/lib/loadUpdatePosts";
+import {
+  isUpdatePostNotFoundError,
+  loadUpdatePost,
+  loadUpdatePostSlugs,
+} from "@/lib/loadUpdatePosts";
 
 type UpdatePostPageProps = {
   params: Promise<{ slug: string }>;
@@ -30,8 +34,11 @@ export async function generateMetadata({ params }: UpdatePostPageProps) {
       description: post.description,
       canonicalPath: post.canonicalPath,
     });
-  } catch {
-    return {};
+  } catch (error) {
+    if (isUpdatePostNotFoundError(error)) {
+      return {};
+    }
+    throw error;
   }
 }
 
@@ -44,8 +51,11 @@ export default async function UpdatePostPage({ params }: UpdatePostPageProps) {
   let post;
   try {
     post = loadUpdatePost(slug);
-  } catch {
-    notFound();
+  } catch (error) {
+    if (isUpdatePostNotFoundError(error)) {
+      notFound();
+    }
+    throw error;
   }
 
   return (
