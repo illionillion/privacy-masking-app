@@ -71,6 +71,8 @@ jobs:
 
           http_status=$(curl --silent --show-error --output /tmp/cursor-webhook-response.txt \
             --write-out "%{http_code}" \
+            --connect-timeout 10 \
+            --max-time 30 \
             --request POST \
             --header "Authorization: Bearer ${WEBHOOK_API_KEY}" \
             --header "Content-Type: application/json" \
