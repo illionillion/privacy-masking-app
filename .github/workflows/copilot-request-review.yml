@@ -79,7 +79,7 @@ jobs:
             );
 
             const reviewRequests = repository.pullRequest.reviewRequests.nodes;
-            const copilotLogins = new Set(['Copilot', 'copilot-pull-request-reviewer']);
+            const copilotLogins = new Set(['Copilot', 'copilot-pull-request-reviewer', bot.login]);
             const hasPendingCopilotRequest = reviewRequests.some((node) => {
               const login = node.requestedReviewer?.login;
               return login != null && copilotLogins.has(login);
