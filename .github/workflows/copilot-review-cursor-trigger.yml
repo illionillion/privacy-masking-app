@@ -1,11 +1,8 @@
-# Copilot コードレビュー自動化
-#
-# 1. PR push 時: GraphQL requestReviews で Copilot をレビュアーに設定
-#    （Ruleset の review_on_push は不安定なため、明示的に再依頼する）
-# 2. Copilot レビュー submit 時: Cursor Automation の Webhook を叩いて精査を起動
+# Copilot コードレビュー submit 後、Cursor Automation の Webhook を叩いて精査を起動する。
 #
 # 背景: Cursor Automation の「PR コメント」トリガーは Bot コメントを除外するため、
 # Webhook トリガー経由で起動する。
+# Copilot への再依頼は copilot-request-review.yml に分離している。
 #
 # セットアップ:
 # 1. Cursor Automation: トリガー Webhook、repo 紐づけ、Save / Active
@@ -15,104 +12,24 @@
 #    - CURSOR_AUTOMATION_WEBHOOK_API_KEY  （crsr_... のみ。Bearer は付けない）
 # 4. Automation プロンプトで payload の pull_request_number を精査対象 PR にする
 
-name: Copilot review automation
+name: Copilot review → Cursor Automation webhook
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
   pull_request_review:
     types: [submitted]
 
 permissions:
   contents: read
 
+concurrency:
+  group: copilot-cursor-webhook-${{ github.event.pull_request.number }}-${{ github.event.review.id }}
+  cancel-in-progress: false
+
 jobs:
-  request-copilot-review:
-    name: Request Copilot code review
-    runs-on: ubuntu-latest
-    if: >-
-      github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.draft == false
-    permissions:
-      pull-requests: write
-    concurrency:
-      group: request-copilot-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
-      cancel-in-progress: false
-    steps:
-      - name: Request Copilot review via GraphQL botIds
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const pullRequest = context.payload.pull_request;
-            const pullRequestId = pullRequest.node_id;
-            const headSha = pullRequest.head.sha;
-
-            const { data: bot } = await github.rest.users.getByUsername({
-              username: 'copilot-pull-request-reviewer[bot]',
-            });
-            const botNodeId = bot.node_id;
-
-            core.info(
-              `Requesting Copilot review for PR #${pullRequest.number} (${headSha.slice(0, 7)}) via botIds (${bot.login}, ${botNodeId})`,
-            );
-
-            await github.graphql(
-              `mutation($pullRequestId: ID!, $botIds: [ID!]!) {
-                requestReviews(input: { pullRequestId: $pullRequestId, botIds: $botIds, union: true }) {
-                  pullRequest { id }
-                }
-              }`,
-              {
-                pullRequestId,
-                botIds: [botNodeId],
-              },
-            );
-
-            const { repository } = await github.graphql(
-              `query($owner: String!, $name: String!, $number: Int!) {
-                repository(owner: $owner, name: $name) {
-                  pullRequest(number: $number) {
-                    reviewRequests(first: 10) {
-                      nodes {
-                        requestedReviewer {
-                          __typename
-                          ... on Bot { login }
-                          ... on User { login }
-                        }
-                      }
-                    }
-                  }
-                }
-              }`,
-              {
-                owner: context.repo.owner,
-                name: context.repo.repo,
-                number: pullRequest.number,
-              },
-            );
-
-            const reviewRequests = repository.pullRequest.reviewRequests.nodes;
-            const copilotLogins = new Set(['Copilot', 'copilot-pull-request-reviewer']);
-            const hasPendingCopilotRequest = reviewRequests.some((node) => {
-              const login = node.requestedReviewer?.login;
-              return login != null && copilotLogins.has(login);
-            });
-
-            if (hasPendingCopilotRequest) {
-              core.info('Copilot is listed in reviewRequests.');
-              return;
-            }
-
-            core.warning(
-              'requestReviews completed but Copilot is not in reviewRequests. Copilot may already be reviewing, or code review is disabled for this repository.',
-            );
-
   trigger-cursor-automation:
     name: Trigger Cursor Automation webhook
     runs-on: ubuntu-latest
     if: >-
-      github.event_name == 'pull_request_review' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.review.user.type == 'Bot' &&
       (
@@ -121,9 +38,6 @@ jobs:
         github.event.review.user.login == 'Copilot'
       ) &&
       github.event.pull_request.draft == false
-    concurrency:
-      group: copilot-cursor-webhook-${{ github.event.pull_request.number }}-${{ github.event.review.id }}
-      cancel-in-progress: false
     steps:
       - name: POST Cursor Automation webhook
         env:
