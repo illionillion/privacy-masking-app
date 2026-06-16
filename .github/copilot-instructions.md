@@ -12,7 +12,7 @@
    - Frontend作業 → `instructions/frontend.instructions.md`
    - レビュー → `instructions/review.instructions.md`
    - Git/GitHub操作 → `.github/skills/github-ops/SKILL.md`
-   - 脆弱性対応 → `skills/vuln-fix/SKILL.md`
+   - 脆弱性対応 → `.github/skills/vuln-fix/SKILL.md`
 
    参照したファイル名を確認メッセージに明記する（例: "frontend.instructions.md のルールを参照しました！"）
 
