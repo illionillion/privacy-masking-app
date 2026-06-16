@@ -9,8 +9,8 @@
 2. **確認メッセージ**: ルールを参照したことを示すため、回答の冒頭に「ルールを参照しました！」と表示してください。
 
 3. **領域別ルールの必須参照**: 作業開始前に、対象領域のルールファイルを**必ず**参照する。
-   - Frontend作業 → `instructions/frontend.instructions.md`
-   - レビュー → `instructions/review.instructions.md`
+   - Frontend作業 → `.github/instructions/frontend.instructions.md`
+   - レビュー → `.github/instructions/review.instructions.md`
    - Git/GitHub操作 → `.github/skills/github-ops/SKILL.md`
    - 脆弱性対応 → `.github/skills/vuln-fix/SKILL.md`
 
