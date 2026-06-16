@@ -29,7 +29,13 @@ jobs:
     name: Trigger Cursor Automation webhook
     runs-on: ubuntu-latest
     if: >-
-      github.event.review.user.login == 'copilot-pull-request-reviewer[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.review.user.type == 'Bot' &&
+      (
+        github.event.review.user.login == 'copilot-pull-request-reviewer[bot]' ||
+        github.event.review.user.login == 'copilot-pull-request-reviewer' ||
+        github.event.review.user.login == 'Copilot'
+      ) &&
       github.event.pull_request.draft == false
     steps:
       - name: POST Cursor Automation webhook
