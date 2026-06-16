@@ -1,0 +1,79 @@
+# Copilot コードレビュー完了後、Cursor Automation の Webhook を叩いて精査を起動する。
+#
+# 背景: Cursor Automation の「PR コメント」トリガーは Bot コメントを除外するため、
+# Webhook トリガー経由で起動する。
+#
+# セットアップ:
+# 1. Cursor Automation: トリガー Webhook、repo 紐づけ、Save / Active
+# 2. Webhook URL と API キー（crsr_...）を Automations 画面で取得
+# 3. Repository Secrets に登録:
+#    - CURSOR_AUTOMATION_WEBHOOK_URL
+#    - CURSOR_AUTOMATION_WEBHOOK_API_KEY  （crsr_... のみ。Bearer は付けない）
+# 4. Automation プロンプトで payload の pull_request_number を精査対象 PR にする
+
+name: Copilot review → Cursor Automation webhook
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+concurrency:
+  group: copilot-cursor-webhook-${{ github.event.pull_request.number }}-${{ github.event.review.id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  trigger-cursor-automation:
+    name: Trigger Cursor Automation webhook
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.review.user.login == 'copilot-pull-request-reviewer[bot]' &&
+      github.event.pull_request.draft == false
+    steps:
+      - name: POST Cursor Automation webhook
+        env:
+          WEBHOOK_URL: ${{ secrets.CURSOR_AUTOMATION_WEBHOOK_URL }}
+          WEBHOOK_API_KEY: ${{ secrets.CURSOR_AUTOMATION_WEBHOOK_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${WEBHOOK_URL}" ] || [ -z "${WEBHOOK_API_KEY}" ]; then
+            echo "::error::Secrets CURSOR_AUTOMATION_WEBHOOK_URL and CURSOR_AUTOMATION_WEBHOOK_API_KEY must be set."
+            exit 1
+          fi
+
+          payload=$(jq -n \
+            --arg event "copilot_review_submitted" \
+            --arg repository "${GITHUB_REPOSITORY}" \
+            --argjson pull_request_number "${{ github.event.pull_request.number }}" \
+            --argjson review_id "${{ github.event.review.id }}" \
+            --arg head_sha "${{ github.event.pull_request.head.sha }}" \
+            --arg review_url "${{ github.event.review.html_url }}" \
+            '{
+              event: $event,
+              repository: $repository,
+              pull_request_number: $pull_request_number,
+              review_id: $review_id,
+              head_sha: $head_sha,
+              review_url: $review_url
+            }')
+
+          echo "Triggering Cursor Automation for PR #${{ github.event.pull_request.number }} (review ${{ github.event.review.id }})"
+
+          http_status=$(curl --silent --show-error --output /tmp/cursor-webhook-response.txt \
+            --write-out "%{http_code}" \
+            --request POST \
+            --header "Authorization: Bearer ${WEBHOOK_API_KEY}" \
+            --header "Content-Type: application/json" \
+            --data "${payload}" \
+            "${WEBHOOK_URL}")
+
+          echo "Cursor webhook response (${http_status}):"
+          cat /tmp/cursor-webhook-response.txt
+
+          if [ "${http_status}" -lt 200 ] || [ "${http_status}" -ge 300 ]; then
+            echo "::error::Cursor webhook failed with HTTP ${http_status}"
+            exit 1
+          fi
