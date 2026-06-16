@@ -20,7 +20,7 @@ export const metadata = buildPageMetadata({
 export default function FaqPage() {
   return (
     <>
-      <LegalPageLayout title={doc.title} lastUpdatedLabel={doc.lastUpdated}>
+      <LegalPageLayout title={doc.title} dateText={doc.lastUpdated}>
         <FaqAccordion intro={faq.intro} items={faq.items} footer={faq.footer} />
       </LegalPageLayout>
       <BackToTopButton />

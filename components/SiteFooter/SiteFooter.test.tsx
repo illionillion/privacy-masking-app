@@ -24,6 +24,7 @@ describe("SiteFooter", () => {
       "href",
       "/faq"
     );
+    expect(screen.getByRole("link", { name: "更新情報" })).toHaveAttribute("href", "/updates");
     expect(screen.getByRole("link", { name: "マスキングツール" })).toHaveAttribute("href", "/app");
   });
 

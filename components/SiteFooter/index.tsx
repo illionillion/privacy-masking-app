@@ -49,6 +49,11 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
+              <Link href="/updates" className={footerLinkClass}>
+                更新情報
+              </Link>
+            </li>
+            <li>
               <Link href="/app" className={footerLinkClass}>
                 マスキングツール
               </Link>
