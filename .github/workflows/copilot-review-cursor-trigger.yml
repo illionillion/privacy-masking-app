@@ -4,6 +4,9 @@
 # Webhook トリガー経由で起動する。
 # Copilot への再依頼は copilot-request-review.yml に分離している。
 #
+# 新規インラインコメントが 0 件の Copilot review では Webhook を叩かない
+# （Automation の無駄起動を防ぐ）。
+#
 # セットアップ:
 # 1. Cursor Automation: トリガー Webhook、repo 紐づけ、Save / Active
 # 2. Webhook URL と API キー（crsr_...）を Automations 画面で取得
@@ -38,8 +41,48 @@ jobs:
         github.event.review.user.login == 'Copilot'
       ) &&
       github.event.pull_request.draft == false
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
+      - name: Count new inline comments on this Copilot review
+        id: review-comments
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const reviewId = context.payload.review.id;
+            const pullNumber = context.payload.pull_request.number;
+            let page = 1;
+            let newCommentCount = 0;
+
+            while (true) {
+              const { data: comments } = await github.rest.pulls.listReviewComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pullNumber,
+                per_page: 100,
+                page,
+              });
+
+              for (const comment of comments) {
+                if (comment.pull_request_review_id === reviewId) {
+                  newCommentCount += 1;
+                }
+              }
+
+              if (comments.length < 100) {
+                break;
+              }
+              page += 1;
+            }
+
+            core.info(
+              `Copilot review ${reviewId} on PR #${pullNumber}: ${newCommentCount} new inline comment(s)`,
+            );
+            core.setOutput('count', String(newCommentCount));
+
       - name: POST Cursor Automation webhook
+        if: steps.review-comments.outputs.count != '0'
         env:
           WEBHOOK_URL: ${{ secrets.CURSOR_AUTOMATION_WEBHOOK_URL }}
           WEBHOOK_API_KEY: ${{ secrets.CURSOR_AUTOMATION_WEBHOOK_API_KEY }}
@@ -67,7 +110,7 @@ jobs:
               review_url: $review_url
             }')
 
-          echo "Triggering Cursor Automation for PR #${{ github.event.pull_request.number }} (review ${{ github.event.review.id }})"
+          echo "Triggering Cursor Automation for PR #${{ github.event.pull_request.number }} (review ${{ github.event.review.id }}, ${{ steps.review-comments.outputs.count }} new comment(s))"
 
           http_status=$(curl --silent --show-error --output /tmp/cursor-webhook-response.txt \
             --write-out "%{http_code}" \
@@ -85,3 +128,8 @@ jobs:
             echo "::error::Cursor webhook failed with HTTP ${http_status}"
             exit 1
           fi
+
+      - name: Skip webhook (no new inline comments)
+        if: steps.review-comments.outputs.count == '0'
+        run: |
+          echo "No new inline comments on Copilot review ${{ github.event.review.id }}. Skipping Cursor Automation webhook."
