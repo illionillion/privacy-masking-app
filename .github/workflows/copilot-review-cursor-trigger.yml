@@ -79,10 +79,9 @@ jobs:
             --data "${payload}" \
             "${WEBHOOK_URL}")
 
-          echo "Cursor webhook response (${http_status}):"
-          cat /tmp/cursor-webhook-response.txt
-
           if [ "${http_status}" -lt 200 ] || [ "${http_status}" -ge 300 ]; then
+            echo "Cursor webhook response (${http_status}):"
+            cat /tmp/cursor-webhook-response.txt
             echo "::error::Cursor webhook failed with HTTP ${http_status}"
             exit 1
           fi
