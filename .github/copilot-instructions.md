@@ -9,10 +9,10 @@
 2. **確認メッセージ**: ルールを参照したことを示すため、回答の冒頭に「ルールを参照しました！」と表示してください。
 
 3. **領域別ルールの必須参照**: 作業開始前に、対象領域のルールファイルを**必ず**参照する。
-   - Frontend作業 → `instructions/frontend.instructions.md`
-   - レビュー → `instructions/review.instructions.md`
-   - Git/GitHub操作 → `skills/github-ops/SKILL.md`
-   - 脆弱性対応 → `skills/vuln-fix/SKILL.md`
+   - Frontend作業 → `.github/instructions/frontend.instructions.md`
+   - レビュー → `.github/instructions/review.instructions.md`
+   - Git/GitHub操作 → `.github/skills/github-ops/SKILL.md`
+   - 脆弱性対応 → `.github/skills/vuln-fix/SKILL.md`
 
    参照したファイル名を確認メッセージに明記する（例: "frontend.instructions.md のルールを参照しました！"）
 
@@ -83,6 +83,7 @@
 4. 動作確認・セルフレビューの実施
    - テストを実行し、すべてのテストが通ることを確認する
    - lefthookのpre-commitでlint/formatが自動実行される
+   - push は作業単位ごとにまとめる（Copilot 自動レビューは push ごとに走るため）。ローカルでは複数コミット可。詳細は `.github/skills/github-ops/SKILL.md` のプッシュ方針
 5. Pull Requestの作成
    - タイトル: 変更内容を簡潔に表現（プレフィックス不要）
    - 説明文: `.github/pull_request_template.md` に従う
