@@ -4,8 +4,16 @@ import type { CustomMaskTerm, DetectionPrefs } from "@/lib/preferences";
  * マスク語句設定のサマリ文字列を返す
  *
  * @param terms - 登録語句一覧
+ * @param options - 表示オプション
+ * @param options.ocrEnabled - テキスト自動検出（OCR）が有効か
  */
-export function formatCustomMaskTermsSummary(terms: readonly CustomMaskTerm[]): string {
+export function formatCustomMaskTermsSummary(
+  terms: readonly CustomMaskTerm[],
+  options?: { ocrEnabled?: boolean }
+): string {
+  if (options?.ocrEnabled === false) {
+    return "利用不可（OCR オフ）";
+  }
   if (terms.length === 0) {
     return "未登録";
   }

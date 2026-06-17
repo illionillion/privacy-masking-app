@@ -25,6 +25,11 @@ describe("detectionMessages", () => {
         { id: "2", text: "田中", enabled: false },
       ])
     ).toBe("2件（有効 1件）");
+    expect(
+      formatCustomMaskTermsSummary([{ id: "1", text: "山田太郎", enabled: true }], {
+        ocrEnabled: false,
+      })
+    ).toBe("利用不可（OCR オフ）");
   });
 
   it("両方オフのアップロード時メッセージを返す", () => {

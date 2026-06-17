@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ImageUpload } from "@/components/ImageUpload";
 import { useFaceDetection } from "@/features/face-detection";
 import { useOcr } from "@/features/ocr";
+import type { DetectionPrefs } from "@/lib/preferences";
 import { useClipboardImagePaste } from "../hooks/useClipboardImagePaste";
 import { DETECTION_SETTINGS_BAR_REVEAL_MS, useDelayedReveal } from "../hooks/useDelayedReveal";
 import { useCustomMaskTerms } from "../hooks/useCustomMaskTerms";
@@ -76,9 +77,13 @@ export function MaskingGallery() {
     [detectionSettings]
   );
   const customMaskTermsSummary = useMemo(
-    () => formatCustomMaskTermsSummary(customMaskTerms),
-    [customMaskTerms]
+    () =>
+      formatCustomMaskTermsSummary(customMaskTerms, {
+        ocrEnabled: detectionSettings.autoDetectOcr,
+      }),
+    [customMaskTerms, detectionSettings.autoDetectOcr]
   );
+  const isCustomMaskTermsEditable = detectionSettings.autoDetectOcr;
 
   const { handleUpload, handleRedetect } = useGalleryDetection({
     images,
@@ -95,6 +100,16 @@ export function MaskingGallery() {
   });
 
   useClipboardImagePaste({ onUpload: handleUpload, isModelLoading, isModelError });
+
+  const handleSaveDetectionSettings = useCallback(
+    (settings: DetectionPrefs) => {
+      updateDetectionSettings(settings);
+      if (!settings.autoDetectOcr) {
+        setIsCustomMaskTermsOpen(false);
+      }
+    },
+    [updateDetectionSettings]
+  );
 
   const handleDownloadAll = useCallback(() => {
     downloadMaskedImagesAsZip(images, () => {
@@ -124,7 +139,14 @@ export function MaskingGallery() {
             </p>
             <p>
               マスク語句:{" "}
-              <span className="font-medium text-zinc-800">{customMaskTermsSummary}</span>
+              <span
+                className={clsx([
+                  "font-medium",
+                  isCustomMaskTermsEditable ? "text-zinc-800" : "text-zinc-500",
+                ])}
+              >
+                {customMaskTermsSummary}
+              </span>
             </p>
           </div>
           <div className="flex flex-wrap gap-2 self-start sm:self-auto">
@@ -146,6 +168,12 @@ export function MaskingGallery() {
             <button
               type="button"
               aria-label="マスク語句"
+              title={
+                isCustomMaskTermsEditable
+                  ? undefined
+                  : "テキスト自動検出（OCR）をオンにすると編集できます"
+              }
+              disabled={!isCustomMaskTermsEditable}
               onClick={() => {
                 setCustomMaskTermsModalKey((key) => key + 1);
                 setIsCustomMaskTermsOpen(true);
@@ -153,6 +181,7 @@ export function MaskingGallery() {
               className={clsx([
                 "flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2",
                 "text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50",
+                !isCustomMaskTermsEditable && "cursor-not-allowed opacity-50 hover:bg-transparent",
               ])}
             >
               <ListChecks className="size-4 shrink-0" aria-hidden="true" />
@@ -169,7 +198,7 @@ export function MaskingGallery() {
             isOpen={isDetectionSettingsOpen}
             settings={detectionSettings}
             onClose={() => setIsDetectionSettingsOpen(false)}
-            onSave={updateDetectionSettings}
+            onSave={handleSaveDetectionSettings}
           />
           <CustomMaskTermsModal
             key={`custom-mask-terms-${customMaskTermsModalKey}`}
