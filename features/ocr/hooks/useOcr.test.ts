@@ -563,4 +563,70 @@ describe("detectPersonalInfoInLine", () => {
     ]);
     expect(result.some((r) => r.patternType === "postal")).toBe(false);
   });
+
+  it("OCR で分割された姓名を空白差を無視して検出する", () => {
+    const result = detectPersonalInfoInLine(
+      "山田 太郎",
+      [
+        { text: "山田", bbox: { x0: 0, y0: 0, x1: 40, y1: 20 } },
+        { text: "太郎", bbox: { x0: 45, y0: 0, x1: 90, y1: 20 } },
+      ],
+      ["山田太郎"]
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("custom");
+    expect(result[0].text).toBe("山田太郎");
+    expect(result[0].x).toBe(0);
+    expect(result[0].width).toBe(90);
+  });
+
+  it("登録語句に空白があっても OCR 分割を検出する", () => {
+    const result = detectPersonalInfoInLine(
+      "山田 太郎",
+      [
+        { text: "山田", bbox: { x0: 0, y0: 0, x1: 40, y1: 20 } },
+        { text: "太郎", bbox: { x0: 45, y0: 0, x1: 90, y1: 20 } },
+      ],
+      ["山田　太郎"]
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].text).toBe("山田　太郎");
+  });
+
+  it("カスタムマスク語句を連続テキストで検出する", () => {
+    const result = detectPersonalInfoInLine(
+      "担当: 山田太郎",
+      [
+        { text: "担当:", bbox: { x0: 0, y0: 0, x1: 40, y1: 20 } },
+        { text: "山田太郎", bbox: { x0: 45, y0: 0, x1: 110, y1: 20 } },
+      ],
+      ["山田太郎"]
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("custom");
+    expect(result[0].text).toBe("山田太郎");
+    expect(result[0].x).toBe(45);
+    expect(result[0].width).toBe(65);
+  });
+
+  it("カスタムマスク語句は既存パターンと重なる範囲では検出しない", () => {
+    const result = detectPersonalInfoInLine(
+      "contact@test.org",
+      [{ text: "contact@test.org", bbox: { x0: 0, y0: 5, x1: 130, y1: 25 } }],
+      ["contact@test.org", "test"]
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("email");
+  });
+
+  it("長いカスタム語句を短い語句より優先する", () => {
+    const result = detectPersonalInfoInLine(
+      "山田太郎",
+      [{ text: "山田太郎", bbox: { x0: 0, y0: 0, x1: 80, y1: 20 } }],
+      ["山田", "山田太郎"]
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("custom");
+    expect(result[0].text).toBe("山田太郎");
+  });
 });

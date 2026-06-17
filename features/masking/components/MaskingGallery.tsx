@@ -2,19 +2,24 @@
 
 import { useCallback, useMemo, useState } from "react";
 import clsx from "clsx";
-import { Settings } from "lucide-react";
+import { Settings, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ImageUpload";
 import { useFaceDetection } from "@/features/face-detection";
 import { useOcr } from "@/features/ocr";
 import { useClipboardImagePaste } from "../hooks/useClipboardImagePaste";
 import { DETECTION_SETTINGS_BAR_REVEAL_MS, useDelayedReveal } from "../hooks/useDelayedReveal";
+import { useCustomMaskTerms } from "../hooks/useCustomMaskTerms";
 import { useDetectionSettings } from "../hooks/useDetectionSettings";
 import { useGalleryDetection } from "../hooks/useGalleryDetection";
 import { useGalleryImages } from "../hooks/useGalleryImages";
 import { useStampImages } from "../hooks/useStampImages";
 import { downloadMaskedImagesAsZip } from "../lib/downloadMaskedImagesAsZip";
-import { formatDetectionSettingsSummary } from "../lib/detectionMessages";
+import {
+  formatCustomMaskTermsSummary,
+  formatDetectionSettingsSummary,
+} from "../lib/detectionMessages";
+import { CustomMaskTermsModal } from "./CustomMaskTermsModal";
 import { DetectionSettingsBarSkeleton } from "./DetectionSettingsBarSkeleton";
 import { DetectionSettingsModal } from "./DetectionSettingsModal";
 import { EditorModal } from "./EditorModal";
@@ -47,18 +52,32 @@ export function MaskingGallery() {
     isReady: isDetectionSettingsReady,
     updateSettings: updateDetectionSettings,
   } = useDetectionSettings();
+  const {
+    terms: customMaskTerms,
+    isReady: isCustomMaskTermsReady,
+    enabledTexts: enabledCustomMaskTexts,
+    updateTerms: updateCustomMaskTerms,
+  } = useCustomMaskTerms();
+  const isSettingsBarReady = isDetectionSettingsReady && isCustomMaskTermsReady;
   const showDetectionSettingsBar = useDelayedReveal(
-    isDetectionSettingsReady,
+    isSettingsBarReady,
     DETECTION_SETTINGS_BAR_REVEAL_MS
   );
   const [isDetectionSettingsOpen, setIsDetectionSettingsOpen] = useState(false);
   const [detectionSettingsModalKey, setDetectionSettingsModalKey] = useState(0);
+  const [isCustomMaskTermsOpen, setIsCustomMaskTermsOpen] = useState(false);
+  const [customMaskTermsModalKey, setCustomMaskTermsModalKey] = useState(0);
 
   const getDetectionSettings = useCallback(() => detectionSettings, [detectionSettings]);
+  const getCustomMaskTerms = useCallback(() => enabledCustomMaskTexts, [enabledCustomMaskTexts]);
 
   const detectionSettingsSummary = useMemo(
     () => formatDetectionSettingsSummary(detectionSettings),
     [detectionSettings]
+  );
+  const customMaskTermsSummary = useMemo(
+    () => formatCustomMaskTermsSummary(customMaskTerms),
+    [customMaskTerms]
   );
 
   const { handleUpload, handleRedetect } = useGalleryDetection({
@@ -72,6 +91,7 @@ export function MaskingGallery() {
     detectFaces,
     recognizeText,
     getDetectionSettings,
+    getCustomMaskTerms,
   });
 
   useClipboardImagePaste({ onUpload: handleUpload, isModelLoading, isModelError });
@@ -96,36 +116,69 @@ export function MaskingGallery() {
       {!showDetectionSettingsBar ? (
         <DetectionSettingsBarSkeleton />
       ) : (
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-zinc-600">
-            自動検出: <span className="font-medium text-zinc-800">{detectionSettingsSummary}</span>
-          </p>
-          <button
-            type="button"
-            aria-label="検出設定"
-            onClick={() => {
-              setDetectionSettingsModalKey((key) => key + 1);
-              setIsDetectionSettingsOpen(true);
-            }}
-            className={clsx([
-              "flex items-center gap-2 self-start rounded-lg border border-zinc-300 px-4 py-2",
-              "text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 sm:self-auto",
-            ])}
-          >
-            <Settings className="size-4 shrink-0" aria-hidden="true" />
-            検出設定
-          </button>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-1 text-sm text-zinc-600">
+            <p>
+              自動検出:{" "}
+              <span className="font-medium text-zinc-800">{detectionSettingsSummary}</span>
+            </p>
+            <p>
+              マスク語句:{" "}
+              <span className="font-medium text-zinc-800">{customMaskTermsSummary}</span>
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 self-start sm:self-auto">
+            <button
+              type="button"
+              aria-label="検出設定"
+              onClick={() => {
+                setDetectionSettingsModalKey((key) => key + 1);
+                setIsDetectionSettingsOpen(true);
+              }}
+              className={clsx([
+                "flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2",
+                "text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50",
+              ])}
+            >
+              <Settings className="size-4 shrink-0" aria-hidden="true" />
+              検出設定
+            </button>
+            <button
+              type="button"
+              aria-label="マスク語句"
+              onClick={() => {
+                setCustomMaskTermsModalKey((key) => key + 1);
+                setIsCustomMaskTermsOpen(true);
+              }}
+              className={clsx([
+                "flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2",
+                "text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50",
+              ])}
+            >
+              <ListChecks className="size-4 shrink-0" aria-hidden="true" />
+              マスク語句
+            </button>
+          </div>
         </div>
       )}
 
       {showDetectionSettingsBar && (
-        <DetectionSettingsModal
-          key={detectionSettingsModalKey}
-          isOpen={isDetectionSettingsOpen}
-          settings={detectionSettings}
-          onClose={() => setIsDetectionSettingsOpen(false)}
-          onSave={updateDetectionSettings}
-        />
+        <>
+          <DetectionSettingsModal
+            key={`detection-settings-${detectionSettingsModalKey}`}
+            isOpen={isDetectionSettingsOpen}
+            settings={detectionSettings}
+            onClose={() => setIsDetectionSettingsOpen(false)}
+            onSave={updateDetectionSettings}
+          />
+          <CustomMaskTermsModal
+            key={`custom-mask-terms-${customMaskTermsModalKey}`}
+            isOpen={isCustomMaskTermsOpen}
+            terms={customMaskTerms}
+            onClose={() => setIsCustomMaskTermsOpen(false)}
+            onSave={updateCustomMaskTerms}
+          />
+        </>
       )}
 
       <ImageUpload

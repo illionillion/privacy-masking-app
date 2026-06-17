@@ -3,6 +3,7 @@ import {
   FUSELY_PREFS_STORAGE_KEY,
   loadFuselyPrefs,
   normalizeFuselyPrefs,
+  saveCustomMaskTerms,
   saveDetectionPrefs,
   saveFuselyPrefs,
 } from "./fuselyPrefs";
@@ -30,6 +31,7 @@ describe("fuselyPrefs", () => {
     expect(loadFuselyPrefs()).toEqual({
       version: 1,
       detection: { autoDetectFace: false, autoDetectOcr: true },
+      customMaskTerms: [],
     });
   });
 
@@ -64,9 +66,22 @@ describe("fuselyPrefs", () => {
         detection: { autoDetectFace: "yes", autoDetectOcr: false },
       })
     ).toEqual({
-      version: 1,
+      version: 2,
       detection: { autoDetectFace: true, autoDetectOcr: false },
+      customMaskTerms: [],
     });
+  });
+
+  it("customMaskTerms を読み書きできる", () => {
+    const terms = [{ id: "term-1", text: "山田太郎", enabled: true }];
+
+    saveFuselyPrefs({
+      version: 2,
+      detection: DEFAULT_FUSELY_PREFS.detection,
+      customMaskTerms: terms,
+    });
+
+    expect(loadFuselyPrefs().customMaskTerms).toEqual(terms);
   });
 
   it("setItem が例外を投げてもクラッシュしない", () => {
@@ -76,20 +91,29 @@ describe("fuselyPrefs", () => {
 
     expect(() =>
       saveFuselyPrefs({
-        version: 1,
+        version: 2,
         detection: { autoDetectFace: false, autoDetectOcr: true },
+        customMaskTerms: [],
       })
     ).not.toThrow();
   });
 
   it("saveFuselyPrefs で全体を保存できる", () => {
     saveFuselyPrefs({
-      version: 1,
+      version: 2,
       detection: { autoDetectFace: false, autoDetectOcr: true },
+      customMaskTerms: [],
     });
     expect(loadFuselyPrefs().detection).toEqual({
       autoDetectFace: false,
       autoDetectOcr: true,
     });
+  });
+
+  it("saveCustomMaskTerms で語句のみ更新できる", () => {
+    saveCustomMaskTerms([{ id: "t1", text: "山田太郎", enabled: true }]);
+    expect(loadFuselyPrefs().customMaskTerms).toEqual([
+      { id: "t1", text: "山田太郎", enabled: true },
+    ]);
   });
 });

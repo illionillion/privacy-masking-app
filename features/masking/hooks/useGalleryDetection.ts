@@ -29,8 +29,12 @@ export interface UseGalleryDetectionOptions {
   isModelLoading: boolean;
   isModelError: boolean;
   detectFaces: (imageElement: HTMLImageElement) => Promise<MaskingImageItem["detections"]>;
-  recognizeText: (imageElement: HTMLImageElement) => Promise<MaskingImageItem["ocrRegions"]>;
+  recognizeText: (
+    imageElement: HTMLImageElement,
+    options?: { customMaskTerms?: readonly string[] }
+  ) => Promise<MaskingImageItem["ocrRegions"]>;
   getDetectionSettings: () => DetectionPrefs;
+  getCustomMaskTerms: () => readonly string[];
 }
 
 /** useGalleryDetection の戻り値 */
@@ -61,6 +65,7 @@ export function useGalleryDetection(
     detectFaces,
     recognizeText,
     getDetectionSettings,
+    getCustomMaskTerms,
   } = options;
 
   const isMounted = useCallback(() => isMountedRef.current === true, [isMountedRef]);
@@ -98,11 +103,13 @@ export function useGalleryDetection(
       }
 
       const detectionSettings = getDetectionSettings();
+      const customMaskTerms = getCustomMaskTerms();
 
       const { detectionSucceededCount, detectionFailedCount } = await runDetectionForGalleryItems({
         items: succeededItems,
         isMounted,
         detectionSettings,
+        customMaskTerms,
         detectFaces,
         recognizeText,
         onItemSuccess: (item, result) => {
@@ -154,6 +161,7 @@ export function useGalleryDetection(
       setImages,
       setActiveImageId,
       getDetectionSettings,
+      getCustomMaskTerms,
     ]
   );
 
@@ -163,6 +171,7 @@ export function useGalleryDetection(
       if (!target || isModelLoading || isModelError || target.isProcessing) return;
 
       const detectionSettings = getDetectionSettings();
+      const customMaskTerms = getCustomMaskTerms();
 
       if (shouldSkipAllDetection(detectionSettings)) {
         toast.info("顔・テキストの自動検出はオフです。検出設定から有効にできます。");
@@ -191,7 +200,7 @@ export function useGalleryDetection(
         const result = await detectImageContent(
           target.imageUrl,
           { detectFaces, recognizeText },
-          { detectionSettings }
+          { detectionSettings, customMaskTerms }
         );
 
         if (isMounted()) {
@@ -225,6 +234,7 @@ export function useGalleryDetection(
       setImages,
       setEditingImageId,
       getDetectionSettings,
+      getCustomMaskTerms,
     ]
   );
 

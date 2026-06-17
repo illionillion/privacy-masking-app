@@ -62,6 +62,7 @@ describe("useGalleryDetection", () => {
         detectFaces: vi.fn(),
         recognizeText: vi.fn(),
         getDetectionSettings: () => ({ autoDetectFace: false, autoDetectOcr: false }),
+        getCustomMaskTerms: () => [],
       })
     );
 
@@ -101,6 +102,7 @@ describe("useGalleryDetection", () => {
         detectFaces: vi.fn(),
         recognizeText: vi.fn(),
         getDetectionSettings: () => ({ autoDetectFace: true, autoDetectOcr: true }),
+        getCustomMaskTerms: () => [],
       })
     );
 

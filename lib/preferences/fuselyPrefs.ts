@@ -1,5 +1,11 @@
 import { deepMergeRecords } from "./deepMerge";
-import { DEFAULT_FUSELY_PREFS, type DetectionPrefs, type FuselyPrefs } from "./types";
+import { normalizeCustomMaskTerms } from "./customMaskTerms";
+import {
+  DEFAULT_FUSELY_PREFS,
+  type CustomMaskTerm,
+  type DetectionPrefs,
+  type FuselyPrefs,
+} from "./types";
 
 /** localStorage キー */
 export const FUSELY_PREFS_STORAGE_KEY = "fusely:prefs";
@@ -31,7 +37,9 @@ export function normalizeFuselyPrefs(raw: Record<string, unknown>): FuselyPrefs 
       ? merged.version
       : DEFAULT_FUSELY_PREFS.version;
 
-  return { version, detection };
+  const customMaskTerms = normalizeCustomMaskTerms(merged.customMaskTerms);
+
+  return { version, detection, customMaskTerms };
 }
 
 /**
@@ -74,6 +82,7 @@ export function saveFuselyPrefs(prefs: FuselyPrefs): void {
       autoDetectFace: prefs.detection.autoDetectFace,
       autoDetectOcr: prefs.detection.autoDetectOcr,
     },
+    customMaskTerms: prefs.customMaskTerms,
   });
 
   try {
@@ -92,7 +101,22 @@ export function saveDetectionPrefs(detection: DetectionPrefs): void {
   const current = loadFuselyPrefs();
   saveFuselyPrefs({
     ...current,
+    version: Math.max(current.version, DEFAULT_FUSELY_PREFS.version),
     detection,
+  });
+}
+
+/**
+ * customMaskTerms セクションのみ更新して保存する
+ *
+ * @param customMaskTerms - マスク語句一覧
+ */
+export function saveCustomMaskTerms(customMaskTerms: CustomMaskTerm[]): void {
+  const current = loadFuselyPrefs();
+  saveFuselyPrefs({
+    ...current,
+    version: Math.max(current.version, DEFAULT_FUSELY_PREFS.version),
+    customMaskTerms,
   });
 }
 

@@ -1,4 +1,17 @@
-import type { DetectionPrefs } from "@/lib/preferences";
+import type { CustomMaskTerm, DetectionPrefs } from "@/lib/preferences";
+
+/**
+ * マスク語句設定のサマリ文字列を返す
+ *
+ * @param terms - 登録語句一覧
+ */
+export function formatCustomMaskTermsSummary(terms: readonly CustomMaskTerm[]): string {
+  if (terms.length === 0) {
+    return "未登録";
+  }
+  const enabledCount = terms.filter((term) => term.enabled).length;
+  return `${terms.length}件（有効 ${enabledCount}件）`;
+}
 
 /**
  * 検出設定のサマリ文字列を返す
