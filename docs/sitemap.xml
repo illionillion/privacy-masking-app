@@ -85,9 +85,4 @@
 <changefreq>monthly</changefreq>
 <priority>0.6</priority>
 </url>
-<url>
-<loc>https://fusely-app.pages.dev/updates/2026-06-11-custom-mask-terms</loc>
-<changefreq>monthly</changefreq>
-<priority>0.6</priority>
-</url>
 </urlset>
