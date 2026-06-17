@@ -83,7 +83,6 @@
 4. 動作確認・セルフレビューの実施
    - テストを実行し、すべてのテストが通ることを確認する
    - lefthookのpre-commitでlint/formatが自動実行される
-   - push は作業単位ごとにまとめる（Copilot 自動レビューは push ごとに走るため）。ローカルでは複数コミット可。詳細は `.github/skills/github-ops/SKILL.md` のプッシュ方針
 5. Pull Requestの作成
    - タイトル: 変更内容を簡潔に表現（プレフィックス不要）
    - 説明文: `.github/pull_request_template.md` に従う
