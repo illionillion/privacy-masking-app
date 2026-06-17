@@ -89,7 +89,7 @@ export function CustomMaskTermsModal({
     if (!text || draft.length >= MAX_CUSTOM_MASK_TERMS) {
       return;
     }
-    if (draft.some((term) => term.text === text)) {
+    if (draft.some((term) => term.text.trim() === text)) {
       setNewTermText("");
       newTermInputRef.current?.focus();
       return;

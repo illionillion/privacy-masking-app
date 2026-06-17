@@ -208,14 +208,13 @@ function extractCustomMaskTermRegions(
     return [];
   }
 
-  const matchedRanges: MatchedRange[] = [];
   const regions: OcrRegion[] = [];
   const paragraphs = page.blocks?.flatMap((block) => block.paragraphs) ?? [];
 
   if (paragraphs.length > 0) {
     for (const paragraph of paragraphs) {
       const words = paragraph.lines.flatMap((line) => line.words ?? []);
-      regions.push(...detectCustomMaskTermsInWordGroup(words, customMaskTerms, matchedRanges));
+      regions.push(...detectCustomMaskTermsInWordGroup(words, customMaskTerms, []));
     }
     return regions;
   }
@@ -224,13 +223,13 @@ function extractCustomMaskTermRegions(
   if (lines.length > 0) {
     for (const line of lines) {
       const words = line.words ?? [];
-      regions.push(...detectCustomMaskTermsInWordGroup(words, customMaskTerms, matchedRanges));
+      regions.push(...detectCustomMaskTermsInWordGroup(words, customMaskTerms, []));
     }
     return regions;
   }
 
   const words = page.words ?? [];
-  regions.push(...detectCustomMaskTermsInWordGroup(words, customMaskTerms, matchedRanges));
+  regions.push(...detectCustomMaskTermsInWordGroup(words, customMaskTerms, []));
   return regions;
 }
 

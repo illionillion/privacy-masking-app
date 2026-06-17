@@ -18,10 +18,11 @@ export function sanitizeCustomMaskTermsForSave(terms: readonly CustomMaskTerm[])
 
   for (const term of terms) {
     const text = term.text.trim().slice(0, MAX_CUSTOM_MASK_TERM_LENGTH);
-    if (!text || seen.has(text)) {
+    const key = text.replace(/\s+/gu, "");
+    if (!text || seen.has(key)) {
       continue;
     }
-    seen.add(text);
+    seen.add(key);
     result.push({
       id: term.id,
       text,
@@ -55,14 +56,15 @@ export function normalizeCustomMaskTerms(raw: unknown): CustomMaskTerm[] {
 
     const text =
       typeof item.text === "string" ? item.text.trim().slice(0, MAX_CUSTOM_MASK_TERM_LENGTH) : "";
-    if (!text || seen.has(text)) {
+    const key = text.replace(/\s+/gu, "");
+    if (!text || seen.has(key)) {
       continue;
     }
 
     const id = typeof item.id === "string" && item.id.length > 0 ? item.id : createTermId();
     const enabled = typeof item.enabled === "boolean" ? item.enabled : true;
 
-    seen.add(text);
+    seen.add(key);
     result.push({ id, text, enabled });
     if (result.length >= MAX_CUSTOM_MASK_TERMS) {
       break;

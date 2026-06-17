@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: copilot-cursor-webhook-${{ github.event.workflow_run.id }}
