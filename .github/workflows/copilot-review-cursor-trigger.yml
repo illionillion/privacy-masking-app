@@ -1,21 +1,11 @@
-# Copilot コードレビュー submit 後、Cursor Automation の Webhook を叩いて精査を起動する。
+# Copilot レビュー submit 後、Webhook 起動用の payload を artifact に書き出す（secrets 不使用）。
 #
-# 背景: Cursor Automation の「PR コメント」トリガーは Bot コメントを除外するため、
-# Webhook トリガー経由で起動する。
-# Copilot への再依頼は copilot-request-review.yml に分離している。
+# secrets を使う Webhook POST は copilot-cursor-webhook-dispatch.yml（workflow_run）に委譲し、
+# Copilot bot 起点でも Approve Run を避ける。
 #
-# 新規インラインコメントが 0 件の Copilot review では Webhook を叩かない
-# （Automation の無駄起動を防ぐ）。
-#
-# セットアップ:
-# 1. Cursor Automation: トリガー Webhook、repo 紐づけ、Save / Active
-# 2. Webhook URL と API キー（crsr_...）を Automations 画面で取得
-# 3. Repository Secrets に登録:
-#    - CURSOR_AUTOMATION_WEBHOOK_URL
-#    - CURSOR_AUTOMATION_WEBHOOK_API_KEY  （crsr_... のみ。Bearer は付けない）
-# 4. Automation プロンプトで payload の pull_request_number を精査対象 PR にする
+# 新規インラインコメントが 0 件の Copilot review では artifact を作らない。
 
-name: Copilot review → Cursor Automation webhook
+name: Copilot review → Cursor gate
 
 on:
   pull_request_review:
@@ -25,12 +15,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: copilot-cursor-webhook-${{ github.event.pull_request.number }}-${{ github.event.review.id }}
+  group: copilot-cursor-gate-${{ github.event.pull_request.number }}-${{ github.event.review.id }}
   cancel-in-progress: false
 
 jobs:
-  trigger-cursor-automation:
-    name: Trigger Cursor Automation webhook
+  prepare-cursor-webhook:
+    name: Prepare Cursor Automation payload
     runs-on: ubuntu-latest
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository &&
@@ -78,55 +68,39 @@ jobs:
             );
             core.setOutput('count', String(newCommentCount));
 
-      - name: POST Cursor Automation webhook
-        if: steps.review-comments.outputs.count != '0'
-        env:
-          WEBHOOK_URL: ${{ secrets.CURSOR_AUTOMATION_WEBHOOK_URL }}
-          WEBHOOK_API_KEY: ${{ secrets.CURSOR_AUTOMATION_WEBHOOK_API_KEY }}
+      - name: Skip webhook (no new inline comments)
+        if: steps.review-comments.outputs.count == '0'
         run: |
-          set -euo pipefail
+          echo "No new inline comments on Copilot review ${{ github.event.review.id }}. Skipping Cursor Automation webhook."
 
-          if [ -z "${WEBHOOK_URL}" ] || [ -z "${WEBHOOK_API_KEY}" ]; then
-            echo "::warning::Secrets CURSOR_AUTOMATION_WEBHOOK_URL and CURSOR_AUTOMATION_WEBHOOK_API_KEY are not set. Skipping Cursor Automation webhook."
-            exit 0
-          fi
-
-          payload=$(jq -n \
+      - name: Write webhook payload artifact
+        if: steps.review-comments.outputs.count != '0'
+        run: |
+          mkdir -p /tmp/cursor-webhook
+          jq -n \
             --arg event "copilot_review_submitted" \
             --arg repository "${GITHUB_REPOSITORY}" \
             --argjson pull_request_number "${{ github.event.pull_request.number }}" \
             --argjson review_id "${{ github.event.review.id }}" \
             --arg head_sha "${{ github.event.review.commit_id }}" \
             --arg review_url "${{ github.event.review.html_url }}" \
+            --argjson new_comment_count "${{ steps.review-comments.outputs.count }}" \
             '{
               event: $event,
               repository: $repository,
               pull_request_number: $pull_request_number,
               review_id: $review_id,
               head_sha: $head_sha,
-              review_url: $review_url
-            }')
+              review_url: $review_url,
+              new_comment_count: $new_comment_count
+            }' > /tmp/cursor-webhook/payload.json
+          cat /tmp/cursor-webhook/payload.json
 
-          echo "Triggering Cursor Automation for PR #${{ github.event.pull_request.number }} (review ${{ github.event.review.id }}, ${{ steps.review-comments.outputs.count }} new comment(s))"
-
-          http_status=$(curl --silent --show-error --output /tmp/cursor-webhook-response.txt \
-            --write-out "%{http_code}" \
-            --connect-timeout 10 \
-            --max-time 30 \
-            --request POST \
-            --header "Authorization: Bearer ${WEBHOOK_API_KEY}" \
-            --header "Content-Type: application/json" \
-            --data "${payload}" \
-            "${WEBHOOK_URL}")
-
-          if [ "${http_status}" -lt 200 ] || [ "${http_status}" -ge 300 ]; then
-            echo "Cursor webhook response (${http_status}):"
-            cat /tmp/cursor-webhook-response.txt
-            echo "::error::Cursor webhook failed with HTTP ${http_status}"
-            exit 1
-          fi
-
-      - name: Skip webhook (no new inline comments)
-        if: steps.review-comments.outputs.count == '0'
-        run: |
-          echo "No new inline comments on Copilot review ${{ github.event.review.id }}. Skipping Cursor Automation webhook."
+      - name: Upload webhook payload artifact
+        if: steps.review-comments.outputs.count != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cursor-webhook-payload
+          path: /tmp/cursor-webhook/payload.json
+          retention-days: 1
+          if-no-files-found: error

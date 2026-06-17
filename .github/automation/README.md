@@ -12,5 +12,6 @@
 
 関連 workflow:
 
-- `.github/workflows/copilot-request-review.yml` — push 時に Copilot 再依頼
-- `.github/workflows/copilot-review-cursor-trigger.yml` — Copilot レビュー後に Webhook 起動
+- `.github/workflows/copilot-request-review.yml` — push 時に Copilot 再依頼（未カバーなら失敗）
+- `.github/workflows/copilot-review-cursor-trigger.yml` — Copilot レビュー後に payload 準備（secrets 不使用）
+- `.github/workflows/copilot-cursor-webhook-dispatch.yml` — gate 完了後に Webhook POST（secrets 使用）

@@ -1,7 +1,8 @@
 # PR push 時に GraphQL requestReviews で Copilot をレビュアーに設定する。
 #
 # Ruleset の review_on_push は不安定なため、明示的に再依頼する。
-# Webhook 連携は copilot-review-cursor-trigger.yml に分離している。
+# GraphQL は成功しても reviewRequests に載らないことがあるため、複数経路で再試行し、
+# 最新 HEAD が未レビューなら job を失敗させる（success 偽陽性を防ぐ）。
 
 name: Request Copilot code review
 
@@ -25,71 +26,201 @@ jobs:
       github.event.pull_request.draft == false
     permissions:
       pull-requests: write
+      checks: read
     steps:
-      - name: Request Copilot review via GraphQL botIds
+      - name: Request Copilot review with verification
         uses: actions/github-script@v7
         with:
           script: |
             const pullRequest = context.payload.pull_request;
             const pullRequestId = pullRequest.node_id;
             const headSha = pullRequest.head.sha;
+            const pullNumber = pullRequest.number;
+
+            const COPILOT_LOGINS = new Set([
+              'Copilot',
+              'copilot-pull-request-reviewer',
+              'copilot-pull-request-reviewer[bot]',
+            ]);
+
+            const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
             const { data: bot } = await github.rest.users.getByUsername({
               username: 'copilot-pull-request-reviewer[bot]',
             });
             const botNodeId = bot.node_id;
 
-            core.info(
-              `Requesting Copilot review for PR #${pullRequest.number} (${headSha.slice(0, 7)}) via botIds (${bot.login}, ${botNodeId})`,
-            );
-
-            await github.graphql(
-              `mutation($pullRequestId: ID!, $botIds: [ID!]!) {
-                requestReviews(input: { pullRequestId: $pullRequestId, botIds: $botIds, union: true }) {
-                  pullRequest { id }
-                }
-              }`,
-              {
-                pullRequestId,
-                botIds: [botNodeId],
-              },
-            );
-
-            const { repository } = await github.graphql(
-              `query($owner: String!, $name: String!, $number: Int!) {
-                repository(owner: $owner, name: $name) {
-                  pullRequest(number: $number) {
-                    reviewRequests(first: 100) {
-                      nodes {
-                        requestedReviewer {
-                          __typename
-                          ... on Bot { login }
-                          ... on User { login }
+            async function fetchCopilotState() {
+              const { repository } = await github.graphql(
+                `query($owner: String!, $name: String!, $number: Int!) {
+                  repository(owner: $owner, name: $name) {
+                    pullRequest(number: $number) {
+                      reviewRequests(first: 100) {
+                        nodes {
+                          requestedReviewer {
+                            __typename
+                            ... on Bot { login }
+                            ... on User { login }
+                          }
+                        }
+                      }
+                      reviews(last: 30) {
+                        nodes {
+                          author { login }
+                          submittedAt
+                          commit { oid }
                         }
                       }
                     }
                   }
-                }
-              }`,
-              {
+                }`,
+                {
+                  owner: context.repo.owner,
+                  name: context.repo.repo,
+                  number: pullNumber,
+                },
+              );
+
+              const pr = repository.pullRequest;
+              const pendingCopilot = pr.reviewRequests.nodes.some((node) => {
+                const login = node.requestedReviewer?.login;
+                return login != null && COPILOT_LOGINS.has(login);
+              });
+
+              const latestCopilotReview = [...pr.reviews.nodes]
+                .filter((review) => COPILOT_LOGINS.has(review.author.login))
+                .sort(
+                  (left, right) =>
+                    new Date(right.submittedAt).getTime() -
+                    new Date(left.submittedAt).getTime(),
+                )[0];
+
+              const { data: checks } = await github.rest.checks.listForRef({
                 owner: context.repo.owner,
-                name: context.repo.repo,
-                number: pullRequest.number,
-              },
-            );
+                repo: context.repo.repo,
+                ref: headSha,
+                per_page: 100,
+              });
 
-            const reviewRequests = repository.pullRequest.reviewRequests.nodes;
-            const copilotLogins = new Set(['Copilot', 'copilot-pull-request-reviewer', bot.login]);
-            const hasPendingCopilotRequest = reviewRequests.some((node) => {
-              const login = node.requestedReviewer?.login;
-              return login != null && copilotLogins.has(login);
-            });
+              const copilotCheckRunning = checks.check_runs.some(
+                (check) =>
+                  check.name === 'Running Copilot Code Review' &&
+                  (check.status === 'queued' || check.status === 'in_progress'),
+              );
 
-            if (hasPendingCopilotRequest) {
-              core.info('Copilot is listed in reviewRequests.');
+              return { pendingCopilot, latestCopilotReview, copilotCheckRunning };
+            }
+
+            async function hasCopilotCoverage() {
+              const state = await fetchCopilotState();
+
+              if (state.pendingCopilot) {
+                return { ok: true, reason: 'Copilot is in reviewRequests' };
+              }
+
+              if (state.copilotCheckRunning) {
+                return { ok: true, reason: 'Running Copilot Code Review check is active' };
+              }
+
+              if (state.latestCopilotReview?.commit?.oid === headSha) {
+                return { ok: true, reason: 'Copilot already reviewed current HEAD' };
+              }
+
+              return {
+                ok: false,
+                reason: `HEAD ${headSha.slice(0, 7)} is not covered (last Copilot review: ${state.latestCopilotReview?.commit?.oid?.slice(0, 7) ?? 'none'})`,
+              };
+            }
+
+            let coverage = await hasCopilotCoverage();
+            if (coverage.ok) {
+              core.info(`Copilot coverage OK: ${coverage.reason}`);
               return;
             }
 
-            core.warning(
-              'requestReviews completed but Copilot is not in reviewRequests. Copilot may already be reviewing, or code review is disabled for this repository.',
+            core.info(
+              `Requesting Copilot review for PR #${pullNumber} (${headSha.slice(0, 7)}). ${coverage.reason}`,
+            );
+
+            const requestMethods = [
+              {
+                label: 'graphql-botids-union-true',
+                run: async () => {
+                  await github.graphql(
+                    `mutation($pullRequestId: ID!, $botIds: [ID!]!) {
+                      requestReviews(input: { pullRequestId: $pullRequestId, botIds: $botIds, union: true }) {
+                        pullRequest { id }
+                      }
+                    }`,
+                    { pullRequestId, botIds: [botNodeId] },
+                  );
+                },
+              },
+              {
+                label: 'graphql-botids-union-false',
+                run: async () => {
+                  await github.graphql(
+                    `mutation($pullRequestId: ID!, $botIds: [ID!]!) {
+                      requestReviews(input: { pullRequestId: $pullRequestId, botIds: $botIds, union: false }) {
+                        pullRequest { id }
+                      }
+                    }`,
+                    { pullRequestId, botIds: [botNodeId] },
+                  );
+                },
+              },
+              {
+                label: 'rest-reviewer-bot-login',
+                run: async () => {
+                  await github.rest.pulls.requestReviewers({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: pullNumber,
+                    reviewers: ['copilot-pull-request-reviewer[bot]'],
+                  });
+                },
+              },
+              {
+                label: 'rest-reviewer-copilot',
+                run: async () => {
+                  await github.rest.pulls.requestReviewers({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: pullNumber,
+                    reviewers: ['Copilot'],
+                  });
+                },
+              },
+            ];
+
+            const methodsTried = [];
+
+            for (const method of requestMethods) {
+              try {
+                await method.run();
+                methodsTried.push(method.label);
+                core.info(`Tried ${method.label}. Waiting for Copilot to attach...`);
+
+                for (let attempt = 1; attempt <= 3; attempt += 1) {
+                  await sleep(attempt * 4000);
+                  coverage = await hasCopilotCoverage();
+                  if (coverage.ok) {
+                    core.info(`Copilot coverage OK after ${method.label}: ${coverage.reason}`);
+                    return;
+                  }
+                  core.info(
+                    `Attempt ${attempt}/3 after ${method.label}: still not covered (${coverage.reason})`,
+                  );
+                }
+              } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                methodsTried.push(`${method.label}:failed`);
+                core.warning(`${method.label} failed: ${message}`);
+              }
+            }
+
+            core.setFailed(
+              `Could not request Copilot review for HEAD ${headSha.slice(0, 7)}. ` +
+                `Tried: ${methodsTried.join(', ')}. ` +
+                'Manually re-request Copilot from the PR UI (↻).',
             );
