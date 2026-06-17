@@ -56,19 +56,16 @@ jobs:
             let newCommentCount = 0;
 
             while (true) {
-              const { data: comments } = await github.rest.pulls.listReviewComments({
+              const { data: comments } = await github.rest.pulls.listCommentsForReview({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: pullNumber,
+                review_id: reviewId,
                 per_page: 100,
                 page,
               });
 
-              for (const comment of comments) {
-                if (comment.pull_request_review_id === reviewId) {
-                  newCommentCount += 1;
-                }
-              }
+              newCommentCount += comments.length;
 
               if (comments.length < 100) {
                 break;

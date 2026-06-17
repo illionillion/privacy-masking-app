@@ -59,7 +59,7 @@ jobs:
               `query($owner: String!, $name: String!, $number: Int!) {
                 repository(owner: $owner, name: $name) {
                   pullRequest(number: $number) {
-                    reviewRequests(first: 10) {
+                    reviewRequests(first: 100) {
                       nodes {
                         requestedReviewer {
                           __typename
