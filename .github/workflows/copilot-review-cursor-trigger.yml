@@ -99,7 +99,7 @@ jobs:
             --arg repository "${GITHUB_REPOSITORY}" \
             --argjson pull_request_number "${{ github.event.pull_request.number }}" \
             --argjson review_id "${{ github.event.review.id }}" \
-            --arg head_sha "${{ github.event.pull_request.head.sha }}" \
+            --arg head_sha "${{ github.event.review.commit_id }}" \
             --arg review_url "${{ github.event.review.html_url }}" \
             '{
               event: $event,
