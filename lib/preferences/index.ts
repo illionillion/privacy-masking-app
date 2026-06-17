@@ -8,6 +8,7 @@ export {
 } from "./fuselyPrefs";
 export {
   createTermId,
+  getCustomMaskTermDedupKey,
   getEnabledCustomMaskTexts,
   MAX_CUSTOM_MASK_TERM_LENGTH,
   MAX_CUSTOM_MASK_TERMS,

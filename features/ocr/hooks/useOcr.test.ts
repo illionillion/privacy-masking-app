@@ -86,6 +86,72 @@ function buildMockPage(
   };
 }
 
+/**
+ * 複数段落の OCR 結果モックを生成する
+ *
+ * @param paragraphs - 段落ごとの行配列
+ */
+function buildMockPageWithParagraphs(
+  paragraphs: Array<
+    Array<{
+      text: string;
+      words: Array<{
+        text: string;
+        bbox: { x0: number; y0: number; x1: number; y1: number };
+      }>;
+    }>
+  >
+) {
+  return {
+    data: {
+      blocks: [
+        {
+          paragraphs: paragraphs.map((lines, paragraphIndex) => ({
+            lines: lines.map((line, lineIndex) => ({
+              text: line.text,
+              words: line.words,
+              bbox: {
+                x0: 0,
+                y0: paragraphIndex * 40 + lineIndex * 20,
+                x1: 200,
+                y1: paragraphIndex * 40 + lineIndex * 20 + 20,
+              },
+              baseline: { x0: 0, y0: 0, x1: 200, y1: 20 },
+              rowAttributes: { ascenders: 0, descenders: 0, rowHeight: 20 },
+              confidence: 90,
+            })),
+            bbox: { x0: 0, y0: paragraphIndex * 40, x1: 200, y1: paragraphIndex * 40 + 40 },
+            is_ltr: true,
+            confidence: 90,
+            text: lines.map((line) => line.text).join("\n"),
+          })),
+          bbox: { x0: 0, y0: 0, x1: 200, y1: paragraphs.length * 40 },
+          blocktype: "TEXT",
+          confidence: 90,
+          text: paragraphs.flatMap((lines) => lines.map((line) => line.text)).join("\n"),
+        },
+      ],
+      confidence: 90,
+      oem: "LSTM_ONLY",
+      osd: "",
+      psm: "AUTO",
+      text: paragraphs.flatMap((lines) => lines.map((line) => line.text)).join("\n"),
+      version: "5.0.0",
+      hocr: null,
+      tsv: null,
+      box: null,
+      unlv: null,
+      sd: null,
+      imageColor: null,
+      imageGrey: null,
+      imageBinary: null,
+      rotateRadians: null,
+      pdf: null,
+      debug: null,
+    },
+  };
+}
+
 describe("useOcr", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -669,5 +735,37 @@ describe("extractOcrRegions bbox重複排除", () => {
 
     expect(regions).toHaveLength(1);
     expect(regions[0]?.patternType).toBe("email");
+  });
+
+  it("別段落に同じカスタム語句があればそれぞれ検出する", async () => {
+    mockRecognize.mockResolvedValueOnce(
+      buildMockPageWithParagraphs([
+        [
+          {
+            text: "山田太郎",
+            words: [{ text: "山田太郎", bbox: { x0: 0, y0: 0, x1: 80, y1: 20 } }],
+          },
+        ],
+        [
+          {
+            text: "山田太郎",
+            words: [{ text: "山田太郎", bbox: { x0: 0, y0: 40, x1: 80, y1: 60 } }],
+          },
+        ],
+      ])
+    );
+
+    const { result } = renderHook(() => useOcr());
+    const mockImage = document.createElement("img");
+
+    let regions: Awaited<ReturnType<typeof result.current.recognizeText>> = [];
+    await act(async () => {
+      regions = await result.current.recognizeText(mockImage, {
+        customMaskTerms: ["山田太郎"],
+      });
+    });
+
+    expect(regions).toHaveLength(2);
+    expect(regions.every((region) => region.patternType === "custom")).toBe(true);
   });
 });

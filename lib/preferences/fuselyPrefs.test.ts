@@ -29,7 +29,7 @@ describe("fuselyPrefs", () => {
     );
 
     expect(loadFuselyPrefs()).toEqual({
-      version: 1,
+      version: 2,
       detection: { autoDetectFace: false, autoDetectOcr: true },
       customMaskTerms: [],
     });
@@ -57,6 +57,15 @@ describe("fuselyPrefs", () => {
   it("壊れた JSON のときはデフォルトにフォールバックする", () => {
     window.localStorage.setItem(FUSELY_PREFS_STORAGE_KEY, "{invalid");
     expect(loadFuselyPrefs()).toEqual(DEFAULT_FUSELY_PREFS);
+  });
+
+  it("normalizeFuselyPrefs は v1 保存データの version を v2 以上に引き上げる", () => {
+    expect(
+      normalizeFuselyPrefs({
+        version: 1,
+        detection: DEFAULT_FUSELY_PREFS.detection,
+      }).version
+    ).toBe(2);
   });
 
   it("normalizeFuselyPrefs は型不一致フィールドを default で補う", () => {

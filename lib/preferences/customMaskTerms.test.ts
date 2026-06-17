@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   createTermId,
+  getCustomMaskTermDedupKey,
   getEnabledCustomMaskTexts,
   MAX_CUSTOM_MASK_TERMS,
   normalizeCustomMaskTerms,
@@ -56,6 +57,11 @@ describe("customMaskTerms", () => {
       { id: "a", text: "山田太郎", enabled: true },
       { id: "c", text: "未来創造", enabled: true },
     ]);
+  });
+
+  it("getCustomMaskTermDedupKey は空白差を同一キーにする", () => {
+    expect(getCustomMaskTermDedupKey("山田太郎")).toBe("山田太郎");
+    expect(getCustomMaskTermDedupKey("山田 太郎")).toBe("山田太郎");
   });
 
   it("sanitizeCustomMaskTermsForSave は重複と空文字を除去する", () => {

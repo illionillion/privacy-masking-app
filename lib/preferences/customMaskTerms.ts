@@ -7,6 +7,15 @@ export const MAX_CUSTOM_MASK_TERMS = 50;
 export const MAX_CUSTOM_MASK_TERM_LENGTH = 100;
 
 /**
+ * 重複判定用キー（trim + 空白除去。検出ロジックと揃える）
+ *
+ * @param text - 語句テキスト
+ */
+export function getCustomMaskTermDedupKey(text: string): string {
+  return text.trim().slice(0, MAX_CUSTOM_MASK_TERM_LENGTH).replace(/\s+/gu, "");
+}
+
+/**
  * 保存用にマスク語句一覧を正規化する（trim・空除去・重複排除・件数上限）
  *
  * @param terms - 編集後の語句一覧
@@ -18,7 +27,7 @@ export function sanitizeCustomMaskTermsForSave(terms: readonly CustomMaskTerm[])
 
   for (const term of terms) {
     const text = term.text.trim().slice(0, MAX_CUSTOM_MASK_TERM_LENGTH);
-    const key = text.replace(/\s+/gu, "");
+    const key = getCustomMaskTermDedupKey(text);
     if (!text || seen.has(key)) {
       continue;
     }
@@ -56,7 +65,7 @@ export function normalizeCustomMaskTerms(raw: unknown): CustomMaskTerm[] {
 
     const text =
       typeof item.text === "string" ? item.text.trim().slice(0, MAX_CUSTOM_MASK_TERM_LENGTH) : "";
-    const key = text.replace(/\s+/gu, "");
+    const key = getCustomMaskTermDedupKey(text);
     if (!text || seen.has(key)) {
       continue;
     }

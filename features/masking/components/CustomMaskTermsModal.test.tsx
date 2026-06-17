@@ -80,6 +80,24 @@ describe("CustomMaskTermsModal", () => {
     });
   });
 
+  it("空白差だけの重複語句は追加しない", () => {
+    render(
+      <CustomMaskTermsModal
+        isOpen
+        terms={[{ id: "1", text: "山田太郎", enabled: true }]}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+      />
+    );
+
+    const input = screen.getByPlaceholderText("語句を入力");
+    fireEvent.change(input, { target: { value: "山田 太郎" } });
+    fireEvent.click(screen.getByRole("button", { name: "追加" }));
+
+    expect(screen.getAllByRole("textbox", { name: /を編集/ })).toHaveLength(1);
+    expect(input).toHaveValue("");
+  });
+
   it("閉じているときは何も表示しない", () => {
     render(<CustomMaskTermsModal isOpen={false} terms={[]} onClose={vi.fn()} onSave={vi.fn()} />);
 

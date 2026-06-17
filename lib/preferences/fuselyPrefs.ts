@@ -32,10 +32,11 @@ export function normalizeFuselyPrefs(raw: Record<string, unknown>): FuselyPrefs 
     ),
   };
 
-  const version =
+  const rawVersion =
     typeof merged.version === "number" && Number.isFinite(merged.version)
       ? merged.version
       : DEFAULT_FUSELY_PREFS.version;
+  const version = Math.max(rawVersion, DEFAULT_FUSELY_PREFS.version);
 
   const customMaskTerms = normalizeCustomMaskTerms(merged.customMaskTerms);
 

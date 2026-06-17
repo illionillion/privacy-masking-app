@@ -5,6 +5,7 @@ import clsx from "clsx";
 import { Plus, Trash2 } from "lucide-react";
 import {
   createTermId,
+  getCustomMaskTermDedupKey,
   MAX_CUSTOM_MASK_TERM_LENGTH,
   MAX_CUSTOM_MASK_TERMS,
   type CustomMaskTerm,
@@ -89,7 +90,9 @@ export function CustomMaskTermsModal({
     if (!text || draft.length >= MAX_CUSTOM_MASK_TERMS) {
       return;
     }
-    if (draft.some((term) => term.text.trim() === text)) {
+    if (
+      draft.some((term) => getCustomMaskTermDedupKey(term.text) === getCustomMaskTermDedupKey(text))
+    ) {
       setNewTermText("");
       newTermInputRef.current?.focus();
       return;
