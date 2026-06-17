@@ -125,4 +125,19 @@ describe("fuselyPrefs", () => {
       { id: "t1", text: "山田太郎", enabled: true },
     ]);
   });
+
+  it("saveCustomMaskTerms は保存時に語句を正規化する", () => {
+    saveCustomMaskTerms([
+      { id: "dup", text: " 山田太郎 ", enabled: true },
+      { id: "dup", text: "山田太郎", enabled: false },
+      { id: "", text: "未来創造", enabled: true },
+    ]);
+
+    const terms = loadFuselyPrefs().customMaskTerms;
+    expect(terms).toHaveLength(2);
+    expect(terms[0]).toEqual({ id: "dup", text: "山田太郎", enabled: true });
+    expect(terms[1]?.text).toBe("未来創造");
+    expect(terms[1]?.id).not.toBe("");
+    expect(terms[1]?.id).not.toBe("dup");
+  });
 });

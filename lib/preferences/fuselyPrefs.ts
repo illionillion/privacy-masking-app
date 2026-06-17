@@ -1,5 +1,5 @@
 import { deepMergeRecords } from "./deepMerge";
-import { normalizeCustomMaskTerms } from "./customMaskTerms";
+import { normalizeCustomMaskTerms, sanitizeCustomMaskTermsForSave } from "./customMaskTerms";
 import {
   DEFAULT_FUSELY_PREFS,
   type CustomMaskTerm,
@@ -117,7 +117,7 @@ export function saveCustomMaskTerms(customMaskTerms: CustomMaskTerm[]): void {
   saveFuselyPrefs({
     ...current,
     version: Math.max(current.version, DEFAULT_FUSELY_PREFS.version),
-    customMaskTerms,
+    customMaskTerms: sanitizeCustomMaskTermsForSave(customMaskTerms),
   });
 }
 
