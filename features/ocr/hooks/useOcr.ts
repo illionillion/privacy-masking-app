@@ -282,6 +282,17 @@ function isRangeOverlapping(
 }
 
 /**
+ * 2つの OcrRegion の bbox が重なるか判定する
+ *
+ * @param a - 比較対象の領域A
+ * @param b - 比較対象の領域B
+ * @returns 重なる場合は true
+ */
+function isBboxOverlapping(a: OcrRegion, b: OcrRegion): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+/**
  * Tesseract.js の Page データから個人情報領域を抽出する
  *
  * @param page - Tesseract.js の認識結果ページ
@@ -308,7 +319,8 @@ function extractOcrRegions(
       const lineRegions = detectPersonalInfoInLine(line.text ?? "", line.words ?? [], []);
       regions.push(...lineRegions);
     }
-    regions.push(...extractCustomMaskTermRegions(page, customMaskTerms));
+    const customRegions = extractCustomMaskTermRegions(page, customMaskTerms);
+    regions.push(...customRegions.filter((cr) => !regions.some((r) => isBboxOverlapping(r, cr))));
     return regions;
   }
 
@@ -320,7 +332,8 @@ function extractOcrRegions(
   if (words.length > 0) {
     const fullText = words.map((w) => w.text).join(" ");
     regions.push(...detectPersonalInfoInLine(fullText, words, []));
-    regions.push(...extractCustomMaskTermRegions(page, customMaskTerms));
+    const customRegions = extractCustomMaskTermRegions(page, customMaskTerms);
+    regions.push(...customRegions.filter((cr) => !regions.some((r) => isBboxOverlapping(r, cr))));
   }
 
   return regions;

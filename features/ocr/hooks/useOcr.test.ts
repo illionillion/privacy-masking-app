@@ -25,6 +25,67 @@ vi.mock("tesseract.js", () => ({
   },
 }));
 
+/**
+ * OCR結果のモックPage構造を生成する
+ *
+ * @param lines - 行テキストと単語情報の配列
+ */
+function buildMockPage(
+  lines: Array<{
+    text: string;
+    words: Array<{
+      text: string;
+      bbox: { x0: number; y0: number; x1: number; y1: number };
+    }>;
+  }>
+) {
+  return {
+    data: {
+      blocks: [
+        {
+          paragraphs: [
+            {
+              lines: lines.map((line) => ({
+                text: line.text,
+                words: line.words,
+                bbox: { x0: 0, y0: 0, x1: 500, y1: 20 },
+                baseline: { x0: 0, y0: 0, x1: 500, y1: 20 },
+                rowAttributes: { ascenders: 0, descenders: 0, rowHeight: 20 },
+                confidence: 90,
+              })),
+              bbox: { x0: 0, y0: 0, x1: 500, y1: 100 },
+              is_ltr: true,
+              confidence: 90,
+              text: lines.map((l) => l.text).join("\n"),
+            },
+          ],
+          bbox: { x0: 0, y0: 0, x1: 500, y1: 200 },
+          blocktype: "TEXT",
+          confidence: 90,
+          text: lines.map((l) => l.text).join("\n"),
+        },
+      ],
+      confidence: 90,
+      oem: "LSTM_ONLY",
+      osd: "",
+      psm: "AUTO",
+      text: lines.map((l) => l.text).join("\n"),
+      version: "5.0.0",
+      hocr: null,
+      tsv: null,
+      box: null,
+      unlv: null,
+      sd: null,
+      imageColor: null,
+      imageGrey: null,
+      imageBinary: null,
+      rotateRadians: null,
+      pdf: null,
+      debug: null,
+    },
+  };
+}
+
 describe("useOcr", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -36,67 +97,6 @@ describe("useOcr", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
-
-  /**
-   * OCR結果のモックPage構造を生成する
-   *
-   * @param lines - 行テキストと単語情報の配列
-   */
-  function buildMockPage(
-    lines: Array<{
-      text: string;
-      words: Array<{
-        text: string;
-        bbox: { x0: number; y0: number; x1: number; y1: number };
-      }>;
-    }>
-  ) {
-    return {
-      data: {
-        blocks: [
-          {
-            paragraphs: [
-              {
-                lines: lines.map((line) => ({
-                  text: line.text,
-                  words: line.words,
-                  bbox: { x0: 0, y0: 0, x1: 500, y1: 20 },
-                  baseline: { x0: 0, y0: 0, x1: 500, y1: 20 },
-                  rowAttributes: { ascenders: 0, descenders: 0, rowHeight: 20 },
-                  confidence: 90,
-                })),
-                bbox: { x0: 0, y0: 0, x1: 500, y1: 100 },
-                is_ltr: true,
-                confidence: 90,
-                text: lines.map((l) => l.text).join("\n"),
-              },
-            ],
-            bbox: { x0: 0, y0: 0, x1: 500, y1: 200 },
-            blocktype: "TEXT",
-            confidence: 90,
-            text: lines.map((l) => l.text).join("\n"),
-          },
-        ],
-        confidence: 90,
-        oem: "LSTM_ONLY",
-        osd: "",
-        psm: "AUTO",
-        text: lines.map((l) => l.text).join("\n"),
-        version: "5.0.0",
-        hocr: null,
-        tsv: null,
-        box: null,
-        unlv: null,
-        sd: null,
-        imageColor: null,
-        imageGrey: null,
-        imageBinary: null,
-        rotateRadians: null,
-        pdf: null,
-        debug: null,
-      },
-    };
-  }
 
   it("初期状態では isRecognizing が false、ocrRegions が空", () => {
     const { result } = renderHook(() => useOcr());
@@ -628,5 +628,46 @@ describe("detectPersonalInfoInLine", () => {
     expect(result).toHaveLength(1);
     expect(result[0].patternType).toBe("custom");
     expect(result[0].text).toBe("山田太郎");
+  });
+});
+
+describe("extractOcrRegions bbox重複排除", () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const tesseract = await import("tesseract.js");
+    vi.mocked(tesseract.createWorker).mockResolvedValue(mockWorker as never);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("emailパターンとカスタム語句が同一bboxに一致する場合は重複を返さない", async () => {
+    mockRecognize.mockResolvedValueOnce(
+      buildMockPage([
+        {
+          text: "user@example.com",
+          words: [
+            {
+              text: "user@example.com",
+              bbox: { x0: 10, y0: 20, x1: 120, y1: 35 },
+            },
+          ],
+        },
+      ])
+    );
+
+    const { result } = renderHook(() => useOcr());
+    const mockImage = document.createElement("img");
+
+    let regions: Awaited<ReturnType<typeof result.current.recognizeText>> = [];
+    await act(async () => {
+      regions = await result.current.recognizeText(mockImage, {
+        customMaskTerms: ["user@example.com"],
+      });
+    });
+
+    expect(regions).toHaveLength(1);
+    expect(regions[0]?.patternType).toBe("email");
   });
 });
