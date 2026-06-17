@@ -45,6 +45,7 @@ export function normalizeCustomMaskTerms(raw: unknown): CustomMaskTerm[] {
     return [];
   }
 
+  const seen = new Set<string>();
   const result: CustomMaskTerm[] = [];
 
   for (const item of raw) {
@@ -54,13 +55,14 @@ export function normalizeCustomMaskTerms(raw: unknown): CustomMaskTerm[] {
 
     const text =
       typeof item.text === "string" ? item.text.trim().slice(0, MAX_CUSTOM_MASK_TERM_LENGTH) : "";
-    if (!text) {
+    if (!text || seen.has(text)) {
       continue;
     }
 
     const id = typeof item.id === "string" && item.id.length > 0 ? item.id : createTermId();
     const enabled = typeof item.enabled === "boolean" ? item.enabled : true;
 
+    seen.add(text);
     result.push({ id, text, enabled });
     if (result.length >= MAX_CUSTOM_MASK_TERMS) {
       break;

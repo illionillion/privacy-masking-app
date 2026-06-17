@@ -23,6 +23,28 @@ describe("customMaskTerms", () => {
     ]);
   });
 
+  it("normalizeCustomMaskTerms は重複テキストを除去する（先頭を優先）", () => {
+    expect(
+      normalizeCustomMaskTerms([
+        { id: "a", text: "山田太郎", enabled: true },
+        { id: "b", text: "山田太郎", enabled: false },
+        { id: "c", text: "未来創造", enabled: true },
+      ])
+    ).toEqual([
+      { id: "a", text: "山田太郎", enabled: true },
+      { id: "c", text: "未来創造", enabled: true },
+    ]);
+  });
+
+  it("normalizeCustomMaskTerms は trim後に重複するテキストも除去する", () => {
+    expect(
+      normalizeCustomMaskTerms([
+        { id: "a", text: " 山田太郎 ", enabled: true },
+        { id: "b", text: "山田太郎", enabled: false },
+      ])
+    ).toEqual([{ id: "a", text: "山田太郎", enabled: true }]);
+  });
+
   it("sanitizeCustomMaskTermsForSave は重複と空文字を除去する", () => {
     const terms: CustomMaskTerm[] = [
       { id: "1", text: " 山田太郎 ", enabled: true },
