@@ -64,6 +64,45 @@ describe("customMaskTerms", () => {
     expect(getCustomMaskTermDedupKey("山田 太郎")).toBe("山田太郎");
   });
 
+  it("normalizeCustomMaskTerms は重複 id を再採番する（先頭を優先）", () => {
+    const result = normalizeCustomMaskTerms([
+      { id: "dup", text: "山田太郎", enabled: true },
+      { id: "dup", text: "未来創造", enabled: true },
+    ]);
+
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({ id: "dup", text: "山田太郎", enabled: true });
+    expect(result[1]?.id).not.toBe("dup");
+    expect(result[1]?.id.length).toBeGreaterThan(0);
+  });
+
+  it("normalizeCustomMaskTerms は空 id を新規採番する", () => {
+    const result = normalizeCustomMaskTerms([{ id: "", text: "山田太郎", enabled: true }]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.id.length).toBeGreaterThan(0);
+  });
+
+  it("sanitizeCustomMaskTermsForSave は重複 id を再採番する（先頭を優先）", () => {
+    const result = sanitizeCustomMaskTermsForSave([
+      { id: "dup", text: "山田太郎", enabled: true },
+      { id: "dup", text: "未来創造", enabled: true },
+    ]);
+
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({ id: "dup", text: "山田太郎", enabled: true });
+    expect(result[1]?.id).not.toBe("dup");
+    expect(result[1]?.id.length).toBeGreaterThan(0);
+  });
+
+  it("sanitizeCustomMaskTermsForSave は空 id を新規採番する", () => {
+    const result = sanitizeCustomMaskTermsForSave([{ id: "", text: "山田太郎", enabled: true }]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.text).toBe("山田太郎");
+    expect(result[0]?.id.length).toBeGreaterThan(0);
+  });
+
   it("sanitizeCustomMaskTermsForSave は重複と空文字を除去する", () => {
     const terms: CustomMaskTerm[] = [
       { id: "1", text: " 山田太郎 ", enabled: true },
