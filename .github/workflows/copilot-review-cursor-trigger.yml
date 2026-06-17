@@ -1,8 +1,8 @@
 # Copilot コードレビュー完了後、Webhook 起動用の payload を artifact に書き出す（secrets 不使用）。
 #
-# pull_request_review は Copilot bot 起点で Approve Run が必要になるため、
-# Copilot の check_run（name: copilot-pull-request-reviewer）完了をトリガーにする。
-# ※ Actions UI の workflow 表示名 "Running Copilot Code Review" とは別。
+# pull_request_review は Copilot bot 起点で Approve Run が必要になる。
+# check_run も Copilot（dynamic workflow）完了では発火しないことがある。
+# そのため Copilot workflow（workflow 名: Copilot）の workflow_run 完了をトリガーにする。
 # secrets を使う Webhook POST は copilot-cursor-webhook-dispatch.yml（workflow_run）に委譲する。
 #
 # 新規インラインコメントが 0 件の Copilot review では artifact を作らない。
@@ -10,14 +10,15 @@
 name: Copilot review → Cursor gate
 
 on:
-  check_run:
+  workflow_run:
+    workflows: ["Copilot"]
     types: [completed]
 
 permissions:
   contents: read
 
 concurrency:
-  group: copilot-cursor-gate-${{ github.event.check_run.id }}
+  group: copilot-cursor-gate-${{ github.event.workflow_run.id }}
   cancel-in-progress: false
 
 jobs:
@@ -25,9 +26,9 @@ jobs:
     name: Prepare Cursor Automation payload
     runs-on: ubuntu-latest
     if: >-
-      github.event.check_run.name == 'copilot-pull-request-reviewer' &&
-      github.event.check_run.conclusion == 'success' &&
-      github.event.check_run.pull_requests[0] != null
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'dynamic' &&
+      github.event.workflow_run.pull_requests[0] != null
     permissions:
       contents: read
       pull-requests: read
@@ -43,16 +44,16 @@ jobs:
               'copilot-pull-request-reviewer[bot]',
             ]);
 
-            const checkRun = context.payload.check_run;
-            const pullNumber = checkRun.pull_requests?.[0]?.number;
+            const workflowRun = context.payload.workflow_run;
+            const pullNumber = workflowRun.pull_requests?.[0]?.number;
 
             if (pullNumber == null) {
-              core.setFailed('No pull request associated with check run.');
+              core.setFailed('No pull request associated with Copilot workflow run.');
               return;
             }
 
-            const headSha = checkRun.head_sha;
-            core.info(`Copilot check completed for PR #${pullNumber} (${headSha.slice(0, 7)})`);
+            const headSha = workflowRun.head_sha;
+            core.info(`Copilot workflow completed for PR #${pullNumber} (${headSha.slice(0, 7)})`);
 
             const { data: pullRequest } = await github.rest.pulls.get({
               owner: context.repo.owner,
