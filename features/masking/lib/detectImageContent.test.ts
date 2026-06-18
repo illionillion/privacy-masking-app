@@ -66,6 +66,40 @@ describe("detectImageContent", () => {
     expect(mockRecognizeText).toHaveBeenCalledOnce();
   });
 
+  it("OCR オン時に customMaskTerms を recognizeText へ渡す", async () => {
+    await detectImageContent(
+      "blob:test",
+      {
+        detectFaces: mockDetectFaces,
+        recognizeText: mockRecognizeText,
+      },
+      {
+        detectionSettings: { autoDetectFace: false, autoDetectOcr: true },
+        customMaskTerms: ["山田太郎"],
+      }
+    );
+
+    expect(mockRecognizeText).toHaveBeenCalledWith(expect.anything(), {
+      customMaskTerms: ["山田太郎"],
+    });
+  });
+
+  it("OCR オフ時は customMaskTerms を渡しても recognizeText を呼ばない", async () => {
+    await detectImageContent(
+      "blob:test",
+      {
+        detectFaces: mockDetectFaces,
+        recognizeText: mockRecognizeText,
+      },
+      {
+        detectionSettings: { autoDetectFace: true, autoDetectOcr: false },
+        customMaskTerms: ["山田太郎"],
+      }
+    );
+
+    expect(mockRecognizeText).not.toHaveBeenCalled();
+  });
+
   it("顔検出が失敗した場合はエラーを伝播する", async () => {
     mockDetectFaces.mockRejectedValue(new Error("検出失敗"));
 

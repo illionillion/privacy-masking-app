@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { OcrPatternType, OcrRegion, UseOcrReturn } from "../types";
+import { detectCustomMaskTermsInWordGroup } from "../lib/customMaskTermMatch";
+import type { OcrPatternType, OcrRegion, RecognizeTextOptions, UseOcrReturn } from "../types";
 
 /**
  * 個人情報検出パターンの定義
@@ -61,6 +62,19 @@ interface TesseractWord {
   bbox: TesseractBbox;
 }
 
+/** detectPersonalInfoInLine の単語位置情報 */
+interface WordPosition {
+  start: number;
+  end: number;
+  bbox: TesseractBbox;
+}
+
+/** マッチ済み文字範囲 */
+interface MatchedRange {
+  start: number;
+  end: number;
+}
+
 interface TesseractLine {
   text?: string;
   words?: TesseractWord[];
@@ -114,12 +128,17 @@ function isDomesticPhoneFalsePositive(
  *
  * @param lineText - OCR結果の行テキスト
  * @param words - 行内の単語一覧（テキスト・bbox付き）
+ * @param customMaskTerms - ユーザー登録のマスク語句（空白差・OCR分割に対応）
  * @returns 検出された個人情報領域の配列
  */
-export function detectPersonalInfoInLine(lineText: string, words: TesseractWord[]): OcrRegion[] {
+export function detectPersonalInfoInLine(
+  lineText: string,
+  words: TesseractWord[],
+  customMaskTerms: readonly string[] = []
+): OcrRegion[] {
   /** 各単語の文字位置範囲をマップする */
   let pos = 0;
-  const wordPositions = (words ?? []).map((w) => {
+  const wordPositions: WordPosition[] = (words ?? []).map((w) => {
     const start = pos;
     const end = pos + w.text.length;
     pos = end + 1; // 単語間のスペース
@@ -128,7 +147,7 @@ export function detectPersonalInfoInLine(lineText: string, words: TesseractWord[
 
   const regions: OcrRegion[] = [];
   /** すでにマッチした文字位置を追跡して重複を防ぐ */
-  const matchedRanges: Array<{ start: number; end: number }> = [];
+  const matchedRanges: MatchedRange[] = [];
 
   for (const pattern of PATTERNS) {
     const regex = new RegExp(pattern.source, "g");
@@ -139,8 +158,7 @@ export function detectPersonalInfoInLine(lineText: string, words: TesseractWord[
       const matchEnd = matchStart + match[0].length;
 
       /** 既にマッチ済みの範囲と重複する場合はスキップ */
-      const alreadyMatched = matchedRanges.some((r) => r.start < matchEnd && r.end > matchStart);
-      if (alreadyMatched) continue;
+      if (isRangeOverlapping(matchedRanges, matchStart, matchEnd)) continue;
 
       /** 国内電話番号の郵便番号誤検出をスキップ（lookbehind 非使用・桁数チェック） */
       if (
@@ -150,39 +168,140 @@ export function detectPersonalInfoInLine(lineText: string, words: TesseractWord[
         continue;
       }
 
-      /** マッチ範囲と重なる単語のbboxを統合 */
-      const overlapping = wordPositions.filter((w) => w.start < matchEnd && w.end > matchStart);
-
-      if (overlapping.length > 0) {
-        const x0 = Math.min(...overlapping.map((w) => w.bbox.x0));
-        const y0 = Math.min(...overlapping.map((w) => w.bbox.y0));
-        const x1 = Math.max(...overlapping.map((w) => w.bbox.x1));
-        const y1 = Math.max(...overlapping.map((w) => w.bbox.y1));
-
-        regions.push({
-          x: x0,
-          y: y0,
-          width: x1 - x0,
-          height: y1 - y0,
-          text: match[0],
-          patternType: pattern.type,
-        });
-
+      const region = buildRegionFromMatch(
+        match[0],
+        pattern.type,
+        matchStart,
+        matchEnd,
+        wordPositions
+      );
+      if (region) {
+        regions.push(region);
         matchedRanges.push({ start: matchStart, end: matchEnd });
       }
     }
   }
 
+  const customRegions = detectCustomMaskTermsInWordGroup(
+    words ?? [],
+    customMaskTerms,
+    matchedRanges
+  );
+  regions.push(...customRegions);
+
   return regions;
+}
+
+/**
+ * ページ構造から段落単位でカスタムマスク語句を検出する
+ *
+ * 名刺などで姓・名が別単語・別行になっても、段落内なら登録語句にマッチさせる。
+ *
+ * @param page - Tesseract.js の認識結果ページ
+ * @param customMaskTerms - 有効な登録語句
+ */
+function extractCustomMaskTermRegions(
+  page: TesseractPage,
+  customMaskTerms: readonly string[]
+): OcrRegion[] {
+  if (customMaskTerms.length === 0) {
+    return [];
+  }
+
+  const regions: OcrRegion[] = [];
+  const paragraphs = page.blocks?.flatMap((block) => block.paragraphs) ?? [];
+
+  if (paragraphs.length > 0) {
+    for (const paragraph of paragraphs) {
+      const words = paragraph.lines.flatMap((line) => line.words ?? []);
+      regions.push(...detectCustomMaskTermsInWordGroup(words, customMaskTerms, []));
+    }
+    return regions;
+  }
+
+  const lines = page.lines ?? [];
+  if (lines.length > 0) {
+    for (const line of lines) {
+      const words = line.words ?? [];
+      regions.push(...detectCustomMaskTermsInWordGroup(words, customMaskTerms, []));
+    }
+    return regions;
+  }
+
+  const words = page.words ?? [];
+  regions.push(...detectCustomMaskTermsInWordGroup(words, customMaskTerms, []));
+  return regions;
+}
+
+/**
+ * マッチ範囲と重なる単語 bbox から OcrRegion を組み立てる
+ *
+ * @param matchText - マッチ文字列
+ * @param patternType - パターン種別
+ * @param matchStart - マッチ開始位置
+ * @param matchEnd - マッチ終了位置
+ * @param wordPositions - 単語位置一覧
+ */
+function buildRegionFromMatch(
+  matchText: string,
+  patternType: OcrPatternType,
+  matchStart: number,
+  matchEnd: number,
+  wordPositions: WordPosition[]
+): OcrRegion | null {
+  const overlapping = wordPositions.filter((w) => w.start < matchEnd && w.end > matchStart);
+  if (overlapping.length === 0) {
+    return null;
+  }
+
+  const x0 = Math.min(...overlapping.map((w) => w.bbox.x0));
+  const y0 = Math.min(...overlapping.map((w) => w.bbox.y0));
+  const x1 = Math.max(...overlapping.map((w) => w.bbox.x1));
+  const y1 = Math.max(...overlapping.map((w) => w.bbox.y1));
+
+  return {
+    x: x0,
+    y: y0,
+    width: x1 - x0,
+    height: y1 - y0,
+    text: matchText,
+    patternType,
+  };
+}
+
+/**
+ * マッチ範囲が既存範囲と重複するか判定する
+ */
+function isRangeOverlapping(
+  matchedRanges: MatchedRange[],
+  matchStart: number,
+  matchEnd: number
+): boolean {
+  return matchedRanges.some((range) => range.start < matchEnd && range.end > matchStart);
+}
+
+/**
+ * 2つの OcrRegion の bbox が重なるか判定する
+ *
+ * @param a - 比較対象の領域A
+ * @param b - 比較対象の領域B
+ * @returns 重なる場合は true
+ */
+function isBboxOverlapping(a: OcrRegion, b: OcrRegion): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
 /**
  * Tesseract.js の Page データから個人情報領域を抽出する
  *
  * @param page - Tesseract.js の認識結果ページ
+ * @param customMaskTerms - ユーザー登録のマスク語句
  * @returns 検出された個人情報領域の配列
  */
-function extractOcrRegions(page: TesseractPage): OcrRegion[] {
+function extractOcrRegions(
+  page: TesseractPage,
+  customMaskTerms: readonly string[] = []
+): OcrRegion[] {
   const regions: OcrRegion[] = [];
 
   /**
@@ -196,9 +315,11 @@ function extractOcrRegions(page: TesseractPage): OcrRegion[] {
 
   if (lines.length > 0) {
     for (const line of lines) {
-      const lineRegions = detectPersonalInfoInLine(line.text ?? "", line.words ?? []);
+      const lineRegions = detectPersonalInfoInLine(line.text ?? "", line.words ?? [], []);
       regions.push(...lineRegions);
     }
+    const customRegions = extractCustomMaskTermRegions(page, customMaskTerms);
+    regions.push(...customRegions.filter((cr) => !regions.some((r) => isBboxOverlapping(r, cr))));
     return regions;
   }
 
@@ -209,8 +330,9 @@ function extractOcrRegions(page: TesseractPage): OcrRegion[] {
   const words = page.words ?? [];
   if (words.length > 0) {
     const fullText = words.map((w) => w.text).join(" ");
-    const wordRegions = detectPersonalInfoInLine(fullText, words);
-    regions.push(...wordRegions);
+    regions.push(...detectPersonalInfoInLine(fullText, words, []));
+    const customRegions = extractCustomMaskTermRegions(page, customMaskTerms);
+    regions.push(...customRegions.filter((cr) => !regions.some((r) => isBboxOverlapping(r, cr))));
   }
 
   return regions;
@@ -312,16 +434,21 @@ export function useOcr(): UseOcrReturn {
    * @returns 検出された個人情報領域の配列
    */
   const recognizeText = useCallback(
-    async (imageElement: HTMLImageElement): Promise<OcrRegion[]> => {
+    async (
+      imageElement: HTMLImageElement,
+      options?: RecognizeTextOptions
+    ): Promise<OcrRegion[]> => {
       const requestId = ++recognizeRequestRef.current;
       inFlightRef.current++;
       setIsRecognizing(true);
+
+      const customMaskTerms = options?.customMaskTerms ?? [];
 
       try {
         const worker = await getWorker();
         const { data } = await worker.recognize(imageElement, {}, { blocks: true, text: true });
 
-        const regions = extractOcrRegions(data as unknown as TesseractPage);
+        const regions = extractOcrRegions(data as unknown as TesseractPage, customMaskTerms);
 
         if (requestId === recognizeRequestRef.current) {
           setOcrRegions(regions);

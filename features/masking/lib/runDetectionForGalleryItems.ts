@@ -15,6 +15,7 @@ export interface RunDetectionForGalleryItemsOptions extends DetectImageContentDe
   items: MaskingImageItem[];
   isMounted: () => boolean;
   detectionSettings: DetectionPrefs;
+  customMaskTerms?: readonly string[];
   concurrency?: number;
   onItemSuccess: (item: MaskingImageItem, result: ImageDetectionResult) => void;
   onItemSkipped: (item: MaskingImageItem) => void;
@@ -43,6 +44,7 @@ export async function runDetectionForGalleryItems(
     items,
     isMounted,
     detectionSettings,
+    customMaskTerms = [],
     detectFaces,
     recognizeText,
     concurrency = DETECTION_CONCURRENCY,
@@ -73,7 +75,7 @@ export async function runDetectionForGalleryItems(
           const result = await detectImageContent(
             item.imageUrl,
             { detectFaces, recognizeText },
-            { detectionSettings }
+            { detectionSettings, customMaskTerms }
           );
           if (isMounted()) {
             onItemSuccess(item, result);

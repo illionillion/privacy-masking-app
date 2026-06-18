@@ -13,13 +13,18 @@ export interface ImageDetectionResult {
 /** detectImageContent の依存関数 */
 export interface DetectImageContentDeps {
   detectFaces: (imageElement: HTMLImageElement) => Promise<DetectedFace[]>;
-  recognizeText: (imageElement: HTMLImageElement) => Promise<DetectedTextRegion[]>;
+  recognizeText: (
+    imageElement: HTMLImageElement,
+    options?: { customMaskTerms?: readonly string[] }
+  ) => Promise<DetectedTextRegion[]>;
 }
 
 /** detectImageContent のオプション */
 export interface DetectImageContentOptions {
   /** 検出設定（省略時は両方オン） */
   detectionSettings?: DetectionPrefs;
+  /** ユーザー登録のマスク語句（OCR 有効時のみ適用） */
+  customMaskTerms?: readonly string[];
 }
 
 /**
@@ -36,6 +41,7 @@ export async function detectImageContent(
   options: DetectImageContentOptions = {}
 ): Promise<ImageDetectionResult> {
   const settings = options.detectionSettings ?? DEFAULT_FUSELY_PREFS.detection;
+  const customMaskTerms = options.customMaskTerms ?? [];
 
   const imageElement = await loadImageElement(imageUrl);
 
@@ -43,7 +49,7 @@ export async function detectImageContent(
     ? deps.detectFaces(imageElement)
     : Promise.resolve<DetectedFace[]>([]);
   const ocrPromise = settings.autoDetectOcr
-    ? deps.recognizeText(imageElement)
+    ? deps.recognizeText(imageElement, { customMaskTerms })
     : Promise.resolve<DetectedTextRegion[]>([]);
 
   const [detections, ocrRegions] = await Promise.all([facePromise, ocrPromise]);

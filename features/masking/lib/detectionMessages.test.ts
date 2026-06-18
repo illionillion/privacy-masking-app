@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  formatCustomMaskTermsSummary,
   formatDetectionSettingsSummary,
   getDetectionBatchCompleteMessage,
   getDetectionCompleteMessage,
@@ -14,6 +15,21 @@ describe("detectionMessages", () => {
     expect(formatDetectionSettingsSummary({ autoDetectFace: false, autoDetectOcr: true })).toBe(
       "顔: 手動 · OCR: 自動"
     );
+  });
+
+  it("マスク語句サマリ文字列を返す", () => {
+    expect(formatCustomMaskTermsSummary([])).toBe("未登録");
+    expect(
+      formatCustomMaskTermsSummary([
+        { id: "1", text: "山田太郎", enabled: true },
+        { id: "2", text: "田中", enabled: false },
+      ])
+    ).toBe("2件（有効 1件）");
+    expect(
+      formatCustomMaskTermsSummary([{ id: "1", text: "山田太郎", enabled: true }], {
+        ocrEnabled: false,
+      })
+    ).toBe("利用不可（OCR オフ）");
   });
 
   it("両方オフのアップロード時メッセージを返す", () => {

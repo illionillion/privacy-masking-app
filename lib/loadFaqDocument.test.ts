@@ -16,7 +16,7 @@ describe("loadFaqDocument", () => {
     expect(doc.title).toBe("よくある質問（FAQ）");
     expect(doc.pageTitle).toContain("FAQ");
     expect(doc.canonicalPath).toBe("faq");
-    expect(doc.lastUpdated).toBe("2026年6月1日");
+    expect(doc.lastUpdated).toBe("2026年6月11日");
     expect(doc.content).toContain(GITHUB_ISSUES_URL);
     expect(doc.content).toContain(GITHUB_DISCUSSIONS_URL);
     expect(doc.content).toContain(GITHUB_REPOSITORY_URL);

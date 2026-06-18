@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import clsx from "clsx";
 import type { DetectionPrefs } from "@/lib/preferences";
+import {
+  closeModalWithUnsavedConfirm,
+  hasDetectionSettingsChanges,
+} from "../lib/unsavedModalClose";
 
 interface DetectionSettingsModalProps {
   isOpen: boolean;
@@ -38,10 +42,14 @@ export function DetectionSettingsModal({
     };
   }, [isOpen]);
 
+  const handleCancel = useCallback(() => {
+    void closeModalWithUnsavedConfirm(hasDetectionSettingsChanges(draft, settings), onClose);
+  }, [draft, onClose, settings]);
+
   const handleKeyDownDialog = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
       if (e.key === "Escape") {
-        onClose();
+        handleCancel();
         return;
       }
       if (e.key !== "Tab") return;
@@ -66,7 +74,7 @@ export function DetectionSettingsModal({
         first.focus();
       }
     },
-    [onClose]
+    [handleCancel]
   );
 
   const handleSave = useCallback(() => {
@@ -86,7 +94,7 @@ export function DetectionSettingsModal({
       <div
         role="presentation"
         className="absolute inset-0 cursor-default bg-black/50"
-        onClick={onClose}
+        onClick={handleCancel}
       />
       <div
         ref={dialogRef}
@@ -159,7 +167,7 @@ export function DetectionSettingsModal({
         <div className="mt-6 flex justify-end gap-2">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleCancel}
             className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
           >
             キャンセル
