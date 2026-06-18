@@ -1,0 +1,36 @@
+1:"$Sreact.fragment"
+2:I[29149,["/_next/static/chunks/125qfxven4x6p.js","/_next/static/chunks/18c_7yihc_8go.js","/_next/static/chunks/0erw9~xyyldpt.js","/_next/static/chunks/0_s3.reuq_n~f.js"],"LegalMarkdownContent"]
+4:I[71403,["/_next/static/chunks/125qfxven4x6p.js","/_next/static/chunks/18c_7yihc_8go.js","/_next/static/chunks/0erw9~xyyldpt.js","/_next/static/chunks/0_s3.reuq_n~f.js"],""]
+5:I[90774,["/_next/static/chunks/125qfxven4x6p.js","/_next/static/chunks/18c_7yihc_8go.js","/_next/static/chunks/0erw9~xyyldpt.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+3:Tb18,メールアドレスや電話番号は従来どおり自動検出されますが、**人名のように決まったパターンに当てはまらない文字列** は、これまで手動マスクが中心でした。今回 **マスク語句** を追加し、あらかじめ登録した文字列が OCR 結果に含まれていれば、自動でマスク候補に載るようにしました。
+
+## こんなときに
+
+資料や報告用に **画像がたくさんあり、特定の個人名が何枚にも入っている** 場合を想定しています。1 枚ずつ編集画面で同じ名前を探して隠すより、**先にマスク語句へ名前を登録してからまとめてアップロード（または再検出）** すると、同じ文字列の下書きマスクを一括で拾いやすくなります。
+
+社内資料のスクショ、イベント写真の選別、名刺画像の加工など、「この人の名前だけは全部隠したい」というときに使えると思います。登録はブラウザに保持されるので、同じセッションで次の画像にも引き継がれます。
+
+## 使い方
+
+1. [マスキングツール（/app）](/app) を開く
+2. **検出設定** で **テキストを自動検出（OCR）** をオンにする
+3. **マスク語句** から、隠したい文字列（例: `山田太郎`、`株式会社サンプル`）を登録する
+4. 画像をアップロードするか、ギャラリーから **再検出** する
+
+登録内容は **ブラウザ内（localStorage）** に保存されます。画像そのものがサーバーへ送られることはありません。OCR をオフにしている間はマスク語句は適用されず、編集ボタンも無効になります。
+
+## 名刺の姓名について
+
+名刺などでは、姓と名が **別々の単語** として読み取られることがあります。`山田太郎` と1語で登録していれば、OCR が `山田` と `太郎` に分けた場合や、空白の入り方が違う場合でも、**空白の有無を無視して** 照合します。
+
+ただし、文字が **小さすぎる・離れすぎている** などでつながって認識できないときは、**苗字だけ・名前だけ** を別々に登録する方法も有効です（例: `山田` と `太郎`）。詳しくは [よくある質問（FAQ）](/faq) もご覧ください。
+
+## 注意
+
+- マスク語句は **OCR 自動検出がオンのときのみ** 動作します
+- 検出漏れ・誤検出は起こり得るため、公開前の目視確認は引き続き必要です
+- 登録は最大 50 件・1 語 100 文字まで
+
+開発の経緯は [Issue #89](https://github.com/illionillion/privacy-masking-app/issues/89) を参照してください。Pull Request 公開後に本記事へリンクを追記します。0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"カスタムマスク語句（人名・社名の登録）を追加"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["公開日",": ","2026年6月11日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":[["$","$L2",null,{"content":"$3"}],["$","p",null,{"className":"pt-2","children":["$","$L4",null,{"href":"/updates","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"更新情報一覧へ戻る"}]}]]}]]}],[["$","script","script-0",{"src":"/_next/static/chunks/0_s3.reuq_n~f.js","async":true}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"I0NIOf86Z8wq8pYweVKQd"}
+7:null
