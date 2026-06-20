@@ -166,6 +166,7 @@ function BrushControls({ brushSize, onBrushSizeChange }: BrushControlsProps) {
  *
  * モード切替の右にマスキング種別（矩形追加時 / スタンプ領域選択時）、
  * ペイントブラシ・削除は各モードに応じて表示する。
+ * 削除は選択中アイテムがあるときモード問わず表示する。
  * SP では 2 段レイアウトにしてモーダル内の高さ変動を抑える。
  */
 export function EditorToolbar({
@@ -184,6 +185,7 @@ export function EditorToolbar({
 }: EditorToolbarProps) {
   const isNarrowViewport = useNarrowViewport();
   const showStampControls = mode === "rect" || isStampSelected;
+  const showDeleteSelected = selectedId !== null;
 
   if (isNarrowViewport) {
     const reserveStampRow = mode === "select" || mode === "rect";
@@ -193,8 +195,8 @@ export function EditorToolbar({
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between gap-2">
             <ModeButtonGroup mode={mode} onChangeMode={onChangeMode} />
-            {mode === "select" && (
-              <DeleteSelectedButton disabled={selectedId === null} onClick={onDeleteSelected} />
+            {showDeleteSelected && (
+              <DeleteSelectedButton disabled={false} onClick={onDeleteSelected} />
             )}
           </div>
 
@@ -250,12 +252,8 @@ export function EditorToolbar({
           </>
         )}
 
-        {mode === "select" && (
-          <DeleteSelectedButton
-            disabled={selectedId === null}
-            onClick={onDeleteSelected}
-            className="ml-auto"
-          />
+        {showDeleteSelected && (
+          <DeleteSelectedButton onClick={onDeleteSelected} disabled={false} className="ml-auto" />
         )}
       </div>
     </div>
