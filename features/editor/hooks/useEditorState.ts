@@ -179,10 +179,19 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
   /**
    * マスキング領域を追加する
    *
+   * 手動追加直後に位置調整できるよう、追加した領域を選択状態にする（モードは変更しない）。
+   *
    * @param region - 追加する領域（id を除く）
    */
   const addStampRegion = useCallback((region: Omit<StampRegion, "id">) => {
-    setStampRegions((prev) => [...prev, { ...region, id: generateUUID() }]);
+    const id = generateUUID();
+    const newRegion: StampRegion = { ...region, id };
+    setStampRegions((prev) => [...prev, newRegion]);
+    setSelectedId(id);
+    _setSelectedStampType(newRegion.stampType);
+    if (newRegion.stampFileName) {
+      _setSelectedStampFileName(newRegion.stampFileName);
+    }
   }, []);
 
   /**
