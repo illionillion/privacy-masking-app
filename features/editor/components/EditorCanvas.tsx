@@ -15,6 +15,7 @@ import {
   Transformer,
 } from "react-konva";
 import type { EditorMode, PaintStroke, StampRegion, StampType } from "../types";
+import { shouldShowEditorTransformer } from "../lib/editorCanvasInteraction";
 import { isEditableKeyboardTarget } from "../lib/isEditableKeyboardTarget";
 import { stagePointerToContentSpace } from "../lib/viewZoom";
 import { useEditorViewport } from "../hooks/useEditorViewport";
@@ -82,6 +83,16 @@ const MODE_CURSORS: Record<EditorMode, string> = {
   rect: "crosshair",
   paint: "cell",
 };
+
+/**
+ * rect モードで新規矩形描画を開始してよい空白キャンバス上のヒットかどうかを判定する
+ *
+ * @param target - Konva イベントのターゲットノード
+ * @param stage - Konva ステージ
+ */
+function isBlankCanvasTarget(target: Konva.Node, stage: Konva.Stage): boolean {
+  return target === stage || target.getType() === "Stage";
+}
 
 /**
  * Konva ステージ上でのポインタ座標を取得する
@@ -292,6 +303,10 @@ export function EditorCanvas({
       return;
     }
 
+    if (mode === "rect" && !isBlankCanvasTarget(e.target, stage)) {
+      return;
+    }
+
     isDrawing.current = true;
     drawStart.current = pos;
 
@@ -484,7 +499,9 @@ export function EditorCanvas({
     onUpdateStampRegion(id, { x: newX, y: newY, width: newW, height: newH });
   }
 
-  const isInteractive = mode === "select";
+  const isStampRegionInteractive = mode === "select" || mode === "rect";
+  const isPaintStrokeInteractive = mode === "select";
+  const showTransformer = shouldShowEditorTransformer(mode, selectedId, stampRegions);
 
   /**
    * ステージ上のポインタを、ズーム補正後のコンテンツ座標（領域描画と同じ系）に変換する
@@ -512,7 +529,7 @@ export function EditorCanvas({
           region={region}
           scaleX={scaleX}
           scaleY={scaleY}
-          isInteractive={isInteractive}
+          isInteractive={isStampRegionInteractive}
           selected={selectedId === region.id}
           stampImages={stampImages}
           bgImage={bgImage}
@@ -536,9 +553,10 @@ export function EditorCanvas({
           lineJoin="round"
           opacity={stroke.isEnabled ? 1 : 0.3}
           hitStrokeWidth={Math.max(stroke.brushSize * scaleX, 12)}
-          draggable={isInteractive}
-          onClick={() => isInteractive && onSelectItem(stroke.id)}
-          onTap={() => isInteractive && onSelectItem(stroke.id)}
+          listening={isPaintStrokeInteractive}
+          draggable={isPaintStrokeInteractive}
+          onClick={() => isPaintStrokeInteractive && onSelectItem(stroke.id)}
+          onTap={() => isPaintStrokeInteractive && onSelectItem(stroke.id)}
           onDragEnd={(e) => handlePaintStrokeDragEnd(stroke.id, e.target as Konva.Line)}
           onTransformEnd={(e) =>
             handlePaintStrokeTransformEnd(stroke.id, stroke, e.target as Konva.Line)
@@ -583,8 +601,8 @@ export function EditorCanvas({
         />
       )}
 
-      {/* Transformer（選択モードのみ） */}
-      {mode === "select" && (
+      {/* Transformer（選択モード、または追加モードでスタンプ領域選択中） */}
+      {showTransformer && (
         <Transformer
           ref={transformerRef}
           boundBoxFunc={(oldBox, newBox) => {

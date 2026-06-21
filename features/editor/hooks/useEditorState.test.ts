@@ -76,6 +76,29 @@ describe("useEditorState", () => {
     expect(result.current.stampRegions).toHaveLength(1);
     expect(result.current.stampRegions[0].stampType).toBe("mosaic");
     expect(result.current.stampRegions[0].source).toBe("manual");
+    expect(result.current.selectedId).toBe("stamp-uuid");
+  });
+
+  it("addStampRegion は追加した領域を選択するがモードは変更しない", () => {
+    vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("auto-select-uuid") });
+    const { result } = renderHook(() => useEditorState());
+    act(() => {
+      result.current.onChangeMode("rect");
+    });
+    expect(result.current.mode).toBe("rect");
+    act(() => {
+      result.current.addStampRegion({
+        x: 0,
+        y: 0,
+        width: 50,
+        height: 50,
+        stampType: "fill-black",
+        isEnabled: true,
+        source: "manual",
+      });
+    });
+    expect(result.current.mode).toBe("rect");
+    expect(result.current.selectedId).toBe("auto-select-uuid");
   });
 
   it("addPaintStroke でペイントストロークを追加できる", () => {
