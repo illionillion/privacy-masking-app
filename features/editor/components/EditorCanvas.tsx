@@ -15,6 +15,7 @@ import {
   Transformer,
 } from "react-konva";
 import type { EditorMode, PaintStroke, StampRegion, StampType } from "../types";
+import { shouldShowEditorTransformer } from "../lib/editorCanvasInteraction";
 import { isEditableKeyboardTarget } from "../lib/isEditableKeyboardTarget";
 import { stagePointerToContentSpace } from "../lib/viewZoom";
 import { useEditorViewport } from "../hooks/useEditorViewport";
@@ -84,22 +85,13 @@ const MODE_CURSORS: Record<EditorMode, string> = {
 };
 
 /**
- * ポインタイベントのターゲットがスタンプ領域（またはその子ノード）かどうかを判定する
+ * rect モードで新規矩形描画を開始してよい空白キャンバス上のヒットかどうかを判定する
  *
  * @param target - Konva イベントのターゲットノード
- * @param stampRegions - キャンバス上のスタンプ領域一覧
+ * @param stage - Konva ステージ
  */
-function isStampRegionTarget(target: Konva.Node, stampRegions: StampRegion[]): boolean {
-  const stampRegionIds = new Set(stampRegions.map((region) => region.id));
-  let node: Konva.Node | null = target;
-  while (node) {
-    const id = node.id();
-    if (id && stampRegionIds.has(id)) {
-      return true;
-    }
-    node = node.getParent();
-  }
-  return false;
+function isBlankCanvasTarget(target: Konva.Node, stage: Konva.Stage): boolean {
+  return target === stage || target.getType() === "Stage";
 }
 
 /**
@@ -311,7 +303,7 @@ export function EditorCanvas({
       return;
     }
 
-    if (mode === "rect" && isStampRegionTarget(e.target, stampRegions)) {
+    if (mode === "rect" && !isBlankCanvasTarget(e.target, stage)) {
       return;
     }
 
@@ -509,7 +501,7 @@ export function EditorCanvas({
 
   const isStampRegionInteractive = mode === "select" || mode === "rect";
   const isPaintStrokeInteractive = mode === "select";
-  const showTransformer = mode === "select" || (mode === "rect" && selectedId !== null);
+  const showTransformer = shouldShowEditorTransformer(mode, selectedId, stampRegions);
 
   /**
    * ステージ上のポインタを、ズーム補正後のコンテンツ座標（領域描画と同じ系）に変換する
@@ -561,6 +553,7 @@ export function EditorCanvas({
           lineJoin="round"
           opacity={stroke.isEnabled ? 1 : 0.3}
           hitStrokeWidth={Math.max(stroke.brushSize * scaleX, 12)}
+          listening={isPaintStrokeInteractive}
           draggable={isPaintStrokeInteractive}
           onClick={() => isPaintStrokeInteractive && onSelectItem(stroke.id)}
           onTap={() => isPaintStrokeInteractive && onSelectItem(stroke.id)}
