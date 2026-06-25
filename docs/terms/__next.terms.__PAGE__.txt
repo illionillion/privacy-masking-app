@@ -1,6 +1,6 @@
 1:"$Sreact.fragment"
-2:I[29149,["/_next/static/chunks/125qfxven4x6p.js","/_next/static/chunks/18c_7yihc_8go.js","/_next/static/chunks/0erw9~xyyldpt.js","/_next/static/chunks/0_s3.reuq_n~f.js"],"LegalMarkdownContent"]
-4:I[90774,["/_next/static/chunks/125qfxven4x6p.js","/_next/static/chunks/18c_7yihc_8go.js","/_next/static/chunks/0erw9~xyyldpt.js"],"OutletBoundary"]
+2:I[9612,["573","static/chunks/573-dc743d1af8dfaed0.js","852","static/chunks/852-dfa9f6bda5363a37.js","66","static/chunks/app/terms/page-2f9b51accd350117.js"],"LegalMarkdownContent"]
+4:I[5017,[],"OutletBoundary"]
 5:"$Sreact.suspense"
 3:T10c0,本利用規約（以下「本規約」）は、伏せ太郎（Fusely）（以下「本サービス」）の利用条件を定めるものです。本サービスを利用する前に、本規約をお読みください。
 
@@ -52,5 +52,5 @@
 
 本規約は日本法を準拠法とします。
 
-[トップページへ戻る](/)0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"利用規約"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["最終更新日",": ","2026年5月12日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":["$","$L2",null,{"content":"$3"}]}]]}],[["$","script","script-0",{"src":"/_next/static/chunks/0_s3.reuq_n~f.js","async":true}]],["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"vUPld5goZkBoM6ym5cCDt"}
+[トップページへ戻る](/)0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"利用規約"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["最終更新日",": ","2026年5月12日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":["$","$L2",null,{"content":"$3"}]}]]}],null,["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"9gTx63lE1UKs-VYJYDYY-"}
 6:null

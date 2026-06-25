@@ -1,6 +1,6 @@
 1:"$Sreact.fragment"
-2:I[29149,["/_next/static/chunks/125qfxven4x6p.js","/_next/static/chunks/18c_7yihc_8go.js","/_next/static/chunks/0erw9~xyyldpt.js","/_next/static/chunks/0_s3.reuq_n~f.js"],"LegalMarkdownContent"]
-4:I[90774,["/_next/static/chunks/125qfxven4x6p.js","/_next/static/chunks/18c_7yihc_8go.js","/_next/static/chunks/0erw9~xyyldpt.js"],"OutletBoundary"]
+2:I[9612,["573","static/chunks/573-dc743d1af8dfaed0.js","852","static/chunks/852-dfa9f6bda5363a37.js","877","static/chunks/app/privacy/page-2f9b51accd350117.js"],"LegalMarkdownContent"]
+4:I[5017,[],"OutletBoundary"]
 5:"$Sreact.suspense"
 3:Tedc,本ポリシーは、伏せ太郎（Fusely）（以下「本サービス」）の利用にあたり、利用者の情報がどのように扱われるかを説明するものです。本サービスはオープンソースとして公開されており、ソースコードは [GitHub リポジトリ](https://github.com/illionillion/privacy-masking-app) で確認できます。
 
@@ -36,5 +36,5 @@ Google AdSense を利用する場合、広告配信事業者・広告ネット�
 
 法令の改正やサービス内容の変更に応じて、本ポリシーを更新することがあります。更新後の内容は本ページに掲載した時点から効力を有するものとします。
 
-[トップページへ戻る](/)0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"プライバシーポリシー"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["最終更新日",": ","2026年5月12日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":["$","$L2",null,{"content":"$3"}]}]]}],[["$","script","script-0",{"src":"/_next/static/chunks/0_s3.reuq_n~f.js","async":true}]],["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"vUPld5goZkBoM6ym5cCDt"}
+[トップページへ戻る](/)0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"プライバシーポリシー"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["最終更新日",": ","2026年5月12日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":["$","$L2",null,{"content":"$3"}]}]]}],null,["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"9gTx63lE1UKs-VYJYDYY-"}
 6:null
