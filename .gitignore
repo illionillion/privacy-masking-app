@@ -40,5 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Serwist（ビルド時に public/ へ生成）
+public/sw.js
+public/swe-worker*
+
 .github/DRAFTS/*.md
 .github/DRAFTS/**/*.md

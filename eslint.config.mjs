@@ -14,6 +14,9 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Build output (static export)
     "docs/**",
+    // Serwist generated service worker
+    "public/sw.js",
+    "public/swe-worker*",
     // Test coverage output
     "coverage/**",
   ]),
