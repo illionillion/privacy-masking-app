@@ -70,6 +70,7 @@ describe("GalleryItem", () => {
         image={createImage()}
         isActive={false}
         isModelLoading={false}
+        isOffline={false}
         stampImages={new Map()}
         {...handlers}
       />
@@ -90,6 +91,7 @@ describe("GalleryItem", () => {
         image={createImage()}
         isActive={false}
         isModelLoading={false}
+        isOffline={false}
         stampImages={new Map()}
         {...handlers}
       />
@@ -105,6 +107,7 @@ describe("GalleryItem", () => {
         image={createImage({ processingError: true })}
         isActive={false}
         isModelLoading={false}
+        isOffline={false}
         stampImages={new Map()}
         {...handlers}
       />

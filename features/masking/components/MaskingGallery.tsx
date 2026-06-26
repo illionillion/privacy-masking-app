@@ -8,6 +8,7 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { useFaceDetection } from "@/features/face-detection";
 import { useOcr } from "@/features/ocr";
 import type { DetectionPrefs } from "@/lib/preferences";
+import { useNetworkStatus } from "@/lib/useNetworkStatus";
 import { useClipboardImagePaste } from "../hooks/useClipboardImagePaste";
 import { DETECTION_SETTINGS_BAR_REVEAL_MS, useDelayedReveal } from "../hooks/useDelayedReveal";
 import { useCustomMaskTerms } from "../hooks/useCustomMaskTerms";
@@ -20,11 +21,16 @@ import {
   formatCustomMaskTermsSummary,
   formatDetectionSettingsSummary,
 } from "../lib/detectionMessages";
+import {
+  getEffectiveDetectionSettings,
+  isUploadBlockedByModelState,
+} from "../lib/offlineManualEdit";
 import { CustomMaskTermsModal } from "./CustomMaskTermsModal";
 import { DetectionSettingsBarSkeleton } from "./DetectionSettingsBarSkeleton";
 import { DetectionSettingsModal } from "./DetectionSettingsModal";
 import { EditorModal } from "./EditorModal";
 import { GalleryItem } from "./GalleryItem";
+import { OfflineManualEditBanner } from "./OfflineManualEditBanner";
 
 /**
  * メインマスキングギャラリーコンポーネント
@@ -32,6 +38,7 @@ import { GalleryItem } from "./GalleryItem";
  * 画像アップロード、顔検出、Canvas表示を統合する。
  */
 export function MaskingGallery() {
+  const { isOffline } = useNetworkStatus();
   const stampImages = useStampImages();
   const {
     images,
@@ -72,18 +79,29 @@ export function MaskingGallery() {
   const getDetectionSettings = useCallback(() => detectionSettings, [detectionSettings]);
   const getCustomMaskTerms = useCallback(() => enabledCustomMaskTexts, [enabledCustomMaskTexts]);
 
+  const effectiveDetectionSettings = useMemo(
+    () => getEffectiveDetectionSettings(detectionSettings, isOffline),
+    [detectionSettings, isOffline]
+  );
+
   const detectionSettingsSummary = useMemo(
-    () => formatDetectionSettingsSummary(detectionSettings),
-    [detectionSettings]
+    () =>
+      isOffline ? "オフライン（手動のみ）" : formatDetectionSettingsSummary(detectionSettings),
+    [detectionSettings, isOffline]
   );
   const customMaskTermsSummary = useMemo(
     () =>
       formatCustomMaskTermsSummary(customMaskTerms, {
-        ocrEnabled: detectionSettings.autoDetectOcr,
+        ocrEnabled: effectiveDetectionSettings.autoDetectOcr,
       }),
-    [customMaskTerms, detectionSettings.autoDetectOcr]
+    [customMaskTerms, effectiveDetectionSettings.autoDetectOcr]
   );
-  const isCustomMaskTermsEditable = detectionSettings.autoDetectOcr;
+  const isCustomMaskTermsEditable = effectiveDetectionSettings.autoDetectOcr;
+  const isUploadBlockedByModel = isUploadBlockedByModelState(
+    isOffline,
+    isModelLoading,
+    isModelError
+  );
 
   const { handleUpload, handleRedetect } = useGalleryDetection({
     images,
@@ -97,9 +115,15 @@ export function MaskingGallery() {
     recognizeText,
     getDetectionSettings,
     getCustomMaskTerms,
+    isOffline,
   });
 
-  useClipboardImagePaste({ onUpload: handleUpload, isModelLoading, isModelError });
+  useClipboardImagePaste({
+    onUpload: handleUpload,
+    isModelLoading,
+    isModelError,
+    isOffline,
+  });
 
   const handleSaveDetectionSettings = useCallback(
     (settings: DetectionPrefs) => {
@@ -121,13 +145,14 @@ export function MaskingGallery() {
 
   const hasProcessingImage = images.some((image) => image.isProcessing);
   const isProcessing = isDetecting || isRecognizing || hasProcessingImage;
-  const loadingMessage = isModelLoading ? "顔検出モデルをロード中…" : null;
+  const loadingMessage = !isOffline && isModelLoading ? "顔検出モデルをロード中…" : null;
   const downloadableImagesCount = images.filter(
     (image) => image.maskedBlobUrl && !image.isProcessing
   ).length;
 
   return (
     <div className="flex flex-col gap-6">
+      <OfflineManualEditBanner visible={isOffline} />
       {!showDetectionSettingsBar ? (
         <DetectionSettingsBarSkeleton />
       ) : (
@@ -212,11 +237,11 @@ export function MaskingGallery() {
 
       <ImageUpload
         onUpload={handleUpload}
-        disabled={isProcessing || isModelLoading || isModelError}
+        disabled={isProcessing || isUploadBlockedByModel}
         multiple
         loadingMessage={loadingMessage}
       />
-      {isModelError && (
+      {isModelError && !isOffline && (
         <p role="alert" className="text-center text-sm text-red-600">
           顔検出モデルのロードに失敗しました。ページを再読み込みしてください。
         </p>
@@ -257,6 +282,7 @@ export function MaskingGallery() {
                 image={image}
                 isActive={image.id === activeImageId}
                 isModelLoading={isModelLoading}
+                isOffline={isOffline}
                 stampImages={stampImages}
                 onSelect={setActiveImageId}
                 onOpenEdit={handleOpenEdit}

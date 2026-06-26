@@ -11,6 +11,8 @@ interface GalleryItemProps {
   isActive: boolean;
   /** face-api モデルのロード中フラグ（ロード中は再検出を無効化する） */
   isModelLoading: boolean;
+  /** オフライン手動編集モード（再検出を無効化する） */
+  isOffline: boolean;
   stampImages: Map<string, HTMLImageElement>;
   onSelect: (id: string) => void;
   onOpenEdit: (id: string) => void;
@@ -27,6 +29,7 @@ export function GalleryItem({
   image,
   isActive,
   isModelLoading,
+  isOffline,
   stampImages,
   onSelect,
   onOpenEdit,
@@ -39,7 +42,7 @@ export function GalleryItem({
   const imageElementRef = useRef<HTMLImageElement | null>(null);
   const [imageReadyVersion, setImageReadyVersion] = useState(0);
 
-  const isRedetectDisabled = image.isProcessing || isModelLoading;
+  const isRedetectDisabled = image.isProcessing || isModelLoading || isOffline;
   const canEdit = !image.isProcessing && !image.processingError;
 
   useEffect(() => {
