@@ -7,6 +7,7 @@ export {
   HEIC_IMAGE_TYPES,
   MAX_CANVAS_DIMENSION,
   MAX_IMAGE_FILE_SIZE,
+  URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR,
 } from "@/lib/image/constants";
 
 /** ファイル選択ダイアログの accept 属性用 MIME タイプ */

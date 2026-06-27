@@ -7,9 +7,13 @@ export const HEIC_IMAGE_TYPES = ["image/heic", "image/heif"] as const;
 /** 最大ファイルサイズ (20MB) */
 export const MAX_IMAGE_FILE_SIZE = 20 * 1024 * 1024;
 
-/** 許可形式外ファイルのエラーメッセージ */
+/** 許可形式外ファイルのエラーメッセージ（ファイル選択・クリップボード貼り付け用） */
 export const ACCEPTED_IMAGE_TYPES_ERROR =
   "JPEG / PNG / WebP / GIF / HEIC 形式の画像を選択してください";
+
+/** URL ドロップ経路で許可外形式のときのエラーメッセージ（HEIC はファイル選択のみ対応） */
+export const URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR =
+  "JPEG / PNG / WebP / GIF の画像 URL のみ対応しています（HEIC はファイルを選択してください）";
 
 /** HEIC 変換失敗時のエラーメッセージ */
 export const HEIC_CONVERSION_ERROR = "HEIC 形式の画像を変換できませんでした";

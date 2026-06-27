@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { toast } from "sonner";
 import { ImageUpload } from "./index";
-import { UPLOAD_IMAGE_FORMATS_LABEL } from "./constants";
+import { UPLOAD_IMAGE_FORMATS_LABEL, URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR } from "./constants";
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), info: vi.fn() } }));
 
@@ -210,9 +210,7 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
       },
     });
 
-    expect(toast.error).toHaveBeenCalledWith(
-      "JPEG / PNG / WebP / GIF / HEIC 形式の画像を選択してください"
-    );
+    expect(toast.error).toHaveBeenCalledWith(URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR);
     expect(onUpload).not.toHaveBeenCalled();
   });
 
@@ -365,9 +363,7 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
       },
     });
 
-    expect(toast.error).toHaveBeenCalledWith(
-      "JPEG / PNG / WebP / GIF / HEIC 形式の画像を選択してください"
-    );
+    expect(toast.error).toHaveBeenCalledWith(URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR);
     expect(onUpload).not.toHaveBeenCalled();
   });
 
@@ -386,9 +382,7 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
       },
     });
 
-    expect(toast.error).toHaveBeenCalledWith(
-      "JPEG / PNG / WebP / GIF / HEIC 形式の画像を選択してください"
-    );
+    expect(toast.error).toHaveBeenCalledWith(URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR);
     expect(onUpload).not.toHaveBeenCalled();
   });
 

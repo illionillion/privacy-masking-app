@@ -64,4 +64,23 @@ describe("normalizeUploadFiles", () => {
     const result = await normalizeUploadFiles([file]);
     expect(result).toEqual({ ok: false, error: HEIC_CONVERSION_ERROR });
   });
+
+  it("有効ファイルと無効ファイルが混在するとき有効ファイルのみ返す", async () => {
+    const valid = new File(["content"], "photo.jpg", { type: "image/jpeg" });
+    const invalid = new File(["content"], "test.txt", { type: "text/plain" });
+    const result = await normalizeUploadFiles([valid, invalid]);
+    expect(result).toEqual({ ok: true, files: [valid] });
+  });
+
+  it("有効な HEIC と無効ファイルが混在するとき変換済みファイルのみ返す", async () => {
+    const heic = new File(["content"], "photo.heic", { type: "image/heic" });
+    const invalid = new File(["content"], "test.txt", { type: "text/plain" });
+    const result = await normalizeUploadFiles([heic, invalid]);
+    expect(convertHeicToJpeg).toHaveBeenCalledWith(heic);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.files).toHaveLength(1);
+      expect(result.files[0]?.type).toBe("image/jpeg");
+    }
+  });
 });

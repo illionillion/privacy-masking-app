@@ -7,11 +7,11 @@ import { ImageIcon, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   ACCEPTED_IMAGE_TYPES,
-  ACCEPTED_IMAGE_TYPES_ERROR,
   HEIC_CONVERSION_LOADING_MESSAGE,
   MAX_CANVAS_DIMENSION,
   UPLOAD_ACCEPT_IMAGE_TYPES,
   UPLOAD_IMAGE_FORMATS_LABEL,
+  URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR,
 } from "./constants";
 import { UPLOAD_NORMALIZATION_ERROR } from "@/lib/image/constants";
 import { normalizeUploadFiles } from "@/lib/image/normalizeUploadFiles";
@@ -103,7 +103,7 @@ const validateImageTypeFromUrl = (url: string): string | null => {
   if (url.startsWith("data:")) {
     const mimeMatch = url.match(/^data:([^;,]+)/);
     const mime = mimeMatch?.[1] ?? "";
-    return ACCEPTED_IMAGE_TYPES.includes(mime) ? null : ACCEPTED_IMAGE_TYPES_ERROR;
+    return ACCEPTED_IMAGE_TYPES.includes(mime) ? null : URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR;
   }
 
   try {
@@ -111,7 +111,7 @@ const validateImageTypeFromUrl = (url: string): string | null => {
     const mime = IMAGE_EXT_TO_MIME[ext];
     /** 拡張子不明の場合は変換を試みる（拡張子なし URL 等） */
     if (!mime) return null;
-    return ACCEPTED_IMAGE_TYPES.includes(mime) ? null : ACCEPTED_IMAGE_TYPES_ERROR;
+    return ACCEPTED_IMAGE_TYPES.includes(mime) ? null : URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR;
   } catch {
     return null;
   }
