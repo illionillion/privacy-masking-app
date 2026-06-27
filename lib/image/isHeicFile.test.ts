@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { isHeicFile } from "./isHeicFile";
+import { MAX_IMAGE_FILE_SIZE } from "./constants";
+import { isHeicFile, willConvertHeicFile } from "./isHeicFile";
 
 describe("isHeicFile", () => {
   it("image/heic を HEIC と判定する", () => {
@@ -20,5 +21,17 @@ describe("isHeicFile", () => {
   it("JPEG は HEIC と判定しない", () => {
     const file = new File(["content"], "photo.jpg", { type: "image/jpeg" });
     expect(isHeicFile(file)).toBe(false);
+  });
+
+  it("サイズ超過の HEIC は変換対象と判定しない", () => {
+    const file = new File(["content"], "large.heic", { type: "image/heic" });
+    Object.defineProperty(file, "size", { value: MAX_IMAGE_FILE_SIZE + 1 });
+    expect(isHeicFile(file)).toBe(true);
+    expect(willConvertHeicFile(file)).toBe(false);
+  });
+
+  it("サイズ以内の HEIC は変換対象と判定する", () => {
+    const file = new File(["content"], "photo.heic", { type: "image/heic" });
+    expect(willConvertHeicFile(file)).toBe(true);
   });
 });

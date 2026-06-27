@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { convertHeicToJpeg } from "./convertHeicToJpeg";
 import {
   ACCEPTED_IMAGE_TYPES_ERROR,
   FILE_SIZE_EXCEEDED_ERROR,
@@ -10,11 +11,10 @@ vi.mock("./convertHeicToJpeg", () => ({
   convertHeicToJpeg: vi.fn(async (file: File) => {
     return new File(["converted"], file.name.replace(/\.(heic|heif)$/i, ".jpg"), {
       type: "image/jpeg",
+      lastModified: file.lastModified,
     });
   }),
 }));
-
-import { convertHeicToJpeg } from "./convertHeicToJpeg";
 
 describe("normalizeUploadFiles", () => {
   beforeEach(() => {

@@ -15,7 +15,7 @@ import {
 } from "./constants";
 import { UPLOAD_NORMALIZATION_ERROR } from "@/lib/image/constants";
 import { normalizeUploadFiles } from "@/lib/image/normalizeUploadFiles";
-import { isHeicFile } from "@/lib/image/isHeicFile";
+import { willConvertHeicFile } from "@/lib/image/isHeicFile";
 
 /** D&D で許可する URL スキーム */
 const ALLOWED_URL_SCHEMES = ["http:", "https:", "data:"];
@@ -301,7 +301,7 @@ export function ImageUpload({
    */
   const processFiles = useCallback(
     async (files: File[]) => {
-      const needsHeicConversion = files.some(isHeicFile);
+      const needsHeicConversion = files.some(willConvertHeicFile);
       if (needsHeicConversion) setIsConvertingHeic(true);
       try {
         const result = await normalizeUploadFiles(files);
