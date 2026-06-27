@@ -116,4 +116,23 @@ describe("GalleryItem", () => {
     expect(await screen.findByText("検出に失敗しました。再検出してください。")).toBeInTheDocument();
     expect(vi.mocked(exportEditorCanvas)).not.toHaveBeenCalled();
   });
+
+  it("オフライン時は再検出ボタンが無効で onRedetect が呼ばれない", async () => {
+    render(
+      <GalleryItem
+        image={createImage()}
+        isActive={false}
+        isModelLoading={false}
+        isOffline={true}
+        stampImages={new Map()}
+        {...handlers}
+      />
+    );
+
+    const redetectButton = await screen.findByRole("button", { name: "再検出" });
+    expect(redetectButton).toBeDisabled();
+
+    fireEvent.click(redetectButton);
+    expect(handlers.onRedetect).not.toHaveBeenCalled();
+  });
 });
