@@ -8,6 +8,11 @@ import {
   applyDetectionSkipped,
   applyDetectionSuccess,
 } from "../lib/applyDetectionResult";
+import {
+  getEffectiveDetectionSettings,
+  isUploadBlockedByModelState,
+  OFFLINE_REDETECT_MESSAGE,
+} from "../lib/offlineManualEdit";
 import { detectImageContent, shouldSkipAllDetection } from "../lib/detectImageContent";
 import {
   getDetectionBatchCompleteMessage,
@@ -35,6 +40,8 @@ export interface UseGalleryDetectionOptions {
   ) => Promise<MaskingImageItem["ocrRegions"]>;
   getDetectionSettings: () => DetectionPrefs;
   getCustomMaskTerms: () => readonly string[];
+  /** オフライン手動編集モードか */
+  isOffline: boolean;
 }
 
 /** useGalleryDetection の戻り値 */
@@ -66,13 +73,19 @@ export function useGalleryDetection(
     recognizeText,
     getDetectionSettings,
     getCustomMaskTerms,
+    isOffline,
   } = options;
 
   const isMounted = useCallback(() => isMountedRef.current === true, [isMountedRef]);
 
   const handleUpload = useCallback(
     async (files: File[]) => {
-      if (files.length === 0 || isModelLoading || isModelError) return;
+      if (
+        files.length === 0 ||
+        isUploadBlockedByModelState(isOffline, isModelLoading, isModelError)
+      ) {
+        return;
+      }
 
       const uploadedAt = Date.now();
       const { succeededItems, blobResults } = await prepareGalleryItemsFromFiles(
@@ -102,7 +115,7 @@ export function useGalleryDetection(
         toast.error(`${blobFailedCount} 件の画像の読み込みに失敗しました`);
       }
 
-      const detectionSettings = getDetectionSettings();
+      const detectionSettings = getEffectiveDetectionSettings(getDetectionSettings(), isOffline);
       const customMaskTerms = getCustomMaskTerms();
 
       const { detectionSucceededCount, detectionFailedCount } = await runDetectionForGalleryItems({
@@ -155,6 +168,7 @@ export function useGalleryDetection(
     [
       detectFaces,
       recognizeText,
+      isOffline,
       isModelLoading,
       isModelError,
       isMounted,
@@ -168,9 +182,16 @@ export function useGalleryDetection(
   const handleRedetect = useCallback(
     async (imageId: string) => {
       const target = images.find((image) => image.id === imageId);
-      if (!target || isModelLoading || isModelError || target.isProcessing) return;
+      if (!target || target.isProcessing) return;
 
-      const detectionSettings = getDetectionSettings();
+      if (isOffline) {
+        toast.info(OFFLINE_REDETECT_MESSAGE);
+        return;
+      }
+
+      if (isModelLoading || isModelError) return;
+
+      const detectionSettings = getEffectiveDetectionSettings(getDetectionSettings(), isOffline);
       const customMaskTerms = getCustomMaskTerms();
 
       if (shouldSkipAllDetection(detectionSettings)) {
@@ -235,6 +256,7 @@ export function useGalleryDetection(
       setEditingImageId,
       getDetectionSettings,
       getCustomMaskTerms,
+      isOffline,
     ]
   );
 

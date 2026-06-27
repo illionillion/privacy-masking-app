@@ -7,18 +7,21 @@ import {
   ACCEPTED_IMAGE_TYPES_ERROR,
   MAX_IMAGE_FILE_SIZE,
 } from "@/components/ImageUpload/constants";
+import { isUploadBlockedByModelState } from "../lib/offlineManualEdit";
 
 /** useClipboardImagePaste のオプション */
 export interface UseClipboardImagePasteOptions {
   onUpload: (files: File[]) => void;
   isModelLoading: boolean;
   isModelError: boolean;
+  /** オフライン手動編集モードではモデル状態でブロックしない */
+  isOffline: boolean;
 }
 
 /**
  * ページ全体の paste イベントをリッスンし、クリップボードの画像を onUpload へ渡す
  *
- * - モデル未ロード・エラー時は何もしない
+ * - モデル未ロード・エラー時は何もしない（オフライン時は除く）
  * - クリップボードに画像がない場合も何もしない
  * - ImageUpload と同じ基準（JPEG/PNG/WebP/GIF・20MB以下）でバリデーションを行う
  * - 貼り付け成功時にトースト通知を表示する
@@ -26,11 +29,13 @@ export interface UseClipboardImagePasteOptions {
  * @param options - アップロードコールバックとモデル状態
  */
 export function useClipboardImagePaste(options: UseClipboardImagePasteOptions): void {
-  const { onUpload, isModelLoading, isModelError } = options;
+  const { onUpload, isModelLoading, isModelError, isOffline } = options;
 
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
-      if (isModelLoading || isModelError) return;
+      if (isUploadBlockedByModelState(isOffline, isModelLoading, isModelError)) {
+        return;
+      }
       const items = e.clipboardData?.items;
       if (!items) return;
 
@@ -69,5 +74,5 @@ export function useClipboardImagePaste(options: UseClipboardImagePasteOptions): 
     return () => {
       window.removeEventListener("paste", handlePaste);
     };
-  }, [onUpload, isModelLoading, isModelError]);
+  }, [onUpload, isOffline, isModelLoading, isModelError]);
 }

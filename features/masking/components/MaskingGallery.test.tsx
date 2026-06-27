@@ -32,6 +32,10 @@ vi.mock("@/features/ocr", () => ({
   }),
 }));
 
+vi.mock("@/lib/useNetworkStatus", () => ({
+  useNetworkStatus: () => ({ isOnline: true, isOffline: false }),
+}));
+
 vi.mock("@/lib/confirmStore", () => ({
   useConfirmStore: {
     getState: () => ({ open: vi.fn().mockResolvedValue(true) }),

@@ -1,3 +1,4 @@
+import { CacheFirst } from "serwist";
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 import { Serwist } from "serwist";
@@ -15,7 +16,19 @@ const serwist = new Serwist({
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: defaultCache,
+  runtimeCaching: [
+    {
+      matcher: ({ url, request }) =>
+        url.origin === self.location.origin &&
+        request.method === "GET" &&
+        request.destination === "image" &&
+        url.pathname.includes("/stamps/"),
+      handler: new CacheFirst({
+        cacheName: "stamp-images",
+      }),
+    },
+    ...defaultCache,
+  ],
   fallbacks: {
     entries: [
       {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import clsx from "clsx";
 import { Settings, ListChecks } from "lucide-react";
 import { toast } from "sonner";
@@ -14,17 +14,15 @@ import { useCustomMaskTerms } from "../hooks/useCustomMaskTerms";
 import { useDetectionSettings } from "../hooks/useDetectionSettings";
 import { useGalleryDetection } from "../hooks/useGalleryDetection";
 import { useGalleryImages } from "../hooks/useGalleryImages";
+import { useOfflineManualEdit } from "../hooks/useOfflineManualEdit";
 import { useStampImages } from "../hooks/useStampImages";
 import { downloadMaskedImagesAsZip } from "../lib/downloadMaskedImagesAsZip";
-import {
-  formatCustomMaskTermsSummary,
-  formatDetectionSettingsSummary,
-} from "../lib/detectionMessages";
 import { CustomMaskTermsModal } from "./CustomMaskTermsModal";
 import { DetectionSettingsBarSkeleton } from "./DetectionSettingsBarSkeleton";
 import { DetectionSettingsModal } from "./DetectionSettingsModal";
 import { EditorModal } from "./EditorModal";
 import { GalleryItem } from "./GalleryItem";
+import { OfflineManualEditBanner } from "./OfflineManualEditBanner";
 
 /**
  * メインマスキングギャラリーコンポーネント
@@ -72,18 +70,20 @@ export function MaskingGallery() {
   const getDetectionSettings = useCallback(() => detectionSettings, [detectionSettings]);
   const getCustomMaskTerms = useCallback(() => enabledCustomMaskTexts, [enabledCustomMaskTexts]);
 
-  const detectionSettingsSummary = useMemo(
-    () => formatDetectionSettingsSummary(detectionSettings),
-    [detectionSettings]
-  );
-  const customMaskTermsSummary = useMemo(
-    () =>
-      formatCustomMaskTermsSummary(customMaskTerms, {
-        ocrEnabled: detectionSettings.autoDetectOcr,
-      }),
-    [customMaskTerms, detectionSettings.autoDetectOcr]
-  );
-  const isCustomMaskTermsEditable = detectionSettings.autoDetectOcr;
+  const {
+    isOffline,
+    detectionSettingsSummary,
+    customMaskTermsSummary,
+    isCustomMaskTermsEditable,
+    isUploadBlockedByModel,
+    modelLoadingMessage,
+    showModelErrorAlert,
+  } = useOfflineManualEdit({
+    detectionSettings,
+    customMaskTerms,
+    isModelLoading,
+    isModelError,
+  });
 
   const { handleUpload, handleRedetect } = useGalleryDetection({
     images,
@@ -97,9 +97,15 @@ export function MaskingGallery() {
     recognizeText,
     getDetectionSettings,
     getCustomMaskTerms,
+    isOffline,
   });
 
-  useClipboardImagePaste({ onUpload: handleUpload, isModelLoading, isModelError });
+  useClipboardImagePaste({
+    onUpload: handleUpload,
+    isModelLoading,
+    isModelError,
+    isOffline,
+  });
 
   const handleSaveDetectionSettings = useCallback(
     (settings: DetectionPrefs) => {
@@ -121,13 +127,13 @@ export function MaskingGallery() {
 
   const hasProcessingImage = images.some((image) => image.isProcessing);
   const isProcessing = isDetecting || isRecognizing || hasProcessingImage;
-  const loadingMessage = isModelLoading ? "顔検出モデルをロード中…" : null;
   const downloadableImagesCount = images.filter(
     (image) => image.maskedBlobUrl && !image.isProcessing
   ).length;
 
   return (
     <div className="flex flex-col gap-6">
+      <OfflineManualEditBanner visible={isOffline} />
       {!showDetectionSettingsBar ? (
         <DetectionSettingsBarSkeleton />
       ) : (
@@ -212,11 +218,11 @@ export function MaskingGallery() {
 
       <ImageUpload
         onUpload={handleUpload}
-        disabled={isProcessing || isModelLoading || isModelError}
+        disabled={isProcessing || isUploadBlockedByModel}
         multiple
-        loadingMessage={loadingMessage}
+        loadingMessage={modelLoadingMessage}
       />
-      {isModelError && (
+      {showModelErrorAlert && (
         <p role="alert" className="text-center text-sm text-red-600">
           顔検出モデルのロードに失敗しました。ページを再読み込みしてください。
         </p>
@@ -257,6 +263,7 @@ export function MaskingGallery() {
                 image={image}
                 isActive={image.id === activeImageId}
                 isModelLoading={isModelLoading}
+                isOffline={isOffline}
                 stampImages={stampImages}
                 onSelect={setActiveImageId}
                 onOpenEdit={handleOpenEdit}

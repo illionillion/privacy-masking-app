@@ -63,6 +63,7 @@ describe("useGalleryDetection", () => {
         recognizeText: vi.fn(),
         getDetectionSettings: () => ({ autoDetectFace: false, autoDetectOcr: false }),
         getCustomMaskTerms: () => [],
+        isOffline: false,
       })
     );
 
@@ -103,6 +104,7 @@ describe("useGalleryDetection", () => {
         recognizeText: vi.fn(),
         getDetectionSettings: () => ({ autoDetectFace: true, autoDetectOcr: true }),
         getCustomMaskTerms: () => [],
+        isOffline: false,
       })
     );
 
@@ -113,5 +115,33 @@ describe("useGalleryDetection", () => {
     expect(clearImageEditorSnapshot).toHaveBeenCalledWith("img-1");
     expect(detectImageContent).toHaveBeenCalled();
     expect(setImages).toHaveBeenCalled();
+  });
+
+  it("オフライン時は再検出せず案内トーストを表示する", async () => {
+    const { result } = renderHook(() =>
+      useGalleryDetection({
+        images: [baseImage],
+        setImages: vi.fn(),
+        setActiveImageId: vi.fn(),
+        setEditingImageId: vi.fn(),
+        isMountedRef: { current: true },
+        isModelLoading: false,
+        isModelError: true,
+        detectFaces: vi.fn(),
+        recognizeText: vi.fn(),
+        getDetectionSettings: () => ({ autoDetectFace: true, autoDetectOcr: true }),
+        getCustomMaskTerms: () => [],
+        isOffline: true,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleRedetect("img-1");
+    });
+
+    expect(detectImageContent).not.toHaveBeenCalled();
+    expect(toast.info).toHaveBeenCalledWith(
+      "オフラインのため自動検出は利用できません。手動でマスキングしてください。"
+    );
   });
 });
