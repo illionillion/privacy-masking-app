@@ -101,7 +101,7 @@ describe("MaskingGallery - クリップボード貼り付け", () => {
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(
-        "JPEG / PNG / WebP / GIF 形式の画像を選択してください"
+        "JPEG / PNG / WebP / GIF / HEIC 形式の画像を選択してください"
       );
     });
     expect(toast.info).not.toHaveBeenCalled();

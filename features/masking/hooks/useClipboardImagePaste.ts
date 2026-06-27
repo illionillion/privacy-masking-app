@@ -2,11 +2,7 @@
 
 import { useEffect } from "react";
 import { toast } from "sonner";
-import {
-  ACCEPTED_IMAGE_TYPES,
-  ACCEPTED_IMAGE_TYPES_ERROR,
-  MAX_IMAGE_FILE_SIZE,
-} from "@/components/ImageUpload/constants";
+import { normalizeUploadFiles } from "@/lib/image/normalizeUploadFiles";
 import { isUploadBlockedByModelState } from "../lib/offlineManualEdit";
 
 /** useClipboardImagePaste のオプション */
@@ -23,7 +19,7 @@ export interface UseClipboardImagePasteOptions {
  *
  * - モデル未ロード・エラー時は何もしない（オフライン時は除く）
  * - クリップボードに画像がない場合も何もしない
- * - ImageUpload と同じ基準（JPEG/PNG/WebP/GIF・20MB以下）でバリデーションを行う
+ * - ImageUpload と同じ基準（JPEG/PNG/WebP/GIF/HEIC・20MB以下）でバリデーションを行う
  * - 貼り付け成功時にトースト通知を表示する
  *
  * @param options - アップロードコールバックとモデル状態
@@ -32,47 +28,40 @@ export function useClipboardImagePaste(options: UseClipboardImagePasteOptions): 
   const { onUpload, isModelLoading, isModelError, isOffline } = options;
 
   useEffect(() => {
-    const handlePaste = (e: ClipboardEvent) => {
+    const handlePaste = async (e: ClipboardEvent) => {
       if (isUploadBlockedByModelState(isOffline, isModelLoading, isModelError)) {
         return;
       }
       const items = e.clipboardData?.items;
       if (!items) return;
 
-      const validFiles: File[] = [];
-      let validationError: string | null = null;
+      const candidateFiles: File[] = [];
 
       for (const item of Array.from(items)) {
         if (!item.type.startsWith("image/")) continue;
         const file = item.getAsFile();
-        if (!file) continue;
-
-        if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-          validationError = ACCEPTED_IMAGE_TYPES_ERROR;
-          continue;
-        }
-        if (file.size > MAX_IMAGE_FILE_SIZE) {
-          validationError = "ファイルサイズは20MB以下にしてください";
-          continue;
-        }
-        validFiles.push(file);
+        if (file) candidateFiles.push(file);
       }
 
-      /** ImageUpload と同じ挙動: 有効ファイルがあればアップロードのみ、なければエラー表示 */
-      if (validFiles.length > 0) {
+      if (candidateFiles.length === 0) return;
+
+      const result = await normalizeUploadFiles(candidateFiles);
+      if (result.ok) {
         toast.info("画像を貼り付けました");
-        void onUpload(validFiles);
+        void onUpload(result.files);
         return;
       }
 
-      if (validationError) {
-        toast.error(validationError);
-      }
+      toast.error(result.error);
     };
 
-    window.addEventListener("paste", handlePaste);
+    const listener = (e: ClipboardEvent) => {
+      void handlePaste(e);
+    };
+
+    window.addEventListener("paste", listener);
     return () => {
-      window.removeEventListener("paste", handlePaste);
+      window.removeEventListener("paste", listener);
     };
   }, [onUpload, isOffline, isModelLoading, isModelError]);
 }

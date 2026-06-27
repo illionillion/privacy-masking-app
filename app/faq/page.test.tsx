@@ -18,7 +18,7 @@ vi.mock("@/lib/loadFaqDocument", () => ({
       "",
       "## 対応している画像形式とサイズ上限は？",
       "",
-      "JPEG / PNG / WebP / GIF に対応しています。",
+      "JPEG / PNG / WebP / GIF / HEIC に対応しています。",
     ].join("\n"),
   })),
 }));
