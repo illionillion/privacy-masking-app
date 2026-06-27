@@ -1,4 +1,5 @@
-import type { DetectionPrefs } from "@/lib/preferences";
+import type { CustomMaskTerm, DetectionPrefs } from "@/lib/preferences";
+import { formatCustomMaskTermsSummary, formatDetectionSettingsSummary } from "./detectionMessages";
 
 /** オフライン時に強制する検出設定（自動検出はすべてオフ） */
 export const OFFLINE_MANUAL_EDIT_DETECTION_SETTINGS: DetectionPrefs = {
@@ -48,4 +49,38 @@ export function isUploadBlockedByModelState(
     return false;
   }
   return isModelLoading || isModelError;
+}
+
+/** 検出設定バー向けのオフライン考慮 UI 状態 */
+export type OfflineAwareDetectionBarState = {
+  effectiveDetectionSettings: DetectionPrefs;
+  detectionSettingsSummary: string;
+  customMaskTermsSummary: string;
+  isCustomMaskTermsEditable: boolean;
+};
+
+/**
+ * オフライン状態を反映した検出設定バーの表示用 state を組み立てる。
+ *
+ * @param detectionSettings - ユーザー設定の検出設定
+ * @param customMaskTerms - 登録済みマスク語句
+ * @param isOffline - オフラインかどうか
+ */
+export function getOfflineAwareDetectionBarState(
+  detectionSettings: DetectionPrefs,
+  customMaskTerms: readonly CustomMaskTerm[],
+  isOffline: boolean
+): OfflineAwareDetectionBarState {
+  const effectiveDetectionSettings = getEffectiveDetectionSettings(detectionSettings, isOffline);
+
+  return {
+    effectiveDetectionSettings,
+    detectionSettingsSummary: isOffline
+      ? "オフライン（手動のみ）"
+      : formatDetectionSettingsSummary(detectionSettings),
+    customMaskTermsSummary: formatCustomMaskTermsSummary(customMaskTerms, {
+      ocrEnabled: effectiveDetectionSettings.autoDetectOcr,
+    }),
+    isCustomMaskTermsEditable: effectiveDetectionSettings.autoDetectOcr,
+  };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import clsx from "clsx";
 import { Settings, ListChecks } from "lucide-react";
 import { toast } from "sonner";
@@ -8,23 +8,15 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { useFaceDetection } from "@/features/face-detection";
 import { useOcr } from "@/features/ocr";
 import type { DetectionPrefs } from "@/lib/preferences";
-import { useNetworkStatus } from "@/lib/useNetworkStatus";
 import { useClipboardImagePaste } from "../hooks/useClipboardImagePaste";
 import { DETECTION_SETTINGS_BAR_REVEAL_MS, useDelayedReveal } from "../hooks/useDelayedReveal";
 import { useCustomMaskTerms } from "../hooks/useCustomMaskTerms";
 import { useDetectionSettings } from "../hooks/useDetectionSettings";
 import { useGalleryDetection } from "../hooks/useGalleryDetection";
 import { useGalleryImages } from "../hooks/useGalleryImages";
+import { useOfflineManualEdit } from "../hooks/useOfflineManualEdit";
 import { useStampImages } from "../hooks/useStampImages";
 import { downloadMaskedImagesAsZip } from "../lib/downloadMaskedImagesAsZip";
-import {
-  formatCustomMaskTermsSummary,
-  formatDetectionSettingsSummary,
-} from "../lib/detectionMessages";
-import {
-  getEffectiveDetectionSettings,
-  isUploadBlockedByModelState,
-} from "../lib/offlineManualEdit";
 import { CustomMaskTermsModal } from "./CustomMaskTermsModal";
 import { DetectionSettingsBarSkeleton } from "./DetectionSettingsBarSkeleton";
 import { DetectionSettingsModal } from "./DetectionSettingsModal";
@@ -38,7 +30,6 @@ import { OfflineManualEditBanner } from "./OfflineManualEditBanner";
  * 画像アップロード、顔検出、Canvas表示を統合する。
  */
 export function MaskingGallery() {
-  const { isOffline } = useNetworkStatus();
   const stampImages = useStampImages();
   const {
     images,
@@ -79,29 +70,20 @@ export function MaskingGallery() {
   const getDetectionSettings = useCallback(() => detectionSettings, [detectionSettings]);
   const getCustomMaskTerms = useCallback(() => enabledCustomMaskTexts, [enabledCustomMaskTexts]);
 
-  const effectiveDetectionSettings = useMemo(
-    () => getEffectiveDetectionSettings(detectionSettings, isOffline),
-    [detectionSettings, isOffline]
-  );
-
-  const detectionSettingsSummary = useMemo(
-    () =>
-      isOffline ? "オフライン（手動のみ）" : formatDetectionSettingsSummary(detectionSettings),
-    [detectionSettings, isOffline]
-  );
-  const customMaskTermsSummary = useMemo(
-    () =>
-      formatCustomMaskTermsSummary(customMaskTerms, {
-        ocrEnabled: effectiveDetectionSettings.autoDetectOcr,
-      }),
-    [customMaskTerms, effectiveDetectionSettings.autoDetectOcr]
-  );
-  const isCustomMaskTermsEditable = effectiveDetectionSettings.autoDetectOcr;
-  const isUploadBlockedByModel = isUploadBlockedByModelState(
+  const {
     isOffline,
+    detectionSettingsSummary,
+    customMaskTermsSummary,
+    isCustomMaskTermsEditable,
+    isUploadBlockedByModel,
+    modelLoadingMessage,
+    showModelErrorAlert,
+  } = useOfflineManualEdit({
+    detectionSettings,
+    customMaskTerms,
     isModelLoading,
-    isModelError
-  );
+    isModelError,
+  });
 
   const { handleUpload, handleRedetect } = useGalleryDetection({
     images,
@@ -145,7 +127,6 @@ export function MaskingGallery() {
 
   const hasProcessingImage = images.some((image) => image.isProcessing);
   const isProcessing = isDetecting || isRecognizing || hasProcessingImage;
-  const loadingMessage = !isOffline && isModelLoading ? "顔検出モデルをロード中…" : null;
   const downloadableImagesCount = images.filter(
     (image) => image.maskedBlobUrl && !image.isProcessing
   ).length;
@@ -239,9 +220,9 @@ export function MaskingGallery() {
         onUpload={handleUpload}
         disabled={isProcessing || isUploadBlockedByModel}
         multiple
-        loadingMessage={loadingMessage}
+        loadingMessage={modelLoadingMessage}
       />
-      {isModelError && !isOffline && (
+      {showModelErrorAlert && (
         <p role="alert" className="text-center text-sm text-red-600">
           顔検出モデルのロードに失敗しました。ページを再読み込みしてください。
         </p>
