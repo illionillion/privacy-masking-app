@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { normalizeUploadFiles } from "@/lib/image/normalizeUploadFiles";
+import { UPLOAD_NORMALIZATION_ERROR } from "@/lib/image/constants";
 import { isUploadBlockedByModelState } from "../lib/offlineManualEdit";
 
 /** useClipboardImagePaste のオプション */
@@ -45,14 +46,18 @@ export function useClipboardImagePaste(options: UseClipboardImagePasteOptions): 
 
       if (candidateFiles.length === 0) return;
 
-      const result = await normalizeUploadFiles(candidateFiles);
-      if (result.ok) {
-        toast.info("画像を貼り付けました");
-        void onUpload(result.files);
-        return;
-      }
+      try {
+        const result = await normalizeUploadFiles(candidateFiles);
+        if (result.ok) {
+          toast.info("画像を貼り付けました");
+          void onUpload(result.files);
+          return;
+        }
 
-      toast.error(result.error);
+        toast.error(result.error);
+      } catch {
+        toast.error(UPLOAD_NORMALIZATION_ERROR);
+      }
     };
 
     const listener = (e: ClipboardEvent) => {

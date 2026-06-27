@@ -1,8 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
   ACCEPTED_IMAGE_TYPES_ERROR,
+  FILE_SIZE_EXCEEDED_ERROR,
   HEIC_CONVERSION_ERROR,
-} from "@/components/ImageUpload/constants";
+} from "./constants";
 import { normalizeUploadFiles } from "./normalizeUploadFiles";
 
 vi.mock("./convertHeicToJpeg", () => ({
@@ -54,7 +55,7 @@ describe("normalizeUploadFiles", () => {
     const file = new File(["content"], "large.jpg", { type: "image/jpeg" });
     Object.defineProperty(file, "size", { value: 21 * 1024 * 1024 });
     const result = await normalizeUploadFiles([file]);
-    expect(result).toEqual({ ok: false, error: "ファイルサイズは20MB以下にしてください" });
+    expect(result).toEqual({ ok: false, error: FILE_SIZE_EXCEEDED_ERROR });
   });
 
   it("HEIC 変換失敗時にエラーを返す", async () => {

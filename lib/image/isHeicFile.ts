@@ -1,4 +1,4 @@
-import { HEIC_IMAGE_TYPES } from "@/components/ImageUpload/constants";
+import { HEIC_IMAGE_TYPES } from "./constants";
 
 /**
  * ファイルが HEIC / HEIF 形式かどうかを判定する

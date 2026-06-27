@@ -1,9 +1,10 @@
 import {
   ACCEPTED_IMAGE_TYPES,
   ACCEPTED_IMAGE_TYPES_ERROR,
+  FILE_SIZE_EXCEEDED_ERROR,
   HEIC_CONVERSION_ERROR,
   MAX_IMAGE_FILE_SIZE,
-} from "@/components/ImageUpload/constants";
+} from "./constants";
 import { convertHeicToJpeg } from "./convertHeicToJpeg";
 import { isHeicFile } from "./isHeicFile";
 
@@ -36,7 +37,7 @@ export async function normalizeUploadFiles(files: File[]): Promise<NormalizeUplo
 
   for (const file of files) {
     if (file.size > MAX_IMAGE_FILE_SIZE) {
-      validationError = "ファイルサイズは20MB以下にしてください";
+      validationError = FILE_SIZE_EXCEEDED_ERROR;
       continue;
     }
 

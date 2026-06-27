@@ -13,6 +13,7 @@ import {
   UPLOAD_ACCEPT_IMAGE_TYPES,
   UPLOAD_IMAGE_FORMATS_LABEL,
 } from "./constants";
+import { UPLOAD_NORMALIZATION_ERROR } from "@/lib/image/constants";
 import { normalizeUploadFiles } from "@/lib/image/normalizeUploadFiles";
 import { isHeicFile } from "@/lib/image/isHeicFile";
 
@@ -310,6 +311,8 @@ export function ImageUpload({
           return;
         }
         setError(result.error);
+      } catch {
+        setError(UPLOAD_NORMALIZATION_ERROR);
       } finally {
         if (needsHeicConversion) setIsConvertingHeic(false);
       }
