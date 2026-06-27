@@ -18,7 +18,11 @@ const serwist = new Serwist({
   navigationPreload: true,
   runtimeCaching: [
     {
-      matcher: ({ url }) => url.pathname.includes("/stamps/"),
+      matcher: ({ url, request }) =>
+        url.origin === self.location.origin &&
+        request.method === "GET" &&
+        request.destination === "image" &&
+        url.pathname.includes("/stamps/"),
       handler: new CacheFirst({
         cacheName: "stamp-images",
       }),
