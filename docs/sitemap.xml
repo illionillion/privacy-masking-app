@@ -96,6 +96,11 @@
 <priority>0.6</priority>
 </url>
 <url>
+<loc>https://fusely-app.pages.dev/updates/2026-06-27-heic-upload-support</loc>
+<changefreq>monthly</changefreq>
+<priority>0.6</priority>
+</url>
+<url>
 <loc>https://fusely-app.pages.dev/updates/2026-06-27-pwa-install-offline-manual-edit</loc>
 <changefreq>monthly</changefreq>
 <priority>0.6</priority>
