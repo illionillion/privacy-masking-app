@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { toast } from "sonner";
 import { ImageUpload } from "./index";
+import { UPLOAD_IMAGE_FORMATS_LABEL, URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR } from "./constants";
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), info: vi.fn() } }));
 
@@ -28,7 +29,7 @@ describe("ImageUpload", () => {
 
   it("許可形式テキストが表示される", () => {
     render(<ImageUpload onUpload={vi.fn()} />);
-    expect(screen.getAllByText(/JPEG \/ PNG \/ WebP \/ GIF/)).toHaveLength(2);
+    expect(screen.getAllByText(new RegExp(UPLOAD_IMAGE_FORMATS_LABEL))).toHaveLength(2);
   });
 
   it("loadingMessage 表示中もドロップゾーンのガイド文言で高さを確保する", () => {
@@ -55,18 +56,20 @@ describe("ImageUpload", () => {
     expect(desktopDropZone).toHaveAttribute("aria-disabled", "true");
   });
 
-  it("不正なファイル形式のときエラーを表示する", () => {
+  it("不正なファイル形式のときエラーを表示する", async () => {
     render(<ImageUpload onUpload={vi.fn()} />);
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(["content"], "test.txt", { type: "text/plain" });
     Object.defineProperty(input, "files", { value: [file] });
     fireEvent.change(input);
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "JPEG / PNG / WebP / GIF 形式の画像を選択してください"
-    );
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "JPEG / PNG / WebP / GIF / HEIC 形式の画像を選択してください"
+      );
+    });
   });
 
-  it("サイズ超過ファイルのときエラーを表示する", () => {
+  it("サイズ超過ファイルのときエラーを表示する", async () => {
     render(<ImageUpload onUpload={vi.fn()} />);
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     const largeFile = new File(["x".repeat(1)], "large.jpg", {
@@ -75,20 +78,24 @@ describe("ImageUpload", () => {
     Object.defineProperty(largeFile, "size", { value: 21 * 1024 * 1024 });
     Object.defineProperty(input, "files", { value: [largeFile] });
     fireEvent.change(input);
-    expect(screen.getByRole("alert")).toHaveTextContent("ファイルサイズは20MB以下にしてください");
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("ファイルサイズは20MB以下にしてください");
+    });
   });
 
-  it("有効な画像ファイルを選択するとonUploadが呼ばれる", () => {
+  it("有効な画像ファイルを選択するとonUploadが呼ばれる", async () => {
     const onUpload = vi.fn();
     render(<ImageUpload onUpload={onUpload} />);
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(["content"], "photo.jpg", { type: "image/jpeg" });
     Object.defineProperty(input, "files", { value: [file] });
     fireEvent.change(input);
-    expect(onUpload).toHaveBeenCalledWith([file]);
+    await waitFor(() => {
+      expect(onUpload).toHaveBeenCalledWith([file]);
+    });
   });
 
-  it("複数の有効ファイルを選択すると配列でonUploadが呼ばれる", () => {
+  it("複数の有効ファイルを選択すると配列でonUploadが呼ばれる", async () => {
     const onUpload = vi.fn();
     render(<ImageUpload onUpload={onUpload} />);
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -96,7 +103,9 @@ describe("ImageUpload", () => {
     const file2 = new File(["content2"], "photo2.png", { type: "image/png" });
     Object.defineProperty(input, "files", { value: [file1, file2] });
     fireEvent.change(input);
-    expect(onUpload).toHaveBeenCalledWith([file1, file2]);
+    await waitFor(() => {
+      expect(onUpload).toHaveBeenCalledWith([file1, file2]);
+    });
   });
 });
 
@@ -201,9 +210,7 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
       },
     });
 
-    expect(toast.error).toHaveBeenCalledWith(
-      "JPEG / PNG / WebP / GIF 形式の画像を選択してください"
-    );
+    expect(toast.error).toHaveBeenCalledWith(URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR);
     expect(onUpload).not.toHaveBeenCalled();
   });
 
@@ -356,9 +363,7 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
       },
     });
 
-    expect(toast.error).toHaveBeenCalledWith(
-      "JPEG / PNG / WebP / GIF 形式の画像を選択してください"
-    );
+    expect(toast.error).toHaveBeenCalledWith(URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR);
     expect(onUpload).not.toHaveBeenCalled();
   });
 
@@ -377,9 +382,7 @@ describe("ImageUpload - 別タブ・外部アプリからのD&D", () => {
       },
     });
 
-    expect(toast.error).toHaveBeenCalledWith(
-      "JPEG / PNG / WebP / GIF 形式の画像を選択してください"
-    );
+    expect(toast.error).toHaveBeenCalledWith(URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR);
     expect(onUpload).not.toHaveBeenCalled();
   });
 

@@ -8,7 +8,7 @@ export function HowToSection() {
       icon: Upload,
       title: "画像をドラッグ＆ドロップ",
       description:
-        "対応形式は JPEG・PNG・WebP・GIF。ファイルをブラウザにドロップするだけで読み込み完了。",
+        "対応形式は JPEG・PNG・WebP・GIF・HEIC。ファイルをブラウザにドロップするだけで読み込み完了（HEIC は自動で JPEG に変換）。",
       color: "text-indigo-600",
       bg: "bg-indigo-50",
       ring: "ring-indigo-100",

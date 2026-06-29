@@ -7,10 +7,15 @@ import { ImageIcon, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   ACCEPTED_IMAGE_TYPES,
-  ACCEPTED_IMAGE_TYPES_ERROR,
+  HEIC_CONVERSION_LOADING_MESSAGE,
   MAX_CANVAS_DIMENSION,
-  MAX_IMAGE_FILE_SIZE,
+  UPLOAD_ACCEPT_IMAGE_TYPES,
+  UPLOAD_IMAGE_FORMATS_LABEL,
+  URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR,
 } from "./constants";
+import { UPLOAD_NORMALIZATION_ERROR } from "@/lib/image/constants";
+import { normalizeUploadFiles } from "@/lib/image/normalizeUploadFiles";
+import { willConvertHeicFile } from "@/lib/image/isHeicFile";
 
 /** D&D で許可する URL スキーム */
 const ALLOWED_URL_SCHEMES = ["http:", "https:", "data:"];
@@ -98,7 +103,7 @@ const validateImageTypeFromUrl = (url: string): string | null => {
   if (url.startsWith("data:")) {
     const mimeMatch = url.match(/^data:([^;,]+)/);
     const mime = mimeMatch?.[1] ?? "";
-    return ACCEPTED_IMAGE_TYPES.includes(mime) ? null : ACCEPTED_IMAGE_TYPES_ERROR;
+    return ACCEPTED_IMAGE_TYPES.includes(mime) ? null : URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR;
   }
 
   try {
@@ -106,7 +111,7 @@ const validateImageTypeFromUrl = (url: string): string | null => {
     const mime = IMAGE_EXT_TO_MIME[ext];
     /** 拡張子不明の場合は変換を試みる（拡張子なし URL 等） */
     if (!mime) return null;
-    return ACCEPTED_IMAGE_TYPES.includes(mime) ? null : ACCEPTED_IMAGE_TYPES_ERROR;
+    return ACCEPTED_IMAGE_TYPES.includes(mime) ? null : URL_DROP_UNSUPPORTED_IMAGE_TYPES_ERROR;
   } catch {
     return null;
   }
@@ -273,7 +278,7 @@ interface ImageUploadProps {
  * 画像アップロードコンポーネント
  *
  * ドラッグ＆ドロップとファイル選択の両方に対応。
- * 許可形式: JPEG / PNG / WebP / GIF（最大20MB）
+ * 許可形式: JPEG / PNG / WebP / GIF / HEIC（最大20MB。HEIC はブラウザ内で JPEG に変換）
  */
 export function ImageUpload({
   onUpload,
@@ -283,37 +288,34 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isConvertingHeic, setIsConvertingHeic] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const effectiveLoadingMessage =
+    loadingMessage ?? (isConvertingHeic ? HEIC_CONVERSION_LOADING_MESSAGE : null);
+  const isBusy = Boolean(effectiveLoadingMessage);
 
   /**
-   * ファイル配列のバリデーションを行い、問題ないファイルのみコールバックを呼ぶ
+   * ファイル配列のバリデーションと HEIC 変換を行い、問題ないファイルのみコールバックを呼ぶ
    *
    * @param files - アップロード対象ファイル配列
    */
-  const handleFiles = useCallback(
-    (files: File[]) => {
-      const validFiles: File[] = [];
-      let validationError: string | null = null;
-
-      for (const file of files) {
-        if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-          validationError = ACCEPTED_IMAGE_TYPES_ERROR;
-          continue;
+  const processFiles = useCallback(
+    async (files: File[]) => {
+      const needsHeicConversion = files.some(willConvertHeicFile);
+      if (needsHeicConversion) setIsConvertingHeic(true);
+      try {
+        const result = await normalizeUploadFiles(files);
+        if (result.ok) {
+          setError(null);
+          onUpload(result.files);
+          return;
         }
-        if (file.size > MAX_IMAGE_FILE_SIZE) {
-          validationError = "ファイルサイズは20MB以下にしてください";
-          continue;
-        }
-        validFiles.push(file);
+        setError(result.error);
+      } catch {
+        setError(UPLOAD_NORMALIZATION_ERROR);
+      } finally {
+        if (needsHeicConversion) setIsConvertingHeic(false);
       }
-
-      if (validFiles.length > 0) {
-        setError(null);
-        onUpload(validFiles);
-        return;
-      }
-
-      setError(validationError);
     },
     [onUpload]
   );
@@ -322,11 +324,11 @@ export function ImageUpload({
     (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       setIsDragOver(false);
-      if (disabled) return;
+      if (disabled || isBusy) return;
 
       const files = Array.from(e.dataTransfer.files);
       if (files.length > 0) {
-        handleFiles(multiple ? files : [files[0]]);
+        void processFiles(multiple ? files : [files[0]]);
         return;
       }
 
@@ -357,7 +359,7 @@ export function ImageUpload({
       void (async () => {
         try {
           const file = await urlToFile(imageUrl);
-          handleFiles([file]);
+          void processFiles([file]);
         } catch (err) {
           /**
            * urlToFile がスローするエラーは既にフレンドリー文言に変換済み。
@@ -368,15 +370,15 @@ export function ImageUpload({
         }
       })();
     },
-    [disabled, handleFiles, multiple]
+    [disabled, isBusy, processFiles, multiple]
   );
 
   const handleDragOver = useCallback(
     (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault();
-      if (!disabled) setIsDragOver(true);
+      if (!disabled && !isBusy) setIsDragOver(true);
     },
-    [disabled]
+    [disabled, isBusy]
   );
 
   const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
@@ -391,45 +393,47 @@ export function ImageUpload({
     (e: KeyboardEvent<HTMLDivElement>) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        if (!disabled) inputRef.current?.click();
+        if (!disabled && !isBusy) inputRef.current?.click();
       }
     },
-    [disabled]
+    [disabled, isBusy]
   );
 
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files ? Array.from(e.target.files) : [];
       if (files.length > 0) {
-        handleFiles(multiple ? files : [files[0]]);
+        void processFiles(multiple ? files : [files[0]]);
       }
       // 同じファイルを連続で選択できるよう、入力値をリセットする
       e.target.value = "";
     },
-    [handleFiles, multiple]
+    [processFiles, multiple]
   );
+
+  const isInteractionDisabled = disabled || isBusy;
 
   return (
     <div className="flex flex-col gap-2">
       <button
         type="button"
         aria-label="画像をアップロード。クリックしてファイルを選択"
-        aria-busy={Boolean(loadingMessage)}
-        disabled={disabled}
+        aria-busy={isBusy}
+        disabled={isInteractionDisabled}
         className={clsx([
           "w-full md:hidden",
           "inline-flex items-center justify-center gap-2",
           "rounded-xl px-4 py-3 text-sm font-semibold",
           "transition-colors duration-200",
           "bg-blue-600 text-white hover:bg-blue-700",
-          disabled && "cursor-not-allowed opacity-50",
+          isInteractionDisabled && "cursor-not-allowed opacity-50",
         ])}
-        onClick={() => !disabled && inputRef.current?.click()}
+        onClick={() => !isInteractionDisabled && inputRef.current?.click()}
       >
-        {loadingMessage ? (
+        {effectiveLoadingMessage ? (
           <>
             <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" />
-            <span>{loadingMessage}</span>
+            <span>{effectiveLoadingMessage}</span>
           </>
         ) : (
           <>
@@ -440,15 +444,15 @@ export function ImageUpload({
       </button>
 
       <p className="text-center text-xs text-zinc-500 md:hidden">
-        JPEG / PNG / WebP / GIF（最大 20MB）
+        {UPLOAD_IMAGE_FORMATS_LABEL}（最大 20MB）
       </p>
 
       <div
         role="button"
-        tabIndex={disabled ? -1 : 0}
+        tabIndex={isInteractionDisabled ? -1 : 0}
         aria-label="画像をアップロード。クリックまたはドラッグ＆ドロップ"
-        aria-disabled={disabled}
-        aria-busy={Boolean(loadingMessage)}
+        aria-disabled={isInteractionDisabled}
+        aria-busy={isBusy}
         className={clsx([
           "relative hidden w-full md:flex",
           "cursor-pointer flex-col items-center justify-center",
@@ -457,17 +461,20 @@ export function ImageUpload({
           isDragOver
             ? "border-blue-400 bg-blue-50"
             : "border-zinc-300 bg-zinc-50 hover:border-zinc-400 hover:bg-zinc-100",
-          disabled && "cursor-not-allowed opacity-50",
+          isInteractionDisabled && "cursor-not-allowed opacity-50",
         ])}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        onClick={() => !disabled && inputRef.current?.click()}
+        onClick={() => !isInteractionDisabled && inputRef.current?.click()}
         onKeyDown={handleDesktopKeyDown}
       >
         <div
-          className={clsx(["flex flex-col items-center gap-3", loadingMessage && "opacity-0"])}
-          aria-hidden={Boolean(loadingMessage)}
+          className={clsx([
+            "flex flex-col items-center gap-3",
+            effectiveLoadingMessage && "opacity-0",
+          ])}
+          aria-hidden={Boolean(effectiveLoadingMessage)}
         >
           <ImageIcon className="h-10 w-10 text-zinc-500" aria-hidden="true" />
           <div className="flex flex-col gap-1">
@@ -475,16 +482,16 @@ export function ImageUpload({
             <p className="text-sm text-zinc-500">
               または クリックして{multiple ? "ファイルを複数選択" : "ファイルを選択"}
             </p>
-            <p className="text-xs text-zinc-400">JPEG / PNG / WebP / GIF（最大 20MB）</p>
+            <p className="text-xs text-zinc-400">{UPLOAD_IMAGE_FORMATS_LABEL}（最大 20MB）</p>
           </div>
         </div>
-        {loadingMessage && (
+        {effectiveLoadingMessage && (
           <div
             className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2"
             aria-live="polite"
           >
             <LoaderCircle className="h-10 w-10 animate-spin text-blue-600" aria-hidden="true" />
-            <p className="text-sm font-medium text-blue-700">{loadingMessage}</p>
+            <p className="text-sm font-medium text-blue-700">{effectiveLoadingMessage}</p>
           </div>
         )}
       </div>
@@ -492,11 +499,11 @@ export function ImageUpload({
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPTED_IMAGE_TYPES.join(",")}
+        accept={[...UPLOAD_ACCEPT_IMAGE_TYPES, ".heic", ".heif"].join(",")}
         multiple={multiple}
         className="hidden"
         onChange={handleChange}
-        disabled={disabled}
+        disabled={isInteractionDisabled}
         aria-hidden="true"
       />
       {error && (
