@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import clsx from "clsx";
 import { Settings, ListChecks } from "lucide-react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import { useDetectionSettings } from "../hooks/useDetectionSettings";
 import { useGalleryDetection } from "../hooks/useGalleryDetection";
 import { useGalleryImages } from "../hooks/useGalleryImages";
 import { useOfflineManualEdit } from "../hooks/useOfflineManualEdit";
+import { useRemountableModal } from "../hooks/useRemountableModal";
 import { useStampImages } from "../hooks/useStampImages";
 import { downloadMaskedImagesAsZip } from "../lib/downloadMaskedImagesAsZip";
 import { CustomMaskTermsModal } from "./CustomMaskTermsModal";
@@ -62,10 +63,8 @@ export function MaskingGallery() {
     isSettingsBarReady,
     DETECTION_SETTINGS_BAR_REVEAL_MS
   );
-  const [isDetectionSettingsOpen, setIsDetectionSettingsOpen] = useState(false);
-  const [detectionSettingsModalKey, setDetectionSettingsModalKey] = useState(0);
-  const [isCustomMaskTermsOpen, setIsCustomMaskTermsOpen] = useState(false);
-  const [customMaskTermsModalKey, setCustomMaskTermsModalKey] = useState(0);
+  const detectionSettingsModal = useRemountableModal();
+  const customMaskTermsModal = useRemountableModal();
 
   const getDetectionSettings = useCallback(() => detectionSettings, [detectionSettings]);
   const getCustomMaskTerms = useCallback(() => enabledCustomMaskTexts, [enabledCustomMaskTexts]);
@@ -111,10 +110,10 @@ export function MaskingGallery() {
     (settings: DetectionPrefs) => {
       updateDetectionSettings(settings);
       if (!settings.autoDetectOcr) {
-        setIsCustomMaskTermsOpen(false);
+        customMaskTermsModal.close();
       }
     },
-    [updateDetectionSettings]
+    [updateDetectionSettings, customMaskTermsModal]
   );
 
   const handleDownloadAll = useCallback(() => {
@@ -160,8 +159,7 @@ export function MaskingGallery() {
               type="button"
               aria-label="検出設定"
               onClick={() => {
-                setDetectionSettingsModalKey((key) => key + 1);
-                setIsDetectionSettingsOpen(true);
+                detectionSettingsModal.open();
               }}
               className={clsx([
                 "flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2",
@@ -181,8 +179,7 @@ export function MaskingGallery() {
               }
               disabled={!isCustomMaskTermsEditable}
               onClick={() => {
-                setCustomMaskTermsModalKey((key) => key + 1);
-                setIsCustomMaskTermsOpen(true);
+                customMaskTermsModal.open();
               }}
               className={clsx([
                 "flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2",
@@ -200,17 +197,17 @@ export function MaskingGallery() {
       {showDetectionSettingsBar && (
         <>
           <DetectionSettingsModal
-            key={`detection-settings-${detectionSettingsModalKey}`}
-            isOpen={isDetectionSettingsOpen}
+            key={`detection-settings-${detectionSettingsModal.key}`}
+            isOpen={detectionSettingsModal.isOpen}
             settings={detectionSettings}
-            onClose={() => setIsDetectionSettingsOpen(false)}
+            onClose={detectionSettingsModal.close}
             onSave={handleSaveDetectionSettings}
           />
           <CustomMaskTermsModal
-            key={`custom-mask-terms-${customMaskTermsModalKey}`}
-            isOpen={isCustomMaskTermsOpen}
+            key={`custom-mask-terms-${customMaskTermsModal.key}`}
+            isOpen={customMaskTermsModal.isOpen}
             terms={customMaskTerms}
-            onClose={() => setIsCustomMaskTermsOpen(false)}
+            onClose={customMaskTermsModal.close}
             onSave={updateCustomMaskTerms}
           />
         </>
