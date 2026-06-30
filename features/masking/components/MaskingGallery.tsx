@@ -65,6 +65,7 @@ export function MaskingGallery() {
   );
   const detectionSettingsModal = useRemountableModal();
   const customMaskTermsModal = useRemountableModal();
+  const closeCustomMaskTermsModal = customMaskTermsModal.close;
 
   const getDetectionSettings = useCallback(() => detectionSettings, [detectionSettings]);
   const getCustomMaskTerms = useCallback(() => enabledCustomMaskTexts, [enabledCustomMaskTexts]);
@@ -110,10 +111,10 @@ export function MaskingGallery() {
     (settings: DetectionPrefs) => {
       updateDetectionSettings(settings);
       if (!settings.autoDetectOcr) {
-        customMaskTermsModal.close();
+        closeCustomMaskTermsModal();
       }
     },
-    [updateDetectionSettings, customMaskTermsModal]
+    [updateDetectionSettings, closeCustomMaskTermsModal]
   );
 
   const handleDownloadAll = useCallback(() => {
@@ -207,7 +208,7 @@ export function MaskingGallery() {
             key={`custom-mask-terms-${customMaskTermsModal.key}`}
             isOpen={customMaskTermsModal.isOpen}
             terms={customMaskTerms}
-            onClose={customMaskTermsModal.close}
+            onClose={closeCustomMaskTermsModal}
             onSave={updateCustomMaskTerms}
           />
         </>
