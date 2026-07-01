@@ -1,12 +1,12 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, beforeEach } from "vitest";
-import { useRemountableModal } from "./useRemountableModal";
+import { useModal } from "./useModal";
 
-describe("useRemountableModal", () => {
-  let hook: ReturnType<typeof renderHook<ReturnType<typeof useRemountableModal>, unknown>>;
+describe("useModal", () => {
+  let hook: ReturnType<typeof renderHook<ReturnType<typeof useModal>, unknown>>;
 
   beforeEach(() => {
-    hook = renderHook(() => useRemountableModal());
+    hook = renderHook(() => useModal());
   });
 
   it("初期状態は isOpen=false、key=0", () => {

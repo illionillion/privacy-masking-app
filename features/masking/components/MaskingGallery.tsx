@@ -15,7 +15,7 @@ import { useDetectionSettings } from "../hooks/useDetectionSettings";
 import { useGalleryDetection } from "../hooks/useGalleryDetection";
 import { useGalleryImages } from "../hooks/useGalleryImages";
 import { useOfflineManualEdit } from "../hooks/useOfflineManualEdit";
-import { useRemountableModal } from "../hooks/useRemountableModal";
+import { useModal } from "../hooks/useModal";
 import { useStampImages } from "../hooks/useStampImages";
 import { downloadMaskedImagesAsZip } from "../lib/downloadMaskedImagesAsZip";
 import { CustomMaskTermsModal } from "./CustomMaskTermsModal";
@@ -63,9 +63,18 @@ export function MaskingGallery() {
     isSettingsBarReady,
     DETECTION_SETTINGS_BAR_REVEAL_MS
   );
-  const detectionSettingsModal = useRemountableModal();
-  const customMaskTermsModal = useRemountableModal();
-  const closeCustomMaskTermsModal = customMaskTermsModal.close;
+  const {
+    isOpen: isDetectionSettingsOpen,
+    key: detectionSettingsKey,
+    open: openDetectionSettings,
+    close: closeDetectionSettings,
+  } = useModal();
+  const {
+    isOpen: isCustomMaskTermsOpen,
+    key: customMaskTermsKey,
+    open: openCustomMaskTerms,
+    close: closeCustomMaskTerms,
+  } = useModal();
 
   const getDetectionSettings = useCallback(() => detectionSettings, [detectionSettings]);
   const getCustomMaskTerms = useCallback(() => enabledCustomMaskTexts, [enabledCustomMaskTexts]);
@@ -111,10 +120,10 @@ export function MaskingGallery() {
     (settings: DetectionPrefs) => {
       updateDetectionSettings(settings);
       if (!settings.autoDetectOcr) {
-        closeCustomMaskTermsModal();
+        closeCustomMaskTerms();
       }
     },
-    [updateDetectionSettings, closeCustomMaskTermsModal]
+    [updateDetectionSettings, closeCustomMaskTerms]
   );
 
   const handleDownloadAll = useCallback(() => {
@@ -160,7 +169,7 @@ export function MaskingGallery() {
               type="button"
               aria-label="検出設定"
               onClick={() => {
-                detectionSettingsModal.open();
+                openDetectionSettings();
               }}
               className={clsx([
                 "flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2",
@@ -180,7 +189,7 @@ export function MaskingGallery() {
               }
               disabled={!isCustomMaskTermsEditable}
               onClick={() => {
-                customMaskTermsModal.open();
+                openCustomMaskTerms();
               }}
               className={clsx([
                 "flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2",
@@ -198,17 +207,17 @@ export function MaskingGallery() {
       {showDetectionSettingsBar && (
         <>
           <DetectionSettingsModal
-            key={`detection-settings-${detectionSettingsModal.key}`}
-            isOpen={detectionSettingsModal.isOpen}
+            key={`detection-settings-${detectionSettingsKey}`}
+            isOpen={isDetectionSettingsOpen}
             settings={detectionSettings}
-            onClose={detectionSettingsModal.close}
+            onClose={closeDetectionSettings}
             onSave={handleSaveDetectionSettings}
           />
           <CustomMaskTermsModal
-            key={`custom-mask-terms-${customMaskTermsModal.key}`}
-            isOpen={customMaskTermsModal.isOpen}
+            key={`custom-mask-terms-${customMaskTermsKey}`}
+            isOpen={isCustomMaskTermsOpen}
             terms={customMaskTerms}
-            onClose={closeCustomMaskTermsModal}
+            onClose={closeCustomMaskTerms}
             onSave={updateCustomMaskTerms}
           />
         </>

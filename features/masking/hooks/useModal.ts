@@ -2,8 +2,8 @@
 
 import { useCallback, useState } from "react";
 
-/** `useRemountableModal` が返す値の型 */
-export interface RemountableModal {
+/** `useModal` が返す値の型 */
+export interface Modal {
   /** モーダルが開いているか */
   isOpen: boolean;
   /** 再マウント用キー（開くたびにインクリメントされる） */
@@ -22,7 +22,7 @@ export interface RemountableModal {
  *
  * @returns `isOpen` / `key` / `open()` / `close()` を含むオブジェクト
  */
-export function useRemountableModal(): RemountableModal {
+export function useModal(): Modal {
   const [isOpen, setIsOpen] = useState(false);
   const [key, setKey] = useState(0);
 
