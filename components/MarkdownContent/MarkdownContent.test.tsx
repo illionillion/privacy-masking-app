@@ -36,4 +36,27 @@ describe("MarkdownContent", () => {
     const heading = screen.getByRole("heading", { level: 2, name: "第1条（適用）" });
     expect(heading).toHaveAttribute("id", "第1条適用");
   });
+
+  it("details 記法を開閉ブロックとして表示する", () => {
+    render(
+      <MarkdownContent
+        content={["::::details スマホの場合", "タップして画像を選択します。", "::::"].join("\n")}
+      />
+    );
+
+    const summary = screen.getByText("スマホの場合");
+    expect(summary.tagName).toBe("SUMMARY");
+    expect(summary.closest("details")).toBeInTheDocument();
+    expect(screen.getByText("タップして画像を選択します。")).toBeInTheDocument();
+  });
+
+  it("画像 URL の hash で表示サイズを指定できる", () => {
+    render(
+      <MarkdownContent content="![スマホで画像を選択する場合](/guides/image-import/image-select-sp.png#small)" />
+    );
+
+    const image = screen.getByRole("img", { name: "スマホで画像を選択する場合" });
+    expect(image).toHaveAttribute("src", "/guides/image-import/image-select-sp.png");
+    expect(image).toHaveClass("max-w-48");
+  });
 });
