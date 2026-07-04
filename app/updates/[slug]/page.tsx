@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { LegalMarkdownContent } from "@/components/LegalMarkdownContent";
 import { LegalPageLayout } from "@/components/LegalPageLayout";
+import { MarkdownContent } from "@/components/MarkdownContent";
 import { buildPageMetadata } from "@/lib/buildPageMetadata";
 import { formatUpdateDate } from "@/lib/formatUpdateDate";
 import { isUpdatePostNotFoundError } from "@/lib/updatePostNotFoundError";
@@ -57,7 +57,7 @@ export default async function UpdatePostPage({ params }: UpdatePostPageProps) {
 
   return (
     <LegalPageLayout title={post.title} dateText={formatUpdateDate(post.date)} dateLabel="公開日">
-      <LegalMarkdownContent content={post.content} />
+      <MarkdownContent content={post.content} />
       <p className="pt-2">
         <Link
           href="/updates"

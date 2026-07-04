@@ -5,11 +5,11 @@ import type { ReactNode } from "react";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { legalHeadingToId } from "@/lib/legalHeadingId";
+import { markdownHeadingToId } from "@/lib/markdownHeadingId";
 
 const LINK_CLASS = "font-medium text-indigo-600 underline-offset-2 hover:underline";
 
-type LegalMarkdownContentProps = {
+type MarkdownContentProps = {
   content: string;
 };
 
@@ -30,7 +30,7 @@ function getHeadingText(children: ReactNode): string {
 const markdownComponents: Components = {
   h2: ({ children }) => {
     const text = getHeadingText(children);
-    const id = legalHeadingToId(text);
+    const id = markdownHeadingToId(text);
     return (
       <h2 id={id} className="text-base font-semibold text-zinc-900">
         {children}
@@ -65,9 +65,9 @@ const markdownComponents: Components = {
 };
 
 /**
- * 法務 Markdown 本文を既存デザインに合わせてレンダリングする。
+ * Markdown 本文をサイト共通デザインに合わせてレンダリングする。
  */
-export function LegalMarkdownContent({ content }: LegalMarkdownContentProps) {
+export function MarkdownContent({ content }: MarkdownContentProps) {
   return (
     <div className="space-y-6">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>

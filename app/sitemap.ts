@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { loadGuidePostSlugs } from "@/lib/guides/loadGuidePosts";
 import { loadUpdatePostSlugs } from "@/lib/loadUpdatePosts";
 import { getSiteUrl } from "@/lib/siteUrl";
 export const dynamic = "force-static";
@@ -8,6 +9,11 @@ export const dynamic = "force-static";
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const siteUrl = getSiteUrl();
+  const guideEntries = loadGuidePostSlugs().map((slug) => ({
+    url: `${siteUrl}/guides/${slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
   const updateEntries = loadUpdatePostSlugs().map((slug) => ({
     url: `${siteUrl}/updates/${slug}`,
     changeFrequency: "monthly" as const,
@@ -31,6 +37,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
+      url: `${siteUrl}/guides`,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
       url: `${siteUrl}/updates`,
       changeFrequency: "weekly",
       priority: 0.7,
@@ -45,6 +56,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.5,
     },
+    ...guideEntries,
     ...updateEntries,
   ];
 }
