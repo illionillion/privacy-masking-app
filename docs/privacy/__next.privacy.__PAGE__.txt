@@ -1,5 +1,5 @@
 1:"$Sreact.fragment"
-2:I[9612,["573","static/chunks/573-dc743d1af8dfaed0.js","852","static/chunks/852-dfa9f6bda5363a37.js","877","static/chunks/app/privacy/page-2f9b51accd350117.js"],"LegalMarkdownContent"]
+2:I[2709,["573","static/chunks/573-dc743d1af8dfaed0.js","26","static/chunks/26-e83b5396b62af8cd.js","877","static/chunks/app/privacy/page-cb586e9fc5f81b23.js"],"MarkdownContent"]
 4:I[5017,[],"OutletBoundary"]
 5:"$Sreact.suspense"
 3:Tedc,本ポリシーは、伏せ太郎（Fusely）（以下「本サービス」）の利用にあたり、利用者の情報がどのように扱われるかを説明するものです。本サービスはオープンソースとして公開されており、ソースコードは [GitHub リポジトリ](https://github.com/illionillion/privacy-masking-app) で確認できます。
@@ -36,5 +36,5 @@ Google AdSense を利用する場合、広告配信事業者・広告ネット�
 
 法令の改正やサービス内容の変更に応じて、本ポリシーを更新することがあります。更新後の内容は本ページに掲載した時点から効力を有するものとします。
 
-[トップページへ戻る](/)0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"プライバシーポリシー"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["最終更新日",": ","2026年5月12日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":["$","$L2",null,{"content":"$3"}]}]]}],null,["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"eqoHnLURwPS5ioGKKnI95"}
+[トップページへ戻る](/)0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"プライバシーポリシー"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["最終更新日",": ","2026年5月12日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":["$","$L2",null,{"content":"$3"}]}]]}],null,["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"MB0RHwupMDKG3GEEm3Bep"}
 6:null
