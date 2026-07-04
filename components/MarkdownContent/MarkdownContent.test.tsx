@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { MarkdownContent } from "./index";
 
@@ -71,6 +72,33 @@ describe("MarkdownContent", () => {
     const image = screen.getByRole("img", { name: "スマホで画像を選択する場合" });
     expect(image).toHaveAttribute("src", "/guides/image-import/image-select-sp.png");
     expect(image).toHaveClass("max-w-48");
+  });
+
+  it("画像をクリックすると拡大モーダルを開閉できる", async () => {
+    const user = userEvent.setup();
+    render(<MarkdownContent content="![操作画面](/guides/manual-edit/edit-button.png)" />);
+
+    await user.click(screen.getByRole("button", { name: "操作画面を拡大表示" }));
+
+    expect(screen.getByRole("dialog", { name: "操作画面の拡大画像" })).toBeInTheDocument();
+    expect(screen.getAllByRole("img", { name: "操作画面" })).toHaveLength(2);
+
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog", { name: "操作画面の拡大画像" })).not.toBeInTheDocument();
+  });
+
+  it("右上の拡大ボタンからも画像モーダルを開ける", async () => {
+    const user = userEvent.setup();
+    render(<MarkdownContent content="![設定画面](/guides/settings/settings-modal.png)" />);
+
+    const expandButton = screen.getByRole("button", { name: "設定画面をモーダルで開く" });
+    expect(expandButton).toHaveClass("group-hover:opacity-100");
+
+    await user.click(expandButton);
+    await user.click(screen.getByRole("button", { name: "拡大画像を閉じる" }));
+
+    expect(screen.queryByRole("dialog", { name: "設定画面の拡大画像" })).not.toBeInTheDocument();
   });
 
   it("HTML コメントを本文に表示しない", () => {
