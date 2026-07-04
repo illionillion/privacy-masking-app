@@ -1,4 +1,4 @@
-import { LegalMarkdownContent } from "@/components/LegalMarkdownContent";
+import { MarkdownContent } from "@/components/MarkdownContent";
 import { LegalPageLayout } from "@/components/LegalPageLayout";
 import { buildPageMetadata } from "@/lib/buildPageMetadata";
 import { loadLegalDocument } from "@/lib/loadLegalDocument";
@@ -17,7 +17,7 @@ export const metadata = buildPageMetadata({
 export default function PrivacyPage() {
   return (
     <LegalPageLayout title={doc.title} dateText={doc.lastUpdated}>
-      <LegalMarkdownContent content={doc.content} />
+      <MarkdownContent content={doc.content} />
     </LegalPageLayout>
   );
 }

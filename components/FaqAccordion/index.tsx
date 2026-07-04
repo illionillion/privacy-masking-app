@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { ChevronDown } from "lucide-react";
 import { useCallback, useState } from "react";
-import { LegalMarkdownContent } from "@/components/LegalMarkdownContent";
+import { MarkdownContent } from "@/components/MarkdownContent";
 import type { FaqItem } from "@/lib/parseFaqContent";
 
 type FaqAccordionProps = {
@@ -100,7 +100,7 @@ function FaqAccordionItem({ item, isOpen, onToggle }: FaqAccordionItemProps) {
               "text-zinc-700",
             ])}
           >
-            <LegalMarkdownContent content={item.answer} />
+            <MarkdownContent content={item.answer} />
           </div>
         </div>
       </div>
@@ -128,7 +128,7 @@ export function FaqAccordion({ intro, items, footer }: FaqAccordionProps) {
 
   return (
     <div className="space-y-6">
-      {intro.length > 0 && <LegalMarkdownContent content={intro} />}
+      {intro.length > 0 && <MarkdownContent content={intro} />}
 
       <div
         className={clsx([
@@ -153,7 +153,7 @@ export function FaqAccordion({ intro, items, footer }: FaqAccordionProps) {
 
       {footer.length > 0 && (
         <div className="pt-2">
-          <LegalMarkdownContent content={footer} />
+          <MarkdownContent content={footer} />
         </div>
       )}
     </div>

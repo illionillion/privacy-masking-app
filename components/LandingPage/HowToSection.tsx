@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Download, Upload, Wand2 } from "lucide-react";
 
 /** 3ステップの使い方セクション */
@@ -63,6 +64,16 @@ export function HowToSection() {
             </div>
           ))}
         </div>
+        <p className="mt-8 text-center text-sm text-zinc-600">
+          画像の読み込みや手動編集の詳しい手順は{" "}
+          <Link
+            href="/guides"
+            className="font-medium text-indigo-600 underline-offset-4 transition-colors hover:text-indigo-800 hover:underline"
+          >
+            使い方ガイド
+          </Link>
+          で確認できます。
+        </p>
       </div>
     </section>
   );

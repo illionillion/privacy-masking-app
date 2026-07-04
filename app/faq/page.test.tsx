@@ -10,7 +10,7 @@ vi.mock("@/lib/loadFaqDocument", () => ({
     canonicalPath: "faq",
     lastUpdated: "2026年6月1日",
     content: [
-      "伏せ太郎（Fusely）の FAQ です。",
+      "伏せ太郎（Fusely）の FAQ です。詳しい操作は [使い方ガイド](/guides) をご覧ください。",
       "",
       "## 画像はサーバーに送信されますか？",
       "",
@@ -34,6 +34,7 @@ describe("FaqPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("画像はサーバーに送信されますか？")).toBeInTheDocument();
     expect(screen.getByText("対応している画像形式とサイズ上限は？")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "使い方ガイド" })).toHaveAttribute("href", "/guides");
   });
 
   it("アコーディオンを開くと回答が表示される", async () => {

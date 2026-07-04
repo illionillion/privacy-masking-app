@@ -37,12 +37,20 @@ export default function AppPage() {
             <p className="mt-1 text-sm text-zinc-500">こんな感じでマスキングできます</p>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500">{APP_PAGE_ABOUT}</p>
           </div>
-          <Link
-            href="/"
-            className="shrink-0 text-sm font-medium text-indigo-600 underline-offset-4 transition-colors hover:text-indigo-800 hover:underline sm:pt-1"
-          >
-            説明をもっと見る
-          </Link>
+          <div className="flex shrink-0 flex-wrap gap-x-4 gap-y-2 sm:justify-end sm:pt-1">
+            <Link
+              href="/guides"
+              className="text-sm font-medium text-indigo-600 underline-offset-4 transition-colors hover:text-indigo-800 hover:underline"
+            >
+              使い方ガイド
+            </Link>
+            <Link
+              href="/"
+              className="text-sm font-medium text-zinc-600 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline"
+            >
+              説明をもっと見る
+            </Link>
+          </div>
         </div>
         <MaskingCompactDemo />
       </section>

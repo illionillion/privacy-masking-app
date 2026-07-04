@@ -15,6 +15,11 @@ describe("SiteFooter", () => {
 
   it("内部リンクが正しい href を持つ", () => {
     render(<SiteFooter />);
+    expect(screen.getByText("アプリ")).toBeInTheDocument();
+    expect(screen.getByText("ガイド・お知らせ")).toBeInTheDocument();
+    expect(screen.getByText("規約・ポリシー")).toBeInTheDocument();
+    expect(screen.getByText("開発・連絡")).toBeInTheDocument();
+
     expect(screen.getByRole("link", { name: "プライバシーポリシー" })).toHaveAttribute(
       "href",
       "/privacy"
@@ -24,6 +29,7 @@ describe("SiteFooter", () => {
       "href",
       "/faq"
     );
+    expect(screen.getByRole("link", { name: "使い方ガイド" })).toHaveAttribute("href", "/guides");
     expect(screen.getByRole("link", { name: "更新情報" })).toHaveAttribute("href", "/updates");
     expect(screen.getByRole("link", { name: "マスキングツール" })).toHaveAttribute("href", "/app");
   });
