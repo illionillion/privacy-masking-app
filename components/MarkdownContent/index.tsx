@@ -157,6 +157,20 @@ const markdownComponents: Components = {
   ul: ({ children }) => <ul className="list-inside list-disc space-y-1 pl-1">{children}</ul>,
   li: ({ children }) => <li>{children}</li>,
   strong: ({ children }) => <strong>{children}</strong>,
+  table: ({ children }) => (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse overflow-hidden rounded-lg border border-zinc-200 text-left">
+        {children}
+      </table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-zinc-50 text-zinc-900">{children}</thead>,
+  th: ({ children }) => (
+    <th className="border border-zinc-200 px-3 py-2 text-sm font-semibold">{children}</th>
+  ),
+  td: ({ children }) => (
+    <td className="border border-zinc-200 px-3 py-3 align-top text-sm">{children}</td>
+  ),
   img: ({ src, alt }) => {
     const image = parseMarkdownImageSrc(typeof src === "string" ? src : undefined);
     return (

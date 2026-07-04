@@ -71,4 +71,12 @@ describe("MarkdownContent", () => {
     expect(screen.getByText("続きの本文")).toBeInTheDocument();
     expect(screen.queryByText("画像 TODO")).not.toBeInTheDocument();
   });
+
+  it("テーブルに表示用スタイルを適用する", () => {
+    render(<MarkdownContent content={["| 左 | 右 |", "| --- | --- |", "| A | B |"].join("\n")} />);
+
+    expect(screen.getByRole("table")).toHaveClass("border-collapse");
+    expect(screen.getByRole("columnheader", { name: "左" })).toHaveClass("px-3");
+    expect(screen.getByRole("cell", { name: "A" })).toHaveClass("align-top");
+  });
 });
