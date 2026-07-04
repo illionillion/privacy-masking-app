@@ -15,6 +15,11 @@ describe("SiteFooter", () => {
 
   it("内部リンクが正しい href を持つ", () => {
     render(<SiteFooter />);
+    expect(screen.getByText("アプリ")).toBeInTheDocument();
+    expect(screen.getByText("ガイド・お知らせ")).toBeInTheDocument();
+    expect(screen.getByText("規約・ポリシー")).toBeInTheDocument();
+    expect(screen.getByText("開発・連絡")).toBeInTheDocument();
+
     expect(screen.getByRole("link", { name: "プライバシーポリシー" })).toHaveAttribute(
       "href",
       "/privacy"
