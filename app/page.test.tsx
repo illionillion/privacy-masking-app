@@ -48,4 +48,9 @@ describe("Home (LandingPage)", () => {
       "/faq"
     );
   });
+
+  it("使い方ガイドへのリンクが表示される", () => {
+    render(<Home />);
+    expect(screen.getByRole("link", { name: "使い方ガイド" })).toHaveAttribute("href", "/guides");
+  });
 });

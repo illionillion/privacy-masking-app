@@ -20,11 +20,13 @@ describe("AppPage", () => {
     expect(screen.getByText(APP_PAGE_ABOUT)).toBeInTheDocument();
   });
 
-  it("コンパクトデモとトップへのリンクが表示される", () => {
+  it("コンパクトデモと関連リンクが表示される", () => {
     render(<AppPage />);
     expect(screen.getByRole("heading", { level: 2, name: "使い例" })).toBeInTheDocument();
     expect(screen.getByAltText(PRIMARY_MASKING_DEMO.beforeAlt)).toBeInTheDocument();
     expect(screen.getByAltText(PRIMARY_MASKING_DEMO.afterAlt)).toBeInTheDocument();
+    const guideLink = screen.getByRole("link", { name: "使い方ガイド" });
+    expect(guideLink).toHaveAttribute("href", "/guides");
     const moreLink = screen.getByRole("link", { name: "説明をもっと見る" });
     expect(moreLink).toHaveAttribute("href", "/");
   });
