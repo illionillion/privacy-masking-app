@@ -59,4 +59,16 @@ describe("MarkdownContent", () => {
     expect(image).toHaveAttribute("src", "/guides/image-import/image-select-sp.png");
     expect(image).toHaveClass("max-w-48");
   });
+
+  it("HTML コメントを本文に表示しない", () => {
+    render(
+      <MarkdownContent
+        content={["公開する本文", "<!--", "画像 TODO", "-->", "続きの本文"].join("\n")}
+      />
+    );
+
+    expect(screen.getByText("公開する本文")).toBeInTheDocument();
+    expect(screen.getByText("続きの本文")).toBeInTheDocument();
+    expect(screen.queryByText("画像 TODO")).not.toBeInTheDocument();
+  });
 });

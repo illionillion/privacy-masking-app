@@ -11,6 +11,7 @@ import { markdownHeadingToId } from "@/lib/markdownHeadingId";
 
 const LINK_CLASS = "font-medium text-indigo-600 underline-offset-2 hover:underline";
 const DETAILS_DIRECTIVE_PATTERN = /^(:{3,})details[ \t]+(.+)$/gm;
+const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g;
 const IMAGE_SIZE_HASHES = ["small", "medium"] as const;
 
 type MarkdownContentProps = {
@@ -39,6 +40,13 @@ function normalizeDetailsDirective(content: string): string {
     const title = rawTitle.trim();
     return title.length > 0 ? `${fence}details[${title}]` : `${fence}details`;
   });
+}
+
+/**
+ * 執筆メモ用の HTML コメントを公開本文から取り除く。
+ */
+function stripMarkdownComments(content: string): string {
+  return content.replace(HTML_COMMENT_PATTERN, "");
 }
 
 function getHeadingText(children: ReactNode): string {
@@ -198,7 +206,7 @@ const markdownComponents: Components = {
  * Markdown 本文をサイト共通デザインに合わせてレンダリングする。
  */
 export function MarkdownContent({ content }: MarkdownContentProps) {
-  const normalizedContent = normalizeDetailsDirective(content);
+  const normalizedContent = normalizeDetailsDirective(stripMarkdownComments(content));
 
   return (
     <div className="space-y-6">
