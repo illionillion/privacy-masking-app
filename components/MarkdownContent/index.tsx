@@ -28,7 +28,7 @@ type MarkdownAstNode = {
   data?: {
     directiveLabel?: boolean;
     hName?: string;
-    hProperties?: Record<string, string>;
+    hProperties?: Record<string, string | string[]>;
   };
 };
 
@@ -106,7 +106,7 @@ function remarkDetailsDirective() {
           ...firstChild.data,
           hName: "summary",
           hProperties: {
-            class: "cursor-pointer font-medium text-zinc-900",
+            className: "cursor-pointer font-medium text-zinc-900",
           },
         };
       } else {
@@ -116,7 +116,7 @@ function remarkDetailsDirective() {
             data: {
               hName: "summary",
               hProperties: {
-                class: "cursor-pointer font-medium text-zinc-900",
+                className: "cursor-pointer font-medium text-zinc-900",
               },
             },
             children: [{ type: "text", value: "詳細を表示" }],
@@ -129,7 +129,7 @@ function remarkDetailsDirective() {
         ...node.data,
         hName: "details",
         hProperties: {
-          class: "rounded-lg border border-zinc-200 bg-white p-4",
+          className: "rounded-lg border border-zinc-200 bg-white p-4",
         },
       };
     });
@@ -194,7 +194,7 @@ const markdownComponents: Components = {
     );
   },
   a: ({ href, children }) => {
-    if (href?.startsWith("/")) {
+    if (href?.startsWith("/") && !href.startsWith("//")) {
       return (
         <Link href={href} className={LINK_CLASS}>
           {children}

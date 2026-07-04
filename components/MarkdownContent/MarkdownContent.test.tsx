@@ -6,7 +6,13 @@ describe("MarkdownContent", () => {
   it("内部リンクは Next Link、外部リンクは新規タブで開く", () => {
     render(
       <MarkdownContent
-        content={["[LP](/lp)", "", "[GitHub](https://github.com/example/repo)"].join("\n")}
+        content={[
+          "[LP](/lp)",
+          "",
+          "[GitHub](https://github.com/example/repo)",
+          "",
+          "[protocol relative](//example.com)",
+        ].join("\n")}
       />
     );
 
@@ -18,6 +24,11 @@ describe("MarkdownContent", () => {
     expect(githubLink).toHaveAttribute("href", "https://github.com/example/repo");
     expect(githubLink).toHaveAttribute("target", "_blank");
     expect(githubLink).toHaveAttribute("rel", "noopener noreferrer");
+
+    const protocolRelativeLink = screen.getByRole("link", { name: "protocol relative" });
+    expect(protocolRelativeLink).toHaveAttribute("href", "//example.com");
+    expect(protocolRelativeLink).toHaveAttribute("target", "_blank");
+    expect(protocolRelativeLink).toHaveAttribute("rel", "noopener noreferrer");
   });
 
   it("ページ内アンカーは同一タブで開き target を付けない", () => {
@@ -46,7 +57,9 @@ describe("MarkdownContent", () => {
 
     const summary = screen.getByText("スマホの場合");
     expect(summary.tagName).toBe("SUMMARY");
+    expect(summary).toHaveClass("cursor-pointer");
     expect(summary.closest("details")).toBeInTheDocument();
+    expect(summary.closest("details")).toHaveClass("rounded-lg");
     expect(screen.getByText("タップして画像を選択します。")).toBeInTheDocument();
   });
 
