@@ -14,10 +14,15 @@ const TYPE_LABELS: Record<SearchContentType, string> = {
   faq: "FAQ",
 };
 
+type SiteSearchProps = {
+  /** 検索結果を選んだときにモーダルを閉じるためのコールバック */
+  onResultSelect?: () => void;
+};
+
 /**
- * サイト内検索 UI。`/search` ページで index JSON を読み込み、クエリで絞り込む。
+ * サイト内検索 UI。index JSON を読み込み、クエリで絞り込む。
  */
-export function SiteSearch() {
+export function SiteSearch({ onResultSelect }: SiteSearchProps) {
   const [query, setQuery] = useState("");
   const [entries, setEntries] = useState<SearchIndexEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -108,6 +113,7 @@ export function SiteSearch() {
                 <h2 className="mt-1 text-base font-semibold text-zinc-900">
                   <Link
                     href={entry.url}
+                    onClick={onResultSelect}
                     className="underline-offset-2 hover:text-indigo-700 hover:underline"
                   >
                     {entry.title}

@@ -20,6 +20,6 @@ describe("sitemap", () => {
 
     expect(urls).toContain("https://example.com/guides");
     expect(urls).toContain("https://example.com/guides/image-import");
-    expect(urls).toContain("https://example.com/search");
+    expect(urls).not.toContain("https://example.com/search");
   });
 });

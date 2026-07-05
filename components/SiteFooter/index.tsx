@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import Link from "next/link";
+import { SearchModalTrigger } from "@/components/SearchModalTrigger";
 import {
   GITHUB_DISCUSSIONS_URL,
   GITHUB_ISSUES_URL,
@@ -63,9 +64,7 @@ export function SiteFooter() {
               <p className={footerSectionTitleClass}>ガイド・お知らせ</p>
               <ul className="mt-3 space-y-2">
                 <li>
-                  <Link href="/search" className={footerLinkClass}>
-                    サイト内検索
-                  </Link>
+                  <SearchModalTrigger className={footerLinkClass}>サイト内検索</SearchModalTrigger>
                 </li>
                 <li>
                   <Link href="/guides" className={footerLinkClass}>

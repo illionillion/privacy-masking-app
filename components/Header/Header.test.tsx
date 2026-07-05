@@ -26,19 +26,18 @@ describe("Header", () => {
     expect(link).toHaveAttribute("href", "/");
   });
 
-  it("検索導線が /search へのリンクになっている", () => {
+  it("検索導線がモーダルを開くボタンになっている", () => {
     vi.mocked(usePathname).mockReturnValue("/faq");
     render(<Header />);
 
-    const link = screen.getByRole("link", { name: "サイト内検索" });
-    expect(link).toHaveAttribute("href", "/search");
+    expect(screen.getByRole("button", { name: "サイト内検索" })).toBeInTheDocument();
   });
 
   it("/app では検索導線を表示しない", () => {
     vi.mocked(usePathname).mockReturnValue("/app");
     render(<Header />);
 
-    expect(screen.queryByRole("link", { name: "サイト内検索" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "サイト内検索" })).not.toBeInTheDocument();
   });
 
   it("FAQ が /faq へのリンクになっている", () => {
