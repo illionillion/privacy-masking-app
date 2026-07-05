@@ -1,7 +1,13 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { GITHUB_REPOSITORY_URL } from "@/lib/githubRepositoryUrl";
 import { Header } from "./index";
+
+vi.mock("next/navigation", () => ({
+  usePathname: vi.fn(() => "/"),
+}));
+
+import { usePathname } from "next/navigation";
 
 describe("Header", () => {
   it("アプリ名が表示される", () => {
@@ -20,7 +26,23 @@ describe("Header", () => {
     expect(link).toHaveAttribute("href", "/");
   });
 
+  it("検索導線が /search へのリンクになっている", () => {
+    vi.mocked(usePathname).mockReturnValue("/faq");
+    render(<Header />);
+
+    const link = screen.getByRole("link", { name: "サイト内検索" });
+    expect(link).toHaveAttribute("href", "/search");
+  });
+
+  it("/app では検索導線を表示しない", () => {
+    vi.mocked(usePathname).mockReturnValue("/app");
+    render(<Header />);
+
+    expect(screen.queryByRole("link", { name: "サイト内検索" })).not.toBeInTheDocument();
+  });
+
   it("FAQ が /faq へのリンクになっている", () => {
+    vi.mocked(usePathname).mockReturnValue("/");
     render(<Header />);
     const link = screen.getByRole("link", { name: "FAQ" });
     expect(link).toHaveAttribute("href", "/faq");

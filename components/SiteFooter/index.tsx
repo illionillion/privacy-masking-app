@@ -63,6 +63,11 @@ export function SiteFooter() {
               <p className={footerSectionTitleClass}>ガイド・お知らせ</p>
               <ul className="mt-3 space-y-2">
                 <li>
+                  <Link href="/search" className={footerLinkClass}>
+                    サイト内検索
+                  </Link>
+                </li>
+                <li>
                   <Link href="/guides" className={footerLinkClass}>
                     使い方ガイド
                   </Link>
