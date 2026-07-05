@@ -6,7 +6,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { Maximize2, X } from "lucide-react";
 import type { KeyboardEvent, ReactNode } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import { createPortal } from "react-dom";
@@ -121,6 +121,7 @@ function MarkdownImage({ src, alt, size }: MarkdownImageProps) {
   const [isOpen, setIsOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const captionId = useId();
   const label = getImageLabel(alt);
   const sizeClass = getImageSizeClass(size);
   const openModal = useCallback(() => {
@@ -193,7 +194,7 @@ function MarkdownImage({ src, alt, size }: MarkdownImageProps) {
   }, []);
 
   if (!src) {
-    return <img src={src} alt={alt ?? ""} className="mx-auto h-auto max-w-full" loading="lazy" />;
+    return null;
   }
 
   return (
@@ -248,7 +249,7 @@ function MarkdownImage({ src, alt, size }: MarkdownImageProps) {
                 ref={dialogRef}
                 role="dialog"
                 aria-modal="true"
-                aria-label={`${label}の拡大画像`}
+                aria-labelledby={captionId}
                 className="relative z-10 flex max-h-[calc(100dvh-2rem)] w-full max-w-5xl flex-col gap-3"
               >
                 <div className="flex justify-end">
@@ -262,12 +263,15 @@ function MarkdownImage({ src, alt, size }: MarkdownImageProps) {
                     <X aria-hidden="true" className="size-5" />
                   </button>
                 </div>
-                <div className="flex min-h-0 justify-center">
+                <div className="flex min-h-0 flex-col items-center gap-3">
                   <img
                     src={src}
                     alt={alt ?? ""}
-                    className="max-h-[calc(100dvh-7rem)] max-w-full rounded-lg bg-white object-contain shadow-2xl"
+                    className="max-h-[calc(100dvh-9rem)] max-w-full rounded-lg bg-white object-contain shadow-2xl"
                   />
+                  <p id={captionId} className="max-w-full px-2 text-center text-sm text-white/90">
+                    {label}
+                  </p>
                 </div>
               </div>
             </div>,

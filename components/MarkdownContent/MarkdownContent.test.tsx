@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { MarkdownContent } from "./index";
@@ -80,12 +80,20 @@ describe("MarkdownContent", () => {
 
     await user.click(screen.getByRole("button", { name: "操作画面を拡大表示" }));
 
-    expect(screen.getByRole("dialog", { name: "操作画面の拡大画像" })).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog", { name: "操作画面" });
+    expect(within(dialog).getByRole("paragraph")).toHaveTextContent("操作画面");
     expect(screen.getAllByRole("img", { name: "操作画面" })).toHaveLength(2);
 
     await user.keyboard("{Escape}");
 
-    expect(screen.queryByRole("dialog", { name: "操作画面の拡大画像" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "操作画面" })).not.toBeInTheDocument();
+  });
+
+  it("画像 URL が欠けている場合は描画しない", () => {
+    render(<MarkdownContent content="![欠落画像]()" />);
+
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /拡大/ })).not.toBeInTheDocument();
   });
 
   it("右上の拡大ボタンからも画像モーダルを開ける", async () => {
@@ -98,7 +106,7 @@ describe("MarkdownContent", () => {
     await user.click(expandButton);
     await user.click(screen.getByRole("button", { name: "拡大画像を閉じる" }));
 
-    expect(screen.queryByRole("dialog", { name: "設定画面の拡大画像" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "設定画面" })).not.toBeInTheDocument();
   });
 
   it("HTML コメントを本文に表示しない", () => {
