@@ -43,7 +43,7 @@ describe("SiteSearch", () => {
     render(<SiteSearch />);
 
     await waitFor(() => {
-      expect(screen.getByText("2 件のページを検索できます")).toBeInTheDocument();
+      expect(screen.getByText("2 件の候補")).toBeInTheDocument();
     });
 
     await user.type(screen.getByRole("searchbox"), "設定");
@@ -58,7 +58,7 @@ describe("SiteSearch", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("クエリ未入力では結果一覧を表示しない", async () => {
+  it("クエリ未入力では候補一覧を表示する", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -70,13 +70,16 @@ describe("SiteSearch", () => {
     render(<SiteSearch />);
 
     await waitFor(() => {
-      expect(screen.getByText("2 件のページを検索できます")).toBeInTheDocument();
+      expect(screen.getByText("2 件の候補")).toBeInTheDocument();
     });
 
-    expect(screen.queryByRole("link", { name: "設定を変える方法" })).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "画像はサーバーに送信されますか？" })
-    ).not.toBeInTheDocument();
-    expect(screen.getByText("キーワードを入力して検索してください。")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "設定を変える方法" })).toHaveAttribute(
+      "href",
+      "/guides/settings"
+    );
+    expect(screen.getByRole("link", { name: "画像はサーバーに送信されますか？" })).toHaveAttribute(
+      "href",
+      "/faq#privacy"
+    );
   });
 });

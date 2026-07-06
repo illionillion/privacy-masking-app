@@ -13,6 +13,20 @@ const TYPE_LABELS: Record<SearchContentType, string> = {
   faq: "FAQ",
 };
 
+const SKELETON_COUNT = 4;
+
+/** 読み込み中の候補カード用スケルトン */
+function SearchResultSkeleton() {
+  return (
+    <li className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+      <div className="h-3 w-20 animate-pulse rounded bg-zinc-200" />
+      <div className="mt-2 h-5 w-3/4 animate-pulse rounded bg-zinc-200" />
+      <div className="mt-3 h-4 w-full animate-pulse rounded bg-zinc-100" />
+      <div className="mt-1 h-4 w-5/6 animate-pulse rounded bg-zinc-100" />
+    </li>
+  );
+}
+
 type SiteSearchProps = {
   /** 検索結果を選んだときにモーダルを閉じるためのコールバック */
   onResultSelect?: () => void;
@@ -31,7 +45,7 @@ export function SiteSearch({ onResultSelect }: SiteSearchProps) {
 
   const results = useMemo(() => searchIndexEntries(entries, query), [entries, query]);
   const trimmedQuery = query.trim();
-  const showResults = !isLoading && !loadError && trimmedQuery.length > 0;
+  const hasQuery = trimmedQuery.length > 0;
 
   return (
     <div className="space-y-6">
@@ -61,56 +75,58 @@ export function SiteSearch({ onResultSelect }: SiteSearchProps) {
         />
       </label>
 
-      {isLoading ? <p className="text-sm text-zinc-500">検索データを読み込んでいます…</p> : null}
+      {isLoading ? (
+        <div>
+          <p className="text-sm text-zinc-500">候補を読み込んでいます…</p>
+          <ul className="mt-4 space-y-3" aria-hidden="true">
+            {Array.from({ length: SKELETON_COUNT }, (_, index) => (
+              <SearchResultSkeleton key={index} />
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {loadError ? <p className="text-sm text-red-600">{loadError}</p> : null}
 
       {!isLoading && !loadError ? (
         <div>
           <p className="text-sm text-zinc-500">
-            {trimmedQuery.length > 0
-              ? `${results.length} 件の結果`
-              : `${entries.length} 件のページを検索できます`}
+            {hasQuery ? `${results.length} 件の結果` : `${entries.length} 件の候補`}
           </p>
-          {trimmedQuery.length === 0 ? (
-            <p className="mt-4 text-sm text-zinc-500">キーワードを入力して検索してください。</p>
-          ) : null}
-          {showResults ? (
-            <ul className="mt-4 space-y-3">
-              {results.map((entry) => (
-                <li
-                  key={entry.id}
-                  className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-colors hover:border-indigo-200"
-                >
-                  <p className="text-xs font-semibold tracking-wide text-indigo-600">
-                    {TYPE_LABELS[entry.type]}
-                  </p>
-                  <h2 className="mt-1 text-base font-semibold text-zinc-900">
-                    <Link
-                      href={entry.url}
-                      onClick={onResultSelect}
-                      className="underline-offset-2 hover:text-indigo-700 hover:underline"
-                    >
-                      {entry.title}
-                    </Link>
-                  </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-600">{entry.summary}</p>
-                  {entry.tags.length > 0 ? (
-                    <ul className="mt-3 flex flex-wrap gap-2">
-                      {entry.tags.map((tag) => (
-                        <li
-                          key={`${entry.id}:${tag}`}
-                          className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600"
-                        >
-                          {tag}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          {showResults && results.length === 0 ? (
+          <ul className="mt-4 space-y-3">
+            {results.map((entry) => (
+              <li
+                key={entry.id}
+                className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-colors hover:border-indigo-200"
+              >
+                <p className="text-xs font-semibold tracking-wide text-indigo-600">
+                  {TYPE_LABELS[entry.type]}
+                </p>
+                <h2 className="mt-1 text-base font-semibold text-zinc-900">
+                  <Link
+                    href={entry.url}
+                    onClick={onResultSelect}
+                    className="underline-offset-2 hover:text-indigo-700 hover:underline"
+                  >
+                    {entry.title}
+                  </Link>
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-600">{entry.summary}</p>
+                {entry.tags.length > 0 ? (
+                  <ul className="mt-3 flex flex-wrap gap-2">
+                    {entry.tags.map((tag) => (
+                      <li
+                        key={`${entry.id}:${tag}`}
+                        className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600"
+                      >
+                        {tag}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          {hasQuery && results.length === 0 ? (
             <p className="mt-4 text-sm text-zinc-500">該当するページが見つかりませんでした。</p>
           ) : null}
         </div>
