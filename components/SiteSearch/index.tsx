@@ -38,18 +38,12 @@ function SearchResultSkeleton() {
   );
 }
 
-/** 0件時の空状態カード */
-function SearchEmptyStateCard() {
+/** 0件時の空状態（スクロール領域いっぱい） */
+function SearchEmptyState() {
   return (
-    <li
-      className={clsx([
-        SEARCH_RESULT_CARD_CLASS,
-        SEARCH_RESULT_CARD_MIN_HEIGHT_CLASS,
-        "flex items-center justify-center",
-      ])}
-    >
+    <div className={clsx([SEARCH_RESULT_CARD_CLASS, "flex flex-1 items-center justify-center"])}>
       <p className="text-sm text-zinc-500">該当するページが見つかりませんでした。</p>
-    </li>
+    </div>
   );
 }
 
@@ -113,7 +107,16 @@ export function SiteSearch({ onResultSelect }: SiteSearchProps) {
           </p>
         ) : null}
 
-        <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
+        <div
+          className={clsx([
+            "mt-4",
+            "min-h-0",
+            "flex-1",
+            hasQuery && !isLoading && !loadError && results.length === 0
+              ? "flex flex-col overflow-hidden"
+              : "overflow-y-auto",
+          ])}
+        >
           {isLoading ? (
             <ul className="space-y-3" aria-hidden="true">
               {Array.from({ length: SKELETON_COUNT }, (_, index) => (
@@ -122,7 +125,7 @@ export function SiteSearch({ onResultSelect }: SiteSearchProps) {
             </ul>
           ) : null}
 
-          {!isLoading && !loadError ? (
+          {!isLoading && !loadError && results.length > 0 ? (
             <ul className="space-y-3">
               {results.map((entry) => (
                 <li
@@ -159,8 +162,11 @@ export function SiteSearch({ onResultSelect }: SiteSearchProps) {
                   ) : null}
                 </li>
               ))}
-              {hasQuery && results.length === 0 ? <SearchEmptyStateCard /> : null}
             </ul>
+          ) : null}
+
+          {hasQuery && !isLoading && !loadError && results.length === 0 ? (
+            <SearchEmptyState />
           ) : null}
         </div>
       </div>

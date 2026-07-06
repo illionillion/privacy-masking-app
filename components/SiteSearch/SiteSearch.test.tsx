@@ -102,8 +102,8 @@ describe("SiteSearch", () => {
     await user.type(screen.getByRole("searchbox"), "存在しないキーワード");
 
     expect(screen.getByText("0 件の結果")).toBeInTheDocument();
-    const emptyCard = screen.getByText("該当するページが見つかりませんでした。").closest("li");
-    expect(emptyCard).toHaveClass("rounded-xl");
-    expect(emptyCard).toHaveClass("min-h-[7.5rem]");
+    const emptyState = screen.getByText("該当するページが見つかりませんでした。").parentElement;
+    expect(emptyState).toHaveClass("rounded-xl");
+    expect(emptyState).toHaveClass("flex-1");
   });
 });
