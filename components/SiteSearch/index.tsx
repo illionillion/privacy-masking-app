@@ -15,14 +15,40 @@ const TYPE_LABELS: Record<SearchContentType, string> = {
 
 const SKELETON_COUNT = 4;
 
+const SEARCH_RESULT_CARD_CLASS = clsx([
+  "rounded-xl",
+  "border border-zinc-200",
+  "bg-white",
+  "p-4",
+  "shadow-sm",
+]);
+
+/** 1件分の検索結果カードと同等の最小高さ */
+const SEARCH_RESULT_CARD_MIN_HEIGHT_CLASS = "min-h-[7.5rem]";
+
 /** 読み込み中の候補カード用スケルトン */
 function SearchResultSkeleton() {
   return (
-    <li className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+    <li className={clsx([SEARCH_RESULT_CARD_CLASS, SEARCH_RESULT_CARD_MIN_HEIGHT_CLASS])}>
       <div className="h-3 w-20 animate-pulse rounded bg-zinc-200" />
       <div className="mt-2 h-5 w-3/4 animate-pulse rounded bg-zinc-200" />
       <div className="mt-3 h-4 w-full animate-pulse rounded bg-zinc-100" />
       <div className="mt-1 h-4 w-5/6 animate-pulse rounded bg-zinc-100" />
+    </li>
+  );
+}
+
+/** 0件時の空状態カード */
+function SearchEmptyStateCard() {
+  return (
+    <li
+      className={clsx([
+        SEARCH_RESULT_CARD_CLASS,
+        SEARCH_RESULT_CARD_MIN_HEIGHT_CLASS,
+        "flex items-center justify-center",
+      ])}
+    >
+      <p className="text-sm text-zinc-500">該当するページが見つかりませんでした。</p>
     </li>
   );
 }
@@ -96,7 +122,10 @@ export function SiteSearch({ onResultSelect }: SiteSearchProps) {
             {results.map((entry) => (
               <li
                 key={entry.id}
-                className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-colors hover:border-indigo-200"
+                className={clsx([
+                  SEARCH_RESULT_CARD_CLASS,
+                  "transition-colors hover:border-indigo-200",
+                ])}
               >
                 <p className="text-xs font-semibold tracking-wide text-indigo-600">
                   {TYPE_LABELS[entry.type]}
@@ -125,10 +154,8 @@ export function SiteSearch({ onResultSelect }: SiteSearchProps) {
                 ) : null}
               </li>
             ))}
+            {hasQuery && results.length === 0 ? <SearchEmptyStateCard /> : null}
           </ul>
-          {hasQuery && results.length === 0 ? (
-            <p className="mt-4 text-sm text-zinc-500">該当するページが見つかりませんでした。</p>
-          ) : null}
         </div>
       ) : null}
     </div>

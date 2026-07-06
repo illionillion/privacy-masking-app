@@ -82,4 +82,28 @@ describe("SiteSearch", () => {
       "/faq#privacy"
     );
   });
+
+  it("0件のとき空状態を結果カードと同じ枠で表示する", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => SAMPLE_INDEX,
+      })
+    );
+
+    render(<SiteSearch />);
+
+    await waitFor(() => {
+      expect(screen.getByText("2 件の候補")).toBeInTheDocument();
+    });
+
+    await user.type(screen.getByRole("searchbox"), "存在しないキーワード");
+
+    expect(screen.getByText("0 件の結果")).toBeInTheDocument();
+    const emptyCard = screen.getByText("該当するページが見つかりませんでした。").closest("li");
+    expect(emptyCard).toHaveClass("rounded-xl");
+    expect(emptyCard).toHaveClass("min-h-[7.5rem]");
+  });
 });
