@@ -1,11 +1,5 @@
 import { STAMP_FILE_NAMES } from "../constants";
-
-/** 公開URLのベースパス。サブパス配信時は `NEXT_PUBLIC_BASE_PATH` を設定する。 */
-const PUBLIC_BASE_PATH = (() => {
-  const raw = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  if (raw === "/" || raw.length === 0) return "";
-  return `/${raw.replace(/^\/+|\/+$/g, "")}`;
-})();
+import { buildPublicAssetPath } from "@/lib/buildPublicAssetPath";
 
 /**
  * スタンプ画像を読み込み Map に格納する
@@ -24,7 +18,7 @@ async function loadStampImages(): Promise<Map<string, HTMLImageElement>> {
             resolve();
           };
           img.onerror = () => resolve();
-          img.src = `${PUBLIC_BASE_PATH}/stamps/${fileName}`;
+          img.src = buildPublicAssetPath(`stamps/${fileName}`);
         })
     )
   );
