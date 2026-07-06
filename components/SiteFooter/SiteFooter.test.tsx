@@ -1,11 +1,17 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   GITHUB_DISCUSSIONS_URL,
   GITHUB_ISSUES_URL,
   GITHUB_REPOSITORY_URL,
 } from "@/lib/githubRepositoryUrl";
 import { SiteFooter } from "./index";
+
+vi.mock("next/navigation", () => ({
+  usePathname: vi.fn(() => "/"),
+}));
+
+import { usePathname } from "next/navigation";
 
 describe("SiteFooter", () => {
   it("contentinfo ロールのフッターが表示される", () => {
@@ -14,6 +20,7 @@ describe("SiteFooter", () => {
   });
 
   it("内部リンクが正しい href を持つ", () => {
+    vi.mocked(usePathname).mockReturnValue("/");
     render(<SiteFooter />);
     expect(screen.getByText("アプリ")).toBeInTheDocument();
     expect(screen.getByText("ガイド・お知らせ")).toBeInTheDocument();
@@ -35,7 +42,15 @@ describe("SiteFooter", () => {
     expect(screen.getByRole("link", { name: "マスキングツール" })).toHaveAttribute("href", "/app");
   });
 
+  it("/app ではサイト内検索トリガーを表示しない", () => {
+    vi.mocked(usePathname).mockReturnValue("/app");
+    render(<SiteFooter />);
+
+    expect(screen.queryByRole("button", { name: "サイト内検索" })).not.toBeInTheDocument();
+  });
+
   it("GitHub 外部リンクが正しく設定される", () => {
+    vi.mocked(usePathname).mockReturnValue("/");
     render(<SiteFooter />);
     const issuesLink = screen.getByRole("link", { name: /GitHub Issues/ });
     expect(issuesLink).toHaveAttribute("href", GITHUB_ISSUES_URL);

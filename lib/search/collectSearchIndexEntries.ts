@@ -22,6 +22,7 @@ function collectGuideEntries(contentRoot: string): SearchIndexEntry[] {
   return fs
     .readdirSync(guidesDir)
     .filter((name) => name.endsWith(".md"))
+    .sort()
     .map((filename) => {
       const slug = guideSlugFromFilename(filename);
       const raw = fs.readFileSync(path.join(guidesDir, filename), "utf8");
@@ -51,6 +52,7 @@ function collectUpdateEntries(contentRoot: string): SearchIndexEntry[] {
   return fs
     .readdirSync(updatesDir)
     .filter((name) => name.endsWith(".md"))
+    .sort()
     .map((filename) => {
       const slug = updateSlugFromFilename(filename);
       const raw = fs.readFileSync(path.join(updatesDir, filename), "utf8");

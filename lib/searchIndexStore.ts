@@ -1,9 +1,10 @@
 "use client";
 
 import { create } from "zustand";
+import { buildPublicAssetPath } from "@/lib/buildPublicAssetPath";
 import type { SearchIndexEntry } from "@/lib/search/types";
 
-const SEARCH_INDEX_URL = "/search-index.json";
+const SEARCH_INDEX_URL = buildPublicAssetPath("search-index.json");
 
 const LOAD_ERROR_MESSAGE = "検索データの読み込みに失敗しました。時間をおいて再度お試しください。";
 
@@ -12,12 +13,11 @@ type SearchIndexState = {
   entries: SearchIndexEntry[];
   isLoading: boolean;
   loadError: string | null;
-  hasStartedLoading: boolean;
 };
 
 /** 検索 index の読み込みアクション */
 type SearchIndexActions = {
-  /** 検索 index の取得を開始する（多重呼び出しは無視） */
+  /** 検索 index の取得を開始する（取得済み・取得中は無視、失敗時は再試行可） */
   preload: () => void;
 };
 
@@ -26,13 +26,12 @@ export const useSearchIndexStore = create<SearchIndexState & SearchIndexActions>
   entries: [],
   isLoading: false,
   loadError: null,
-  hasStartedLoading: false,
   preload: () => {
-    if (get().hasStartedLoading) {
+    if (get().isLoading || get().entries.length > 0) {
       return;
     }
 
-    set({ hasStartedLoading: true, isLoading: true });
+    set({ isLoading: true, loadError: null });
 
     void (async () => {
       try {
@@ -56,6 +55,5 @@ export function resetSearchIndexStore(): void {
     entries: [],
     isLoading: false,
     loadError: null,
-    hasStartedLoading: false,
   });
 }

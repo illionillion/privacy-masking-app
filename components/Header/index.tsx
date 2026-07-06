@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 import { GitHubMarkIcon } from "@/components/GitHubMarkIcon";
 import { GITHUB_REPOSITORY_URL } from "@/lib/githubRepositoryUrl";
+import { shouldShowSearchLink } from "@/lib/shouldShowSearchLink";
 import { useSearchModalStore } from "@/lib/searchModalStore";
 
 const navLinkClass =
@@ -13,17 +14,6 @@ const navLinkClass =
 
 const primaryLinkClass =
   "text-sm font-medium text-indigo-600 underline-offset-4 transition-colors hover:text-indigo-800 hover:underline";
-
-/**
- * `/app` とオフラインページでは検索導線を表示しない。
- */
-function shouldShowSearchLink(pathname: string | null): boolean {
-  if (!pathname) {
-    return true;
-  }
-
-  return pathname !== "/app" && !pathname.startsWith("/~offline");
-}
 
 /**
  * アプリヘッダーコンポーネント

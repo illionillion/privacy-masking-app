@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetSearchIndexStore } from "@/lib/searchIndexStore";
 import { SiteSearch } from "./index";
 import type { SearchIndexEntry } from "@/lib/search/types";
@@ -27,7 +27,13 @@ const SAMPLE_INDEX: SearchIndexEntry[] = [
 describe("SiteSearch", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
     resetSearchIndexStore();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("index を読み込んでクエリで絞り込める", async () => {

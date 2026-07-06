@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetSearchIndexStore, useSearchIndexStore } from "./searchIndexStore";
 import type { SearchIndexEntry } from "./search/types";
 
@@ -16,7 +16,13 @@ const SAMPLE_INDEX: SearchIndexEntry[] = [
 describe("searchIndexStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
     resetSearchIndexStore();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("preload で index を取得してキャッシュする", async () => {
@@ -39,5 +45,28 @@ describe("searchIndexStore", () => {
 
     useSearchIndexStore.getState().preload();
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("失敗後は preload で再試行できる", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => SAMPLE_INDEX,
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    useSearchIndexStore.getState().preload();
+    await vi.waitFor(() => {
+      expect(useSearchIndexStore.getState().loadError).not.toBeNull();
+    });
+
+    useSearchIndexStore.getState().preload();
+    await vi.waitFor(() => {
+      expect(useSearchIndexStore.getState().entries).toEqual(SAMPLE_INDEX);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
