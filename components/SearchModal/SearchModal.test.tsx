@@ -1,12 +1,14 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { resetSearchIndexStore, useSearchIndexStore } from "@/lib/searchIndexStore";
 import { useSearchModalStore } from "@/lib/searchModalStore";
 import { SearchModal } from "./index";
 
 /** ストアをリセットするヘルパー */
 function resetStore() {
   useSearchModalStore.setState({ isOpen: false });
+  resetSearchIndexStore();
 }
 
 describe("SearchModal", () => {
@@ -18,6 +20,13 @@ describe("SearchModal", () => {
   it("isOpen が false のときは何もレンダリングしない", () => {
     render(<SearchModal />);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("マウント時に検索 index の preload を開始する", () => {
+    const preload = vi.fn();
+    useSearchIndexStore.setState({ preload });
+    render(<SearchModal />);
+    expect(preload).toHaveBeenCalledTimes(1);
   });
 
   it("open() を呼ぶとダイアログとオーバーレイが表示される", async () => {

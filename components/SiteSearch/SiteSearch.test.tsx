@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { resetSearchIndexStore } from "@/lib/searchIndexStore";
 import { SiteSearch } from "./index";
 import type { SearchIndexEntry } from "@/lib/search/types";
 
@@ -24,6 +25,11 @@ const SAMPLE_INDEX: SearchIndexEntry[] = [
 ];
 
 describe("SiteSearch", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetSearchIndexStore();
+  });
+
   it("index を読み込んでクエリで絞り込める", async () => {
     const user = userEvent.setup();
     vi.stubGlobal(
@@ -50,5 +56,27 @@ describe("SiteSearch", () => {
     expect(
       screen.queryByRole("link", { name: "画像はサーバーに送信されますか？" })
     ).not.toBeInTheDocument();
+  });
+
+  it("クエリ未入力では結果一覧を表示しない", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => SAMPLE_INDEX,
+      })
+    );
+
+    render(<SiteSearch />);
+
+    await waitFor(() => {
+      expect(screen.getByText("2 件のページを検索できます")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole("link", { name: "設定を変える方法" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "画像はサーバーに送信されますか？" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("キーワードを入力して検索してください。")).toBeInTheDocument();
   });
 });
