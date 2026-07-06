@@ -89,7 +89,7 @@ export function SearchModal() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-16 sm:items-center sm:pt-4"
+      className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-16 sm:pt-20"
       onKeyDown={handleKeyDownDialog}
     >
       <div
@@ -107,7 +107,7 @@ export function SearchModal() {
           "relative",
           "z-10",
           "flex",
-          "max-h-[calc(100dvh-2rem)]",
+          "h-[min(36rem,calc(100dvh-2rem))]",
           "w-full",
           "max-w-2xl",
           "flex-col",
@@ -131,7 +131,7 @@ export function SearchModal() {
             <X aria-hidden="true" className="size-5" />
           </button>
         </header>
-        <div className="min-h-0 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-4 sm:px-5 sm:py-5">
           <SiteSearch onResultSelect={close} />
         </div>
       </div>
