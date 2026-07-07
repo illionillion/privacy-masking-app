@@ -2,5 +2,5 @@
 2:I[2573,["573","static/chunks/573-dc743d1af8dfaed0.js","783","static/chunks/app/lp/page-32e01b28a4a0a991.js"],""]
 3:I[5017,[],"OutletBoundary"]
 4:"$Sreact.suspense"
-0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto flex max-w-xl flex-1 flex-col items-center justify-center px-4 py-16 text-center","children":[["$","p",null,{"className":"text-zinc-600","children":"サービス紹介ページはトップ（/）に移動しました。"}],["$","$L2",null,{"href":"/","className":"mt-4 text-sm font-medium text-indigo-600 underline-offset-4 hover:underline","children":"トップへ"}]]}],null,["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"Qwx7GjbWPxR6PJxIdGYml"}
+0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto flex max-w-xl flex-1 flex-col items-center justify-center px-4 py-16 text-center","children":[["$","p",null,{"className":"text-zinc-600","children":"サービス紹介ページはトップ（/）に移動しました。"}],["$","$L2",null,{"href":"/","className":"mt-4 text-sm font-medium text-indigo-600 underline-offset-4 hover:underline","children":"トップへ"}]]}],null,["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"VzzEIwPa8Sjh6V8gfNJh7"}
 5:null
