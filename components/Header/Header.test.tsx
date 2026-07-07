@@ -1,13 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { GITHUB_REPOSITORY_URL } from "@/lib/githubRepositoryUrl";
-import { Header } from "./index";
 
 vi.mock("next/navigation", () => ({
   usePathname: vi.fn(() => "/"),
 }));
 
 import { usePathname } from "next/navigation";
+import { GITHUB_REPOSITORY_URL } from "@/lib/githubRepositoryUrl";
+import { Header } from "./index";
 
 describe("Header", () => {
   it("アプリ名が表示される", () => {

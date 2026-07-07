@@ -1,17 +1,17 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import {
-  GITHUB_DISCUSSIONS_URL,
-  GITHUB_ISSUES_URL,
-  GITHUB_REPOSITORY_URL,
-} from "@/lib/githubRepositoryUrl";
-import { SiteFooter } from "./index";
 
 vi.mock("next/navigation", () => ({
   usePathname: vi.fn(() => "/"),
 }));
 
 import { usePathname } from "next/navigation";
+import {
+  GITHUB_DISCUSSIONS_URL,
+  GITHUB_ISSUES_URL,
+  GITHUB_REPOSITORY_URL,
+} from "@/lib/githubRepositoryUrl";
+import { SiteFooter } from "./index";
 
 describe("SiteFooter", () => {
   it("contentinfo ロールのフッターが表示される", () => {

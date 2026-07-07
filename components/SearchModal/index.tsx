@@ -5,7 +5,6 @@ import { X } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef } from "react";
 import { SiteSearch } from "@/components/SiteSearch";
-import { useSearchIndexStore } from "@/lib/searchIndexStore";
 import { useSearchModalStore } from "@/lib/searchModalStore";
 
 /**
@@ -13,13 +12,8 @@ import { useSearchModalStore } from "@/lib/searchModalStore";
  */
 export function SearchModal() {
   const { isOpen, close } = useSearchModalStore();
-  const preloadSearchIndex = useSearchIndexStore((state) => state.preload);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    preloadSearchIndex();
-  }, [preloadSearchIndex]);
 
   useEffect(() => {
     if (!isOpen) {

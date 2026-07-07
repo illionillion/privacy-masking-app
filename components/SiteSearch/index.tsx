@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import clsx from "clsx";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { searchIndexEntries } from "@/lib/search/searchContent";
 import { useSearchIndexStore } from "@/lib/searchIndexStore";
 import type { SearchContentType } from "@/lib/search/types";
@@ -57,11 +57,7 @@ type SiteSearchProps = {
  */
 export function SiteSearch({ onResultSelect }: SiteSearchProps) {
   const [query, setQuery] = useState("");
-  const { entries, isLoading, loadError, preload } = useSearchIndexStore();
-
-  useEffect(() => {
-    preload();
-  }, [preload]);
+  const { entries, isLoading, loadError } = useSearchIndexStore();
 
   const results = useMemo(() => searchIndexEntries(entries, query), [entries, query]);
   const trimmedQuery = query.trim();

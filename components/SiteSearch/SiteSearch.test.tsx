@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { resetSearchIndexStore } from "@/lib/searchIndexStore";
+import { resetSearchIndexStore, useSearchIndexStore } from "@/lib/searchIndexStore";
 import { SiteSearch } from "./index";
 import type { SearchIndexEntry } from "@/lib/search/types";
 
@@ -46,6 +46,7 @@ describe("SiteSearch", () => {
       })
     );
 
+    useSearchIndexStore.getState().preload();
     render(<SiteSearch />);
 
     await waitFor(() => {
@@ -73,6 +74,7 @@ describe("SiteSearch", () => {
       })
     );
 
+    useSearchIndexStore.getState().preload();
     render(<SiteSearch />);
 
     await waitFor(() => {
@@ -99,6 +101,7 @@ describe("SiteSearch", () => {
       })
     );
 
+    useSearchIndexStore.getState().preload();
     render(<SiteSearch />);
 
     await waitFor(() => {
