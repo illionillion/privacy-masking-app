@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { BackToTopButton } from "@/components/BackToTopButton";
 import { MaskingCompactDemo } from "@/components/MaskingCompactDemo";
 import { MaskingGallery } from "@/features/masking";
 import { buildPageMetadata } from "@/lib/buildPageMetadata";
@@ -54,8 +53,6 @@ export default function AppPage() {
         </div>
         <MaskingCompactDemo />
       </section>
-
-      <BackToTopButton />
     </div>
   );
 }

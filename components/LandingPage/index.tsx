@@ -1,4 +1,3 @@
-import { BackToTopButton } from "@/components/BackToTopButton";
 import { DemoSection } from "@/components/LandingPage/DemoSection";
 import { FinalCtaSection } from "@/components/LandingPage/FinalCtaSection";
 import { HeroSection } from "@/components/LandingPage/HeroSection";
@@ -18,7 +17,6 @@ export function LandingPage() {
       <PrivacySection />
       <UseCasesSection />
       <FinalCtaSection />
-      <BackToTopButton />
     </div>
   );
 }
