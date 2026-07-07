@@ -1,5 +1,3 @@
-import "server-only";
-
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
@@ -98,6 +96,9 @@ function collectFaqEntries(contentRoot: string): SearchIndexEntry[] {
 
 /**
  * guides / updates / FAQ からサイト内検索用 index を組み立てる。
+ *
+ * `scripts/generate-search-index.ts`（tsx / prebuild）からも import するため `server-only` は付けない。
+ * Client Component から import しないこと。
  */
 export function collectSearchIndexEntries(
   contentRoot = path.join(process.cwd(), "content")
