@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef } from "react";
 import { SiteSearch } from "@/components/SiteSearch";
+import { useSearchIndexStore } from "@/lib/searchIndexStore";
 import { useSearchModalStore } from "@/lib/searchModalStore";
 
 /**
@@ -12,8 +13,17 @@ import { useSearchModalStore } from "@/lib/searchModalStore";
  */
 export function SearchModal() {
   const { isOpen, close } = useSearchModalStore();
+  const preload = useSearchIndexStore((state) => state.preload);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    preload();
+  }, [isOpen, preload]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -88,6 +98,7 @@ export function SearchModal() {
     >
       <div
         role="presentation"
+        data-testid="search-modal-overlay"
         className="absolute inset-0 bg-black/50"
         aria-hidden="true"
         onClick={close}

@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { resetSearchIndexStore } from "@/lib/searchIndexStore";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { resetSearchIndexStore, useSearchIndexStore } from "@/lib/searchIndexStore";
 import { useSearchModalStore } from "@/lib/searchModalStore";
 import { SearchModal } from "./index";
 
@@ -14,7 +14,13 @@ function resetStore() {
 describe("SearchModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
     resetStore();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("isOpen が false のときは何もレンダリングしない", () => {
@@ -27,7 +33,32 @@ describe("SearchModal", () => {
     useSearchModalStore.getState().open();
     await screen.findByRole("dialog");
     expect(screen.getByRole("heading", { name: "サイト内検索" })).toBeInTheDocument();
-    expect(document.querySelector(".absolute.inset-0.bg-black\\/50")).toBeInTheDocument();
+    expect(screen.getByTestId("search-modal-overlay")).toBeInTheDocument();
+  });
+
+  it("開いたとき preload を呼び失敗状態からリトライする", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    useSearchIndexStore.getState().preload();
+    await vi.waitFor(() => {
+      expect(useSearchIndexStore.getState().loadError).not.toBeNull();
+    });
+
+    render(<SearchModal />);
+    useSearchModalStore.getState().open();
+    await screen.findByRole("dialog");
+
+    await vi.waitFor(() => {
+      expect(useSearchIndexStore.getState().hasLoaded).toBe(true);
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("閉じるボタンでモーダルが閉じる", async () => {
@@ -46,7 +77,7 @@ describe("SearchModal", () => {
     useSearchModalStore.getState().open();
     await screen.findByRole("dialog");
 
-    await user.click(document.querySelector(".absolute.inset-0.bg-black\\/50")!);
+    await user.click(screen.getByTestId("search-modal-overlay"));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
