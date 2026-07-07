@@ -1,4 +1,3 @@
-import { BackToTopButton } from "@/components/BackToTopButton";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { LegalPageLayout } from "@/components/LegalPageLayout";
 import { buildPageMetadata } from "@/lib/buildPageMetadata";
@@ -23,7 +22,6 @@ export default function FaqPage() {
       <LegalPageLayout title={doc.title} dateText={doc.lastUpdated}>
         <FaqAccordion intro={faq.intro} items={faq.items} footer={faq.footer} />
       </LegalPageLayout>
-      <BackToTopButton />
     </>
   );
 }

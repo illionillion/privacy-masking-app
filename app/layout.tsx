@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import { BackToTopButton } from "@/components/BackToTopButton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Header } from "@/components/Header";
 import { SearchIndexPreloader } from "@/components/SearchIndexPreloader";
@@ -91,6 +92,7 @@ export default function RootLayout({
         <Header />
         <main className="flex flex-1 flex-col">{children}</main>
         <SiteFooter />
+        <BackToTopButton />
         <SearchIndexPreloader />
         <SearchModal />
         <ConfirmDialog />
