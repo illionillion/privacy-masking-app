@@ -1,14 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
-import { assertFaqFrontmatter } from "@/lib/faqDocumentFrontmatter";
-import { assertGuidePostFrontmatter, guideSlugFromFilename } from "@/lib/guides/frontmatter";
-import { substituteLegalDocumentPlaceholders } from "@/lib/legalDocumentPlaceholders";
-import { parseFaqContent } from "@/lib/parseFaqContent";
-import { normalizeSearchTags } from "@/lib/search/normalizeSearchTags";
-import { stripMarkdownSnippet } from "@/lib/search/stripMarkdownSnippet";
-import type { SearchIndexEntry } from "@/lib/search/types";
-import { assertUpdatePostFrontmatter, updateSlugFromFilename } from "@/lib/updatePostFrontmatter";
+import { assertFaqFrontmatter } from "../faqDocumentFrontmatter";
+import { assertGuidePostFrontmatter, guideSlugFromFilename } from "../guides/frontmatter";
+import { substituteLegalDocumentPlaceholders } from "../legalDocumentPlaceholders";
+import { parseFaqContent } from "../parseFaqContent";
+import { normalizeSearchTags } from "./normalizeSearchTags";
+import { stripMarkdownSnippet } from "./stripMarkdownSnippet";
+import type { SearchIndexEntry } from "./types";
+import { assertUpdatePostFrontmatter, updateSlugFromFilename } from "../updatePostFrontmatter";
 
 /**
  * `content/guides` から検索 index エントリを収集する。
