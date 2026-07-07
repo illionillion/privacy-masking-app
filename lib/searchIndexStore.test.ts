@@ -69,4 +69,25 @@ describe("searchIndexStore", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it("空配列でも一度取得成功したら再フェッチしない", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [],
+      })
+    );
+
+    useSearchIndexStore.getState().preload();
+    await vi.waitFor(() => {
+      expect(useSearchIndexStore.getState().hasLoaded).toBe(true);
+    });
+
+    expect(useSearchIndexStore.getState().entries).toEqual([]);
+    expect(fetch).toHaveBeenCalledTimes(1);
+
+    useSearchIndexStore.getState().preload();
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
 });

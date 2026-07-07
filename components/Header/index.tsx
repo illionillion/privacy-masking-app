@@ -37,7 +37,7 @@ export function Header() {
             <button
               type="button"
               onClick={openSearch}
-              className="rounded-md p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+              className="rounded-md p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               aria-label="サイト内検索"
             >
               <Search aria-hidden="true" className="h-5 w-5" />

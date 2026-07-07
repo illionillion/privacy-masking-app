@@ -13,6 +13,7 @@ type SearchIndexState = {
   entries: SearchIndexEntry[];
   isLoading: boolean;
   loadError: string | null;
+  hasLoaded: boolean;
 };
 
 /** 検索 index の読み込みアクション */
@@ -26,8 +27,9 @@ export const useSearchIndexStore = create<SearchIndexState & SearchIndexActions>
   entries: [],
   isLoading: false,
   loadError: null,
+  hasLoaded: false,
   preload: () => {
-    if (get().isLoading || get().entries.length > 0) {
+    if (get().isLoading || get().hasLoaded) {
       return;
     }
 
@@ -41,9 +43,9 @@ export const useSearchIndexStore = create<SearchIndexState & SearchIndexActions>
         }
 
         const data = (await response.json()) as SearchIndexEntry[];
-        set({ entries: data, loadError: null, isLoading: false });
+        set({ entries: data, loadError: null, isLoading: false, hasLoaded: true });
       } catch {
-        set({ loadError: LOAD_ERROR_MESSAGE, isLoading: false });
+        set({ loadError: LOAD_ERROR_MESSAGE, isLoading: false, hasLoaded: false });
       }
     })();
   },
@@ -55,5 +57,6 @@ export function resetSearchIndexStore(): void {
     entries: [],
     isLoading: false,
     loadError: null,
+    hasLoaded: false,
   });
 }
