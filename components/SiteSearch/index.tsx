@@ -128,7 +128,12 @@ export function SiteSearch({ onResultSelect }: SiteSearchProps) {
                   key={entry.id}
                   className={clsx([
                     SEARCH_RESULT_CARD_CLASS,
-                    "transition-colors hover:border-indigo-200",
+                    "relative",
+                    "transition-colors",
+                    "hover:border-indigo-200",
+                    "has-[:focus-visible]:ring-2",
+                    "has-[:focus-visible]:ring-indigo-500",
+                    "has-[:focus-visible]:ring-offset-2",
                   ])}
                 >
                   <p className="text-xs font-semibold tracking-wide text-indigo-600">
@@ -138,7 +143,19 @@ export function SiteSearch({ onResultSelect }: SiteSearchProps) {
                     <Link
                       href={entry.url}
                       onClick={onResultSelect}
-                      className="underline-offset-2 hover:text-indigo-700 hover:underline"
+                      className={clsx([
+                        "underline-offset-2",
+                        "transition-colors",
+                        "hover:text-indigo-700",
+                        "hover:underline",
+                        "focus-visible:text-indigo-700",
+                        "focus-visible:underline",
+                        "after:absolute",
+                        "after:inset-0",
+                        "after:rounded-xl",
+                        "after:content-['']",
+                        "focus-visible:outline-none",
+                      ])}
                     >
                       {entry.title}
                     </Link>
