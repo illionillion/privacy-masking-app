@@ -1,0 +1,118 @@
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { resetSearchIndexStore, useSearchIndexStore } from "@/lib/searchIndexStore";
+import { SiteSearch } from "./index";
+import type { SearchIndexEntry } from "@/lib/search/types";
+
+const SAMPLE_INDEX: SearchIndexEntry[] = [
+  {
+    id: "guide:settings",
+    type: "guide",
+    title: "設定を変える方法",
+    summary: "検出やマスキングの設定を変更します。",
+    tags: ["設定"],
+    url: "/guides/settings",
+  },
+  {
+    id: "faq:privacy",
+    type: "faq",
+    title: "画像はサーバーに送信されますか？",
+    summary: "送信されません。",
+    tags: ["FAQ"],
+    url: "/faq#privacy",
+  },
+];
+
+describe("SiteSearch", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllGlobals();
+    resetSearchIndexStore();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("index を読み込んでクエリで絞り込める", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => SAMPLE_INDEX,
+      })
+    );
+
+    useSearchIndexStore.getState().preload();
+    render(<SiteSearch />);
+
+    await waitFor(() => {
+      expect(screen.getByText("2 件の候補")).toBeInTheDocument();
+    });
+
+    await user.type(screen.getByRole("searchbox"), "設定");
+
+    expect(screen.getByText("1 件の結果")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "設定を変える方法" })).toHaveAttribute(
+      "href",
+      "/guides/settings"
+    );
+    expect(
+      screen.queryByRole("link", { name: "画像はサーバーに送信されますか？" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("クエリ未入力では候補一覧を表示する", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => SAMPLE_INDEX,
+      })
+    );
+
+    useSearchIndexStore.getState().preload();
+    render(<SiteSearch />);
+
+    await waitFor(() => {
+      expect(screen.getByText("2 件の候補")).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole("link", { name: "設定を変える方法" })).toHaveAttribute(
+      "href",
+      "/guides/settings"
+    );
+    expect(screen.getByRole("link", { name: "画像はサーバーに送信されますか？" })).toHaveAttribute(
+      "href",
+      "/faq#privacy"
+    );
+  });
+
+  it("0件のとき空状態を結果カードと同じ枠で表示する", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => SAMPLE_INDEX,
+      })
+    );
+
+    useSearchIndexStore.getState().preload();
+    render(<SiteSearch />);
+
+    await waitFor(() => {
+      expect(screen.getByText("2 件の候補")).toBeInTheDocument();
+    });
+
+    await user.type(screen.getByRole("searchbox"), "存在しないキーワード");
+
+    expect(screen.getByText("0 件の結果")).toBeInTheDocument();
+    const emptyState = screen.getByText("該当するページが見つかりませんでした。").parentElement;
+    expect(emptyState).toHaveClass("rounded-xl");
+    expect(emptyState).toHaveClass("flex-1");
+  });
+});

@@ -2,23 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
+import { buildPublicAssetPath } from "@/lib/buildPublicAssetPath";
 import type { FaceDetectionResult, UseFaceDetectionReturn } from "../types";
-
-/**
- * `NEXT_PUBLIC_BASE_PATH` を考慮した公開アセットURLを生成する。
- *
- * @param assetPath - `public` 配下のアセット相対パス
- * @returns ベースパスを考慮した公開URL
- */
-const buildPublicAssetPath = (assetPath: string): string => {
-  const rawBasePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  const normalizedBasePath =
-    rawBasePath === "/" || rawBasePath.length === 0
-      ? ""
-      : `/${rawBasePath.replace(/^\/+|\/+$/g, "")}`;
-  const normalizedAssetPath = assetPath.replace(/^\/+/, "");
-  return `${normalizedBasePath}/${normalizedAssetPath}`;
-};
 
 /** モデルのロードURLパス */
 const MODEL_URL = buildPublicAssetPath("models");

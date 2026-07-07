@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { buildPublicAssetPath } from "@/lib/buildPublicAssetPath";
 import { MAX_CANVAS_DIMENSION } from "@/lib/canvas";
 import type { FaceDetectionResult } from "../types";
 
@@ -32,13 +33,6 @@ const OCR_MASK_COLOR = "#000000";
 /** props 未指定時に使う空の OCR 領域配列（参照を安定させ不要な再描画を防ぐ） */
 const EMPTY_OCR_REGIONS: MaskRegion[] = [];
 
-/** 公開URLのベースパス。サブパス配信時は `NEXT_PUBLIC_BASE_PATH` を設定する。 */
-const PUBLIC_BASE_PATH = (() => {
-  const raw = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  if (raw === "/" || raw.length === 0) return "";
-  return `/${raw.replace(/^\/+|\/+$/g, "")}`;
-})();
-
 /** スタンプ画像のファイル名一覧 */
 const STAMP_FILE_NAMES = [
   "beaming_face_with_smiling_eyes-64.png",
@@ -55,7 +49,7 @@ const STAMP_FILE_NAMES = [
 ];
 
 /** スタンプ画像のパス一覧 */
-const STAMP_PATHS = STAMP_FILE_NAMES.map((fileName) => `${PUBLIC_BASE_PATH}/stamps/${fileName}`);
+const STAMP_PATHS = STAMP_FILE_NAMES.map((fileName) => buildPublicAssetPath(`stamps/${fileName}`));
 
 /** モジュールスコープのスタンプ画像キャッシュ（初回ロード後は再利用） */
 const stampImageCache = new Map<string, Promise<HTMLImageElement>>();
