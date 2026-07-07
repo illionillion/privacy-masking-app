@@ -53,10 +53,5 @@ export const useSearchIndexStore = create<SearchIndexState & SearchIndexActions>
 
 /** テスト用にストアを初期状態へ戻す */
 export function resetSearchIndexStore(): void {
-  useSearchIndexStore.setState({
-    entries: [],
-    isLoading: false,
-    loadError: null,
-    hasLoaded: false,
-  });
+  useSearchIndexStore.setState(useSearchIndexStore.getInitialState(), true);
 }

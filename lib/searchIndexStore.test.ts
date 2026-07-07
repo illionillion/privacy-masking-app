@@ -90,4 +90,19 @@ describe("searchIndexStore", () => {
     useSearchIndexStore.getState().preload();
     expect(fetch).toHaveBeenCalledTimes(1);
   });
+
+  it("reset でモックした preload を元に戻す", () => {
+    const preloadMock = vi.fn();
+    useSearchIndexStore.setState({ preload: preloadMock });
+    expect(useSearchIndexStore.getState().preload).toBe(preloadMock);
+
+    resetSearchIndexStore();
+
+    expect(useSearchIndexStore.getState().preload).not.toBe(preloadMock);
+    expect(useSearchIndexStore.getState().preload).toBe(
+      useSearchIndexStore.getInitialState().preload
+    );
+    expect(useSearchIndexStore.getState().entries).toEqual([]);
+    expect(useSearchIndexStore.getState().hasLoaded).toBe(false);
+  });
 });
