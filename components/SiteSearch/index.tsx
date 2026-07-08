@@ -9,6 +9,7 @@ import type { SearchContentType } from "@/lib/search/types";
 
 const TYPE_LABELS: Record<SearchContentType, string> = {
   guide: "使い方ガイド",
+  blog: "ブログ",
   update: "更新情報",
   faq: "FAQ",
 };

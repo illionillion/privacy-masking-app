@@ -1,5 +1,5 @@
 /** 検索 index に含めるコンテンツ種別。 */
-export type SearchContentType = "guide" | "update" | "faq";
+export type SearchContentType = "guide" | "blog" | "update" | "faq";
 
 /** サイト内検索用の1エントリ。 */
 export type SearchIndexEntry = {

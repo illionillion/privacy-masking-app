@@ -72,6 +72,11 @@ export function SiteFooter() {
                   </Link>
                 </li>
                 <li>
+                  <Link href="/blog" className={footerLinkClass}>
+                    ブログ
+                  </Link>
+                </li>
+                <li>
                   <Link href="/faq" className={footerLinkClass}>
                     よくある質問（FAQ）
                   </Link>

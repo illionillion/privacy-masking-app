@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
+import { assertBlogPostFrontmatter, blogSlugFromFilename } from "../blog/frontmatter";
 import { assertFaqFrontmatter } from "../faqDocumentFrontmatter";
 import { assertGuidePostFrontmatter, guideSlugFromFilename } from "../guides/frontmatter";
 import { substituteLegalDocumentPlaceholders } from "../legalDocumentPlaceholders";
@@ -36,6 +37,36 @@ function collectGuideEntries(contentRoot: string): SearchIndexEntry[] {
         summary: frontmatter.summary,
         tags: normalizeSearchTags(data.tags),
         url: `/guides/${slug}`,
+      };
+    });
+}
+
+/**
+ * `content/blog` から検索 index エントリを収集する。
+ */
+function collectBlogEntries(contentRoot: string): SearchIndexEntry[] {
+  const blogDir = path.join(contentRoot, "blog");
+  if (!fs.existsSync(blogDir)) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(blogDir)
+    .filter((name) => name.endsWith(".md"))
+    .sort()
+    .map((filename) => {
+      const slug = blogSlugFromFilename(filename);
+      const raw = fs.readFileSync(path.join(blogDir, filename), "utf8");
+      const { data } = matter(raw);
+      const frontmatter = assertBlogPostFrontmatter(data as Record<string, unknown>, slug);
+
+      return {
+        id: `blog:${slug}`,
+        type: "blog" as const,
+        title: frontmatter.title,
+        summary: frontmatter.summary,
+        tags: frontmatter.tags,
+        url: `/blog/${slug}`,
       };
     });
 }
@@ -95,7 +126,7 @@ function collectFaqEntries(contentRoot: string): SearchIndexEntry[] {
 }
 
 /**
- * guides / updates / FAQ からサイト内検索用 index を組み立てる。
+ * guides / blog / updates / FAQ からサイト内検索用 index を組み立てる。
  *
  * `scripts/generate-search-index.ts`（tsx / prebuild）からも import するため `server-only` は付けない。
  * Client Component から import しないこと。
@@ -105,6 +136,7 @@ export function collectSearchIndexEntries(
 ): SearchIndexEntry[] {
   return [
     ...collectGuideEntries(contentRoot),
+    ...collectBlogEntries(contentRoot),
     ...collectUpdateEntries(contentRoot),
     ...collectFaqEntries(contentRoot),
   ];
