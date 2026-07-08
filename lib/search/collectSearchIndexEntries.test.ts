@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 import { collectSearchIndexEntries } from "./collectSearchIndexEntries";
 
 describe("collectSearchIndexEntries", () => {
-  it("guides / updates / FAQ の検索 index を生成する", () => {
+  it("guides / blog / updates / FAQ の検索 index を生成する", () => {
     const entries = collectSearchIndexEntries();
 
     expect(entries.length).toBeGreaterThan(0);
     expect(entries.some((entry) => entry.type === "guide")).toBe(true);
+    expect(entries.some((entry) => entry.type === "blog")).toBe(true);
     expect(entries.some((entry) => entry.type === "update")).toBe(true);
     expect(entries.some((entry) => entry.type === "faq")).toBe(true);
   });

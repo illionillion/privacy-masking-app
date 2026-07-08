@@ -37,6 +37,7 @@ describe("SiteFooter", () => {
       "/faq"
     );
     expect(screen.getByRole("link", { name: "使い方ガイド" })).toHaveAttribute("href", "/guides");
+    expect(screen.getByRole("link", { name: "ブログ" })).toHaveAttribute("href", "/blog");
     expect(screen.getByRole("button", { name: "サイト内検索" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "更新情報" })).toHaveAttribute("href", "/updates");
     expect(screen.getByRole("link", { name: "マスキングツール" })).toHaveAttribute("href", "/app");
