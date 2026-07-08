@@ -21,6 +21,11 @@
 <priority>0.8</priority>
 </url>
 <url>
+<loc>https://fusely-app.pages.dev/blog</loc>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+<url>
 <loc>https://fusely-app.pages.dev/updates</loc>
 <changefreq>weekly</changefreq>
 <priority>0.7</priority>
@@ -47,6 +52,11 @@
 </url>
 <url>
 <loc>https://fusely-app.pages.dev/guides/settings</loc>
+<changefreq>monthly</changefreq>
+<priority>0.7</priority>
+</url>
+<url>
+<loc>https://fusely-app.pages.dev/blog/2026-07-08-event-photo-face-masking</loc>
 <changefreq>monthly</changefreq>
 <priority>0.7</priority>
 </url>

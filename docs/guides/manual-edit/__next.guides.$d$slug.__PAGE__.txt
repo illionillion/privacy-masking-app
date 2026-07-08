@@ -1,6 +1,6 @@
 1:"$Sreact.fragment"
-2:I[2709,["573","static/chunks/573-dc743d1af8dfaed0.js","235","static/chunks/235-f332fb7a9a6635e6.js","54","static/chunks/app/guides/%5Bslug%5D/page-534b296d917ed9c6.js"],"MarkdownContent"]
-4:I[2573,["573","static/chunks/573-dc743d1af8dfaed0.js","235","static/chunks/235-f332fb7a9a6635e6.js","54","static/chunks/app/guides/%5Bslug%5D/page-534b296d917ed9c6.js"],""]
+2:I[2709,["573","static/chunks/573-dc743d1af8dfaed0.js","235","static/chunks/235-f332fb7a9a6635e6.js","54","static/chunks/app/guides/%5Bslug%5D/page-c374ab0bed937bf7.js"],"MarkdownContent"]
+4:I[2573,["573","static/chunks/573-dc743d1af8dfaed0.js","235","static/chunks/235-f332fb7a9a6635e6.js","54","static/chunks/app/guides/%5Bslug%5D/page-c374ab0bed937bf7.js"],""]
 5:I[5017,[],"OutletBoundary"]
 6:"$Sreact.suspense"
 3:Ta0c,## 編集モードで手動で編集する
@@ -88,5 +88,5 @@
 
 `すべてクリア` を押すと、読み込んだ画像をまとめて削除できます。
 
-![すべてクリア](/guides/manual-edit/reset.png)0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","p",null,{"className":"text-xs font-semibold tracking-wide text-indigo-600","children":["ガイド ",2]}],["$","h1",null,{"className":"mt-2 text-2xl font-bold tracking-tight text-zinc-900","children":"手動での編集の仕方"}],["$","p",null,{"className":"mt-3 text-sm leading-relaxed text-zinc-600","children":"自動検出後にマスク範囲を追加・調整して、隠したい場所を手動で編集する方法を説明します。"}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":[["$","$L2",null,{"content":"$3"}],["$","p",null,{"className":"pt-2","children":["$","$L4",null,{"href":"/guides","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"使い方ガイド一覧へ戻る"}]}]]}]]}],null,["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"WG6RLbfE_qmecXfsMBuug"}
+![すべてクリア](/guides/manual-edit/reset.png)0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","p",null,{"className":"text-xs font-semibold tracking-wide text-indigo-600","children":["ガイド ",2]}],["$","h1",null,{"className":"mt-2 text-2xl font-bold tracking-tight text-zinc-900","children":"手動での編集の仕方"}],["$","p",null,{"className":"mt-3 text-sm leading-relaxed text-zinc-600","children":"自動検出後にマスク範囲を追加・調整して、隠したい場所を手動で編集する方法を説明します。"}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":[["$","$L2",null,{"content":"$3"}],["$","p",null,{"className":"pt-2","children":["$","$L4",null,{"href":"/guides","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"使い方ガイド一覧へ戻る"}]}]]}]]}],null,["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"lQSORqPw_Q52hDz_JujdS"}
 7:null

@@ -24,6 +24,19 @@
     "url": "/guides/settings"
   },
   {
+    "id": "blog:2026-07-08-event-photo-face-masking",
+    "type": "blog",
+    "title": "イベント写真を SNS に投稿する前に顔を隠すべき理由",
+    "summary": "イベントや集合写真を SNS に上げる前に、顔出しへの配慮と公開後のリスクを整理し、投稿前に確認したいチェックポイントをまとめます。",
+    "tags": [
+      "SNS",
+      "イベント写真",
+      "顔隠し",
+      "集合写真"
+    ],
+    "url": "/blog/2026-07-08-event-photo-face-masking"
+  },
+  {
     "id": "update:2026-04-24-image-upload-mobile-ux",
     "type": "update",
     "title": "画像アップロードの操作性改善とモバイル対応",
