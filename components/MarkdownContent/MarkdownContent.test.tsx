@@ -47,6 +47,7 @@ describe("MarkdownContent", () => {
 
     const heading = screen.getByRole("heading", { level: 2, name: "第1条（適用）" });
     expect(heading).toHaveAttribute("id", "第1条適用");
+    expect(heading).toHaveClass("scroll-mt-24");
   });
 
   it("details 記法を開閉ブロックとして表示する", () => {

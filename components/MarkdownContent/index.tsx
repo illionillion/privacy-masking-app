@@ -342,7 +342,7 @@ const markdownComponents: Components = {
     const text = getHeadingText(children);
     const id = markdownHeadingToId(text);
     return (
-      <h2 id={id} className="text-base font-semibold text-zinc-900">
+      <h2 id={id} className="scroll-mt-24 text-base font-semibold text-zinc-900">
         {children}
       </h2>
     );
