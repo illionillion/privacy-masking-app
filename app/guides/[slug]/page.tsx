@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MarkdownContent } from "@/components/MarkdownContent";
+import { MarkdownWithToc } from "@/components/MarkdownWithToc";
 import { buildPageMetadata } from "@/lib/buildPageMetadata";
+import { extractMarkdownH2Headings } from "@/lib/extractMarkdownH2Headings";
 import { isGuidePostNotFoundError } from "@/lib/guides/notFoundError";
 import { loadGuidePost, loadGuidePostSlugs } from "@/lib/guides/loadGuidePosts";
 
@@ -53,23 +55,29 @@ export default async function GuidePostPage({ params }: GuidePostPageProps) {
     throw error;
   }
 
+  const headings = extractMarkdownH2Headings(post.content);
+
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-10">
-      <p className="text-xs font-semibold tracking-wide text-indigo-600">ガイド {post.order}</p>
-      <h1 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900">{post.title}</h1>
-      <p className="mt-3 text-sm leading-relaxed text-zinc-600">{post.summary}</p>
-      <div className="mt-8 space-y-6 text-sm leading-relaxed text-zinc-700">
-        <MarkdownContent content={post.content} />
-        <p className="pt-2">
-          <Link
-            href="/guides"
-            className="font-medium text-indigo-600 underline-offset-2 hover:underline"
-          >
-            使い方ガイド一覧へ戻る
-          </Link>
-        </p>
-      </div>
-    </div>
+    <MarkdownWithToc
+      headings={headings}
+      header={
+        <>
+          <p className="text-xs font-semibold tracking-wide text-indigo-600">ガイド {post.order}</p>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900">{post.title}</h1>
+          <p className="mt-3 text-sm leading-relaxed text-zinc-600">{post.summary}</p>
+        </>
+      }
+    >
+      <MarkdownContent content={post.content} />
+      <p className="pt-2">
+        <Link
+          href="/guides"
+          className="font-medium text-indigo-600 underline-offset-2 hover:underline"
+        >
+          使い方ガイド一覧へ戻る
+        </Link>
+      </p>
+    </MarkdownWithToc>
   );
 }
 

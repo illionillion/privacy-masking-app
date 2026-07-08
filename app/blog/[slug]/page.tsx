@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { LegalPageLayout } from "@/components/LegalPageLayout";
 import { MarkdownContent } from "@/components/MarkdownContent";
+import { MarkdownWithToc } from "@/components/MarkdownWithToc";
 import { isBlogPostNotFoundError } from "@/lib/blog/notFoundError";
 import { loadBlogPost, loadBlogPostSlugs } from "@/lib/blog/loadBlogPosts";
 import { buildPageMetadata } from "@/lib/buildPageMetadata";
+import { extractMarkdownH2Headings } from "@/lib/extractMarkdownH2Headings";
 import { formatUpdateDate } from "@/lib/formatUpdateDate";
 
 type BlogPostPageProps = {
@@ -55,21 +56,33 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     throw error;
   }
 
+  const headings = extractMarkdownH2Headings(post.content);
+
   return (
-    <LegalPageLayout title={post.title} dateText={formatUpdateDate(post.date)} dateLabel="公開日">
-      <p className="text-xs font-semibold tracking-wide text-indigo-600">{post.category}</p>
-      {post.tags.length > 0 ? (
-        <ul className="flex flex-wrap gap-2">
-          {post.tags.map((tag) => (
-            <li
-              key={tag}
-              className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600"
-            >
-              {tag}
-            </li>
-          ))}
-        </ul>
-      ) : null}
+    <MarkdownWithToc
+      headings={headings}
+      header={
+        <>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">{post.title}</h1>
+          <p className="mt-2 text-sm text-zinc-500">公開日: {formatUpdateDate(post.date)}</p>
+          <p className="mt-3 text-xs font-semibold tracking-wide text-indigo-600">
+            {post.category}
+          </p>
+          {post.tags.length > 0 ? (
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {post.tags.map((tag) => (
+                <li
+                  key={tag}
+                  className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600"
+                >
+                  {tag}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </>
+      }
+    >
       <MarkdownContent content={post.content} />
       <p className="pt-2">
         <Link
@@ -79,7 +92,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           ブログ一覧へ戻る
         </Link>
       </p>
-    </LegalPageLayout>
+    </MarkdownWithToc>
   );
 }
 

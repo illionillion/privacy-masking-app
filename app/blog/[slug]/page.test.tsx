@@ -16,7 +16,8 @@ vi.mock("@/lib/blog/loadBlogPosts", () => ({
       pageTitle: "イベント写真を SNS に投稿する前に顔を隠すべき理由 | ブログ | 伏せ太郎（Fusely）",
       description: "投稿前のチェックポイントをまとめます",
       canonicalPath: "blog/2026-07-08-event-photo-face-masking",
-      content: "投稿前チェックリストを確認しましょう。\n\n[ブログ一覧へ](/blog)",
+      content:
+        "## 投稿前チェックリスト\n\n確認しましょう。\n\n## まとめ\n\n公開前に見直しましょう。",
     };
   }),
   loadBlogPostSlugs: vi.fn(() => ["2026-07-08-event-photo-face-masking"]),
@@ -40,6 +41,11 @@ describe("BlogPostPage", () => {
     expect(screen.getByText("公開日: 2026年7月8日")).toBeInTheDocument();
     expect(screen.getByText("プライバシー")).toBeInTheDocument();
     expect(screen.getByText("SNS")).toBeInTheDocument();
+    expect(screen.getAllByRole("navigation", { name: "目次" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "投稿前チェックリスト" })[0]).toHaveAttribute(
+      "href",
+      "#投稿前チェックリスト"
+    );
     expect(screen.getByRole("link", { name: "ブログ一覧へ戻る" })).toHaveAttribute("href", "/blog");
   });
 });
