@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * 見出し id へスクロールする。sticky Header を考慮するため h2 の scroll-margin に任せる。
  */

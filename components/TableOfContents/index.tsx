@@ -73,6 +73,10 @@ type TocLinkListProps = {
  */
 function TocLinkList({ headings, activeId }: TocLinkListProps) {
   const handleClick = (event: MouseEvent<HTMLAnchorElement>, id: string): void => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+      return;
+    }
+
     event.preventDefault();
     navigateToHeadingId(id);
   };
