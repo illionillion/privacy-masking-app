@@ -415,7 +415,7 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
     () => extractMarkdownH2Headings(content).map((heading) => heading.id),
     [content]
   );
-  const components = useMemo(() => createMarkdownComponents(h2Ids), [h2Ids]);
+  const components = createMarkdownComponents(h2Ids);
 
   return (
     <div className="space-y-6">
