@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { ChevronDown } from "lucide-react";
 import type { MouseEvent } from "react";
 import type { MarkdownHeading } from "@/lib/extractMarkdownH2Headings";
-import { scrollToHeadingId } from "@/lib/scrollToHeadingId";
+import { navigateToHeadingId } from "@/lib/scrollToHeadingId";
 
 type TableOfContentsProps = {
   headings: MarkdownHeading[];
@@ -74,7 +74,7 @@ type TocLinkListProps = {
 function TocLinkList({ headings, activeId }: TocLinkListProps) {
   const handleClick = (event: MouseEvent<HTMLAnchorElement>, id: string): void => {
     event.preventDefault();
-    scrollToHeadingId(id);
+    navigateToHeadingId(id);
   };
 
   return (

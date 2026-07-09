@@ -4,10 +4,10 @@ import { describe, expect, it, vi } from "vitest";
 import { TableOfContents } from "./index";
 
 vi.mock("@/lib/scrollToHeadingId", () => ({
-  scrollToHeadingId: vi.fn(() => true),
+  navigateToHeadingId: vi.fn(),
 }));
 
-import { scrollToHeadingId } from "@/lib/scrollToHeadingId";
+import { navigateToHeadingId } from "@/lib/scrollToHeadingId";
 
 describe("TableOfContents", () => {
   it("見出しが0件なら何も描画しない", () => {
@@ -57,7 +57,7 @@ describe("TableOfContents", () => {
     expect(document.querySelector("details")).toBeInTheDocument();
   });
 
-  it("リンククリックで scrollToHeadingId を呼ぶ", async () => {
+  it("リンククリックで navigateToHeadingId を呼ぶ", async () => {
     const user = userEvent.setup();
 
     render(
@@ -72,6 +72,6 @@ describe("TableOfContents", () => {
 
     await user.click(screen.getByRole("link", { name: "まとめ" }));
 
-    expect(scrollToHeadingId).toHaveBeenCalledWith("まとめ");
+    expect(navigateToHeadingId).toHaveBeenCalledWith("まとめ");
   });
 });

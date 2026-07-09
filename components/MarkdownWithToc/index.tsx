@@ -4,7 +4,8 @@ import clsx from "clsx";
 import { useEffect, useMemo, type ReactNode } from "react";
 import { TableOfContents } from "@/components/TableOfContents";
 import type { MarkdownHeading } from "@/lib/extractMarkdownH2Headings";
-import { scrollToHeadingId } from "@/lib/scrollToHeadingId";
+import { decodeLocationHash } from "@/lib/decodeLocationHash";
+import { navigateToHeadingId } from "@/lib/scrollToHeadingId";
 import { useActiveHeadingId } from "@/lib/useActiveHeadingId";
 
 type MarkdownWithTocProps = {
@@ -38,21 +39,9 @@ export function MarkdownWithToc({ headings, header, children }: MarkdownWithTocP
       return;
     }
 
-    const targetId = decodeURIComponent(hash);
-    let attempts = 0;
+    const targetId = decodeLocationHash(hash);
 
-    const scrollToHash = (): void => {
-      if (scrollToHeadingId(targetId)) {
-        return;
-      }
-
-      attempts += 1;
-      if (attempts < 60) {
-        requestAnimationFrame(scrollToHash);
-      }
-    };
-
-    requestAnimationFrame(scrollToHash);
+    navigateToHeadingId(targetId);
   }, [showToc, headingIdsKey]);
 
   return (

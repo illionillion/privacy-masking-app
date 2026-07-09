@@ -5,6 +5,22 @@ export type MarkdownHeading = {
   text: string;
 };
 
+/** ATX 形式 h2（先頭インデント最大3スペース・末尾の閉じ `##` に対応） */
+const ATX_H2_PATTERN = /^( {0,3})##(?!#)\s+(.+?)(?:\s+#+\s*)?$/;
+
+/**
+ * ATX 見出し行から h2 の表示テキストを取り出す。
+ */
+function parseAtxH2Line(line: string): string | null {
+  const match = ATX_H2_PATTERN.exec(line);
+  if (!match) {
+    return null;
+  }
+
+  const text = match[2]!.trim();
+  return text.length > 0 ? text : null;
+}
+
 /**
  * Markdown 本文から ATX 形式の h2（`##`）を抽出する。
  *
@@ -26,13 +42,8 @@ export function extractMarkdownH2Headings(content: string): MarkdownHeading[] {
       continue;
     }
 
-    const match = /^##\s+(.+)$/.exec(line);
-    if (!match) {
-      continue;
-    }
-
-    const text = match[1]!.trim();
-    if (text.length === 0) {
+    const text = parseAtxH2Line(line);
+    if (text === null) {
       continue;
     }
 

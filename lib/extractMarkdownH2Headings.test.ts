@@ -41,4 +41,37 @@ describe("extractMarkdownH2Headings", () => {
 
     expect(headings).toEqual([{ text: "対象", id: "対象" }]);
   });
+
+  it("先頭インデント付き h2 を抽出する", () => {
+    const headings = extractMarkdownH2Headings(`   ## 先頭インデント
+
+## 通常
+`);
+
+    expect(headings).toEqual([
+      { text: "先頭インデント", id: "先頭インデント" },
+      { text: "通常", id: "通常" },
+    ]);
+  });
+
+  it("閉じ ## 付き h2 から見出しテキストだけを取り出す", () => {
+    const headings = extractMarkdownH2Headings(`## 閉じ記法 ##
+
+## 通常
+`);
+
+    expect(headings).toEqual([
+      { text: "閉じ記法", id: "閉じ記法" },
+      { text: "通常", id: "通常" },
+    ]);
+  });
+
+  it("インデント4スペース以上の行は h2 として扱わない", () => {
+    const headings = extractMarkdownH2Headings(`    ## コードブロック相当
+
+## 対象
+`);
+
+    expect(headings).toEqual([{ text: "対象", id: "対象" }]);
+  });
 });
