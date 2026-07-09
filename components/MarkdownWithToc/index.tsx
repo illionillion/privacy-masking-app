@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from "clsx";
 import { useEffect, useMemo, type ReactNode } from "react";
 import { TableOfContents } from "@/components/TableOfContents";
 import type { MarkdownHeading } from "@/lib/extractMarkdownH2Headings";
@@ -55,11 +56,11 @@ export function MarkdownWithToc({ headings, header, children }: MarkdownWithTocP
   }, [showToc, headingIdsKey]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10">
+    <div className={clsx(["mx-auto w-full px-4 py-10", showToc ? "max-w-5xl" : "max-w-3xl"])}>
       <div
         className={
           showToc
-            ? "lg:grid lg:grid-cols-[minmax(0,1fr)_14rem] lg:items-start lg:gap-10"
+            ? "lg:grid lg:grid-cols-[minmax(0,48rem)_11rem] lg:items-start lg:gap-8"
             : undefined
         }
       >
