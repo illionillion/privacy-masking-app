@@ -8,7 +8,7 @@ import { scrollToHeadingId } from "@/lib/scrollToHeadingId";
 import { useActiveHeadingId } from "@/lib/useActiveHeadingId";
 
 type MarkdownWithTocProps = {
-  /** 抽出済みの h2 見出し（2件未満なら TOC は出さない） */
+  /** 抽出済みの h2 見出し（1件以上あれば TOC を出す） */
   headings: MarkdownHeading[];
   /** ページ見出しブロック（タイトル・メタ情報など） */
   header: ReactNode;
@@ -23,7 +23,7 @@ type MarkdownWithTocProps = {
  * 現在位置ハイライト用の Observer は 1 箇所で共有する。
  */
 export function MarkdownWithToc({ headings, header, children }: MarkdownWithTocProps) {
-  const showToc = headings.length >= 2;
+  const showToc = headings.length >= 1;
   const headingIds = useMemo(() => headings.map((heading) => heading.id), [headings]);
   const headingIdsKey = headingIds.join("\0");
   const activeId = useActiveHeadingId(showToc ? headingIds : []);

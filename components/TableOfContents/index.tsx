@@ -17,7 +17,7 @@ type TableOfContentsProps = {
  * Markdown の h2 目次リンク一覧。現在位置をハイライトする。
  */
 export function TableOfContents({ headings, activeId, collapsible = false }: TableOfContentsProps) {
-  if (headings.length < 2) {
+  if (headings.length === 0) {
     return null;
   }
 

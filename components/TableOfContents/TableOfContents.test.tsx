@@ -10,12 +10,16 @@ vi.mock("@/lib/scrollToHeadingId", () => ({
 import { scrollToHeadingId } from "@/lib/scrollToHeadingId";
 
 describe("TableOfContents", () => {
-  it("見出しが2件未満なら何も描画しない", () => {
-    const { container } = render(
-      <TableOfContents headings={[{ id: "ひとつ", text: "ひとつ" }]} activeId="ひとつ" />
-    );
+  it("見出しが0件なら何も描画しない", () => {
+    const { container } = render(<TableOfContents headings={[]} activeId={null} />);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("見出しが1件でもアンカーリンクを表示する", () => {
+    render(<TableOfContents headings={[{ id: "ひとつ", text: "ひとつ" }]} activeId="ひとつ" />);
+
+    expect(screen.getByRole("link", { name: "ひとつ" })).toHaveAttribute("href", "#ひとつ");
   });
 
   it("見出しへのアンカーリンクを表示する", () => {

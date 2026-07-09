@@ -7,7 +7,7 @@ vi.mock("@/lib/useActiveHeadingId", () => ({
 }));
 
 describe("MarkdownWithToc", () => {
-  it("見出しが2件以上なら目次を表示する", () => {
+  it("見出しが1件以上なら目次を表示する", () => {
     render(
       <MarkdownWithToc
         headings={[
@@ -25,13 +25,23 @@ describe("MarkdownWithToc", () => {
     expect(screen.getByText("本文")).toBeInTheDocument();
   });
 
-  it("見出しが1件以下なら目次を出さない", () => {
+  it("見出しが0件なら目次を出さない", () => {
+    render(
+      <MarkdownWithToc headings={[]} header={<h1>短い記事</h1>}>
+        <p>本文</p>
+      </MarkdownWithToc>
+    );
+
+    expect(screen.queryByRole("navigation", { name: "目次" })).not.toBeInTheDocument();
+  });
+
+  it("見出しが1件でも目次を表示する", () => {
     render(
       <MarkdownWithToc headings={[{ id: "ひとつ", text: "ひとつ" }]} header={<h1>短い記事</h1>}>
         <p>本文</p>
       </MarkdownWithToc>
     );
 
-    expect(screen.queryByRole("navigation", { name: "目次" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("navigation", { name: "目次" }).length).toBeGreaterThan(0);
   });
 });
