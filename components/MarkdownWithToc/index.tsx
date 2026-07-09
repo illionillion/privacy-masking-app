@@ -40,9 +40,12 @@ export function MarkdownWithToc({ headings, header, children }: MarkdownWithTocP
     }
 
     const targetId = decodeLocationHash(hash);
+    if (!headingIds.includes(targetId)) {
+      return;
+    }
 
     navigateToHeadingId(targetId);
-  }, [showToc, headingIdsKey]);
+  }, [showToc, headingIds, headingIdsKey]);
 
   return (
     <div className={clsx(["mx-auto w-full px-4 py-10", showToc ? "max-w-5xl" : "max-w-3xl"])}>

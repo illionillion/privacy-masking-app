@@ -50,6 +50,14 @@ describe("MarkdownContent", () => {
     expect(heading).toHaveClass("scroll-mt-24");
   });
 
+  it("重複 h2 には連番 id を付与する", () => {
+    render(<MarkdownContent content={["## まとめ", "", "## まとめ"].join("\n")} />);
+
+    const headings = screen.getAllByRole("heading", { level: 2, name: "まとめ" });
+    expect(headings[0]).toHaveAttribute("id", "まとめ");
+    expect(headings[1]).toHaveAttribute("id", "まとめ-2");
+  });
+
   it("details 記法を開閉ブロックとして表示する", () => {
     render(
       <MarkdownContent

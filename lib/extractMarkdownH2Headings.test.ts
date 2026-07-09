@@ -74,4 +74,18 @@ describe("extractMarkdownH2Headings", () => {
 
     expect(headings).toEqual([{ text: "対象", id: "対象" }]);
   });
+
+  it("重複見出しには連番サフィックス付き id を付与する", () => {
+    const headings = extractMarkdownH2Headings(`## まとめ
+
+本文
+
+## まとめ
+`);
+
+    expect(headings).toEqual([
+      { text: "まとめ", id: "まとめ" },
+      { text: "まとめ", id: "まとめ-2" },
+    ]);
+  });
 });

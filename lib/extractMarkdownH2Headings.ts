@@ -1,4 +1,4 @@
-import { markdownHeadingToId } from "@/lib/markdownHeadingId";
+import { assignUniqueMarkdownHeadingId } from "@/lib/markdownHeadingId";
 
 export type MarkdownHeading = {
   id: string;
@@ -29,6 +29,7 @@ function parseAtxH2Line(line: string): string | null {
  */
 export function extractMarkdownH2Headings(content: string): MarkdownHeading[] {
   const headings: MarkdownHeading[] = [];
+  const usedIds = new Set<string>();
   const lines = content.split("\n");
   let inCodeFence = false;
 
@@ -49,7 +50,7 @@ export function extractMarkdownH2Headings(content: string): MarkdownHeading[] {
 
     headings.push({
       text,
-      id: markdownHeadingToId(text),
+      id: assignUniqueMarkdownHeadingId(text, usedIds),
     });
   }
 

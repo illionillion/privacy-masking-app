@@ -6,13 +6,14 @@ import Link from "next/link";
 import clsx from "clsx";
 import { Maximize2, X } from "lucide-react";
 import type { KeyboardEvent, ReactNode } from "react";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import { createPortal } from "react-dom";
 import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
 import { markdownHeadingToId } from "@/lib/markdownHeadingId";
+import { extractMarkdownH2Headings } from "@/lib/extractMarkdownH2Headings";
 
 const LINK_CLASS = "font-medium text-indigo-600 underline-offset-2 hover:underline";
 const DETAILS_DIRECTIVE_PATTERN = /^(:{3,})details[ \t]+(.+)$/gm;
@@ -337,16 +338,7 @@ function visitMarkdownAst(node: MarkdownAstNode, visitor: (node: MarkdownAstNode
   });
 }
 
-const markdownComponents: Components = {
-  h2: ({ children }) => {
-    const text = getHeadingText(children);
-    const id = markdownHeadingToId(text);
-    return (
-      <h2 id={id} className="scroll-mt-24 text-base font-semibold text-zinc-900">
-        {children}
-      </h2>
-    );
-  },
+const baseMarkdownComponents: Components = {
   p: ({ children }) => <p>{children}</p>,
   ul: ({ children }) => <ul className="list-inside list-disc space-y-1 pl-1">{children}</ul>,
   li: ({ children }) => <li>{children}</li>,
@@ -393,16 +385,43 @@ const markdownComponents: Components = {
 };
 
 /**
+ * h2 用 id 一覧に沿って Markdown コンポーネントを組み立てる。
+ */
+function createMarkdownComponents(h2Ids: string[]): Components {
+  let h2Index = 0;
+
+  return {
+    ...baseMarkdownComponents,
+    h2: ({ children }) => {
+      const text = getHeadingText(children);
+      const id = h2Ids[h2Index] ?? markdownHeadingToId(text);
+      h2Index += 1;
+
+      return (
+        <h2 id={id} className="scroll-mt-24 text-base font-semibold text-zinc-900">
+          {children}
+        </h2>
+      );
+    },
+  };
+}
+
+/**
  * Markdown 本文をサイト共通デザインに合わせてレンダリングする。
  */
 export function MarkdownContent({ content }: MarkdownContentProps) {
   const normalizedContent = normalizeDetailsDirective(stripMarkdownComments(content));
+  const h2Ids = useMemo(
+    () => extractMarkdownH2Headings(content).map((heading) => heading.id),
+    [content]
+  );
+  const components = useMemo(() => createMarkdownComponents(h2Ids), [h2Ids]);
 
   return (
     <div className="space-y-6">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkDirective, remarkDetailsDirective]}
-        components={markdownComponents}
+        components={components}
       >
         {normalizedContent}
       </ReactMarkdown>

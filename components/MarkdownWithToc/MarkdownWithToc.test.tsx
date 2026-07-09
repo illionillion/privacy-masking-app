@@ -6,6 +6,12 @@ vi.mock("@/lib/useActiveHeadingId", () => ({
   useActiveHeadingId: vi.fn(() => "まとめ"),
 }));
 
+vi.mock("@/lib/scrollToHeadingId", () => ({
+  navigateToHeadingId: vi.fn(),
+}));
+
+import { navigateToHeadingId } from "@/lib/scrollToHeadingId";
+
 describe("MarkdownWithToc", () => {
   it("見出しが1件以上なら目次を表示する", () => {
     render(
@@ -43,5 +49,18 @@ describe("MarkdownWithToc", () => {
     );
 
     expect(screen.getAllByRole("navigation", { name: "目次" }).length).toBeGreaterThan(0);
+  });
+
+  it("TOC 対象外の hash では navigateToHeadingId を呼ばない", () => {
+    window.location.hash = "#unknown-section";
+
+    render(
+      <MarkdownWithToc headings={[{ id: "まとめ", text: "まとめ" }]} header={<h1>記事タイトル</h1>}>
+        <p>本文</p>
+      </MarkdownWithToc>
+    );
+
+    expect(navigateToHeadingId).not.toHaveBeenCalled();
+    window.location.hash = "";
   });
 });
