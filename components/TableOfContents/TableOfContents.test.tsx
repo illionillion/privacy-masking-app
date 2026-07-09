@@ -1,6 +1,13 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
 import { TableOfContents } from "./index";
+
+vi.mock("@/lib/scrollToHeadingId", () => ({
+  scrollToHeadingId: vi.fn(() => true),
+}));
+
+import { scrollToHeadingId } from "@/lib/scrollToHeadingId";
 
 describe("TableOfContents", () => {
   it("見出しが2件未満なら何も描画しない", () => {
@@ -44,5 +51,23 @@ describe("TableOfContents", () => {
 
     expect(screen.getByText("目次").closest("summary")).toBeInTheDocument();
     expect(document.querySelector("details")).toBeInTheDocument();
+  });
+
+  it("リンククリックで scrollToHeadingId を呼ぶ", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <TableOfContents
+        headings={[
+          { id: "投稿前チェックリスト", text: "投稿前チェックリスト" },
+          { id: "まとめ", text: "まとめ" },
+        ]}
+        activeId="投稿前チェックリスト"
+      />
+    );
+
+    await user.click(screen.getByRole("link", { name: "まとめ" }));
+
+    expect(scrollToHeadingId).toHaveBeenCalledWith("まとめ");
   });
 });

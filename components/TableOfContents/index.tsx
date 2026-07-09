@@ -2,7 +2,9 @@
 
 import clsx from "clsx";
 import { ChevronDown } from "lucide-react";
+import type { MouseEvent } from "react";
 import type { MarkdownHeading } from "@/lib/extractMarkdownH2Headings";
+import { scrollToHeadingId } from "@/lib/scrollToHeadingId";
 
 type TableOfContentsProps = {
   headings: MarkdownHeading[];
@@ -70,6 +72,11 @@ type TocLinkListProps = {
  * TOC のリンク一覧を描画する。
  */
 function TocLinkList({ headings, activeId }: TocLinkListProps) {
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>, id: string): void => {
+    event.preventDefault();
+    scrollToHeadingId(id);
+  };
+
   return (
     <ol className="space-y-1">
       {headings.map((heading) => {
@@ -78,6 +85,9 @@ function TocLinkList({ headings, activeId }: TocLinkListProps) {
           <li key={heading.id}>
             <a
               href={`#${heading.id}`}
+              onClick={(event) => {
+                handleClick(event, heading.id);
+              }}
               className={clsx([
                 "block",
                 "rounded-md",

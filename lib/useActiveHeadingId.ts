@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 
+const MAX_OBSERVER_SETUP_ATTEMPTS = 60;
+
 /**
  * 画面内で最も上にある見出し id を IntersectionObserver で追跡する。
  *
- * sticky Header 分のオフセットを rootMargin で考慮する。
- * 見出し一覧が変わった直後は先頭を仮の現在位置とし、Observer のコールバックで更新する。
+ * Markdown 本文は Client Component のため、見出し DOM の出現を待ってから監視を始める。
  */
 export function useActiveHeadingId(headingIds: string[]): string | null {
   const headingIdsKey = headingIds.join("\0");
@@ -25,46 +26,63 @@ export function useActiveHeadingId(headingIds: string[]): string | null {
       return;
     }
 
-    const elements = ids
-      .map((id) => document.getElementById(id))
-      .filter((element): element is HTMLElement => element !== null);
+    let cancelled = false;
+    let observer: IntersectionObserver | null = null;
+    let attempts = 0;
 
-    if (elements.length === 0) {
-      return;
-    }
-
-    const visibleIds = new Set<string>();
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!(entry.target instanceof HTMLElement) || !entry.target.id) {
-            continue;
-          }
-          if (entry.isIntersecting) {
-            visibleIds.add(entry.target.id);
-          } else {
-            visibleIds.delete(entry.target.id);
-          }
-        }
-
-        const nextActive = ids.find((id) => visibleIds.has(id));
-        if (nextActive) {
-          setObserved({ key: headingIdsKey, id: nextActive });
-        }
-      },
-      {
-        rootMargin: "-80px 0px -55% 0px",
-        threshold: [0, 1],
+    const setupObserver = (): void => {
+      if (cancelled) {
+        return;
       }
-    );
 
-    for (const element of elements) {
-      observer.observe(element);
-    }
+      const elements = ids
+        .map((id) => document.getElementById(id))
+        .filter((element): element is HTMLElement => element !== null);
+
+      if (elements.length === 0) {
+        attempts += 1;
+        if (attempts < MAX_OBSERVER_SETUP_ATTEMPTS) {
+          requestAnimationFrame(setupObserver);
+        }
+        return;
+      }
+
+      const visibleIds = new Set<string>();
+
+      observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!(entry.target instanceof HTMLElement) || !entry.target.id) {
+              continue;
+            }
+            if (entry.isIntersecting) {
+              visibleIds.add(entry.target.id);
+            } else {
+              visibleIds.delete(entry.target.id);
+            }
+          }
+
+          const nextActive = ids.find((id) => visibleIds.has(id));
+          if (nextActive) {
+            setObserved({ key: headingIdsKey, id: nextActive });
+          }
+        },
+        {
+          rootMargin: "-80px 0px -55% 0px",
+          threshold: [0, 1],
+        }
+      );
+
+      for (const element of elements) {
+        observer.observe(element);
+      }
+    };
+
+    setupObserver();
 
     return () => {
-      observer.disconnect();
+      cancelled = true;
+      observer?.disconnect();
     };
   }, [headingIdsKey]);
 

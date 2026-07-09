@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import { TableOfContents } from "@/components/TableOfContents";
 import type { MarkdownHeading } from "@/lib/extractMarkdownH2Headings";
+import { scrollToHeadingId } from "@/lib/scrollToHeadingId";
 import { useActiveHeadingId } from "@/lib/useActiveHeadingId";
 
 type MarkdownWithTocProps = {
@@ -23,7 +24,35 @@ type MarkdownWithTocProps = {
 export function MarkdownWithToc({ headings, header, children }: MarkdownWithTocProps) {
   const showToc = headings.length >= 2;
   const headingIds = useMemo(() => headings.map((heading) => heading.id), [headings]);
+  const headingIdsKey = headingIds.join("\0");
   const activeId = useActiveHeadingId(showToc ? headingIds : []);
+
+  useEffect(() => {
+    if (!showToc || typeof window === "undefined") {
+      return;
+    }
+
+    const hash = window.location.hash.slice(1);
+    if (hash.length === 0) {
+      return;
+    }
+
+    const targetId = decodeURIComponent(hash);
+    let attempts = 0;
+
+    const scrollToHash = (): void => {
+      if (scrollToHeadingId(targetId)) {
+        return;
+      }
+
+      attempts += 1;
+      if (attempts < 60) {
+        requestAnimationFrame(scrollToHash);
+      }
+    };
+
+    requestAnimationFrame(scrollToHash);
+  }, [showToc, headingIdsKey]);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10">
