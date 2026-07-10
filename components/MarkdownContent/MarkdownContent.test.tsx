@@ -156,6 +156,17 @@ describe("MarkdownContent", () => {
     expect(screen.queryByText("画像 TODO")).not.toBeInTheDocument();
   });
 
+  it("HTML コメント内の h2 は id 割り当てに含めない", () => {
+    render(
+      <MarkdownContent
+        content={["<!--", "## コメント内見出し", "-->", "## 実際の見出し"].join("\n")}
+      />
+    );
+
+    const heading = screen.getByRole("heading", { level: 2, name: "実際の見出し" });
+    expect(heading).toHaveAttribute("id", "実際の見出し");
+  });
+
   it("テーブルに表示用スタイルを適用する", () => {
     render(<MarkdownContent content={["| 左 | 右 |", "| --- | --- |", "| A | B |"].join("\n")} />);
 

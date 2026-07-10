@@ -4,6 +4,7 @@ import { MarkdownContent } from "@/components/MarkdownContent";
 import { MarkdownWithToc } from "@/components/MarkdownWithToc";
 import { buildPageMetadata } from "@/lib/buildPageMetadata";
 import { extractMarkdownH2Headings } from "@/lib/extractMarkdownH2Headings";
+import { normalizeMarkdownContent } from "@/lib/normalizeMarkdownContent";
 import { isGuidePostNotFoundError } from "@/lib/guides/notFoundError";
 import { loadGuidePost, loadGuidePostSlugs } from "@/lib/guides/loadGuidePosts";
 
@@ -55,7 +56,7 @@ export default async function GuidePostPage({ params }: GuidePostPageProps) {
     throw error;
   }
 
-  const headings = extractMarkdownH2Headings(post.content);
+  const headings = extractMarkdownH2Headings(normalizeMarkdownContent(post.content));
 
   return (
     <MarkdownWithToc

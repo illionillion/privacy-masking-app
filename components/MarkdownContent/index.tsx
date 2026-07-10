@@ -14,10 +14,9 @@ import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
 import { markdownHeadingToId } from "@/lib/markdownHeadingId";
 import { extractMarkdownH2Headings } from "@/lib/extractMarkdownH2Headings";
+import { normalizeMarkdownContent } from "@/lib/normalizeMarkdownContent";
 
 const LINK_CLASS = "font-medium text-indigo-600 underline-offset-2 hover:underline";
-const DETAILS_DIRECTIVE_PATTERN = /^(:{3,})details[ \t]+(.+)$/gm;
-const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g;
 const IMAGE_SIZE_HASHES = ["small", "medium"] as const;
 
 type MarkdownContentProps = {
@@ -43,23 +42,6 @@ type MarkdownAstNode = {
     hProperties?: Record<string, string | string[]>;
   };
 };
-
-/**
- * Qiita 風の `:::details タイトル` を remark-directive のラベル構文へ正規化する。
- */
-function normalizeDetailsDirective(content: string): string {
-  return content.replace(DETAILS_DIRECTIVE_PATTERN, (_, fence: string, rawTitle: string) => {
-    const title = rawTitle.trim();
-    return title.length > 0 ? `${fence}details[${title}]` : `${fence}details`;
-  });
-}
-
-/**
- * 執筆メモ用の HTML コメントを公開本文から取り除く。
- */
-function stripMarkdownComments(content: string): string {
-  return content.replace(HTML_COMMENT_PATTERN, "");
-}
 
 function getHeadingText(children: ReactNode): string {
   if (typeof children === "string") {
@@ -410,10 +392,10 @@ function createMarkdownComponents(h2Ids: string[]): Components {
  * Markdown 本文をサイト共通デザインに合わせてレンダリングする。
  */
 export function MarkdownContent({ content }: MarkdownContentProps) {
-  const normalizedContent = normalizeDetailsDirective(stripMarkdownComments(content));
+  const normalizedContent = normalizeMarkdownContent(content);
   const h2Ids = useMemo(
-    () => extractMarkdownH2Headings(content).map((heading) => heading.id),
-    [content]
+    () => extractMarkdownH2Headings(normalizedContent).map((heading) => heading.id),
+    [normalizedContent]
   );
   const components = createMarkdownComponents(h2Ids);
 

@@ -25,7 +25,7 @@ function parseAtxH2Line(line: string): string | null {
  * Markdown 本文から ATX 形式の h2（`##`）を抽出する。
  *
  * コードフェンス内の行は無視する。`MarkdownContent` が付与する id と揃えるため
- * `markdownHeadingToId` を使う。
+ * `assignUniqueMarkdownHeadingId` を使う（重複見出しは `-2` サフィックス）。
  */
 export function extractMarkdownH2Headings(content: string): MarkdownHeading[] {
   const headings: MarkdownHeading[] = [];

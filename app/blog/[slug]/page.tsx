@@ -6,6 +6,7 @@ import { isBlogPostNotFoundError } from "@/lib/blog/notFoundError";
 import { loadBlogPost, loadBlogPostSlugs } from "@/lib/blog/loadBlogPosts";
 import { buildPageMetadata } from "@/lib/buildPageMetadata";
 import { extractMarkdownH2Headings } from "@/lib/extractMarkdownH2Headings";
+import { normalizeMarkdownContent } from "@/lib/normalizeMarkdownContent";
 import { formatUpdateDate } from "@/lib/formatUpdateDate";
 
 type BlogPostPageProps = {
@@ -56,7 +57,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     throw error;
   }
 
-  const headings = extractMarkdownH2Headings(post.content);
+  const headings = extractMarkdownH2Headings(normalizeMarkdownContent(post.content));
 
   return (
     <MarkdownWithToc
