@@ -1,6 +1,6 @@
 1:"$Sreact.fragment"
-2:I[2709,["573","static/chunks/573-dc743d1af8dfaed0.js","235","static/chunks/235-f332fb7a9a6635e6.js","229","static/chunks/app/updates/%5Bslug%5D/page-c374ab0bed937bf7.js"],"MarkdownContent"]
-4:I[2573,["573","static/chunks/573-dc743d1af8dfaed0.js","235","static/chunks/235-f332fb7a9a6635e6.js","229","static/chunks/app/updates/%5Bslug%5D/page-c374ab0bed937bf7.js"],""]
+2:I[7170,["573","static/chunks/573-dc743d1af8dfaed0.js","235","static/chunks/235-f332fb7a9a6635e6.js","229","static/chunks/app/updates/%5Bslug%5D/page-7aae01128a8b9202.js"],"MarkdownContent"]
+4:I[2573,["573","static/chunks/573-dc743d1af8dfaed0.js","235","static/chunks/235-f332fb7a9a6635e6.js","229","static/chunks/app/updates/%5Bslug%5D/page-7aae01128a8b9202.js"],""]
 5:I[5017,[],"OutletBoundary"]
 6:"$Sreact.suspense"
 3:Tb18,メールアドレスや電話番号は従来どおり自動検出されますが、**人名のように決まったパターンに当てはまらない文字列** は、これまで手動マスクが中心でした。今回 **マスク語句** を追加し、あらかじめ登録した文字列が OCR 結果に含まれていれば、自動でマスク候補に載るようにしました。
@@ -32,5 +32,5 @@
 - 検出漏れ・誤検出は起こり得るため、公開前の目視確認は引き続き必要です
 - 登録は最大 50 件・1 語 100 文字まで
 
-開発の経緯は [Issue #89](https://github.com/illionillion/privacy-masking-app/issues/89) を参照してください。Pull Request 公開後に本記事へリンクを追記します。0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"カスタムマスク語句（人名・社名の登録）を追加"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["公開日",": ","2026年6月11日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":[["$","$L2",null,{"content":"$3"}],["$","p",null,{"className":"pt-2","children":["$","$L4",null,{"href":"/updates","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"更新情報一覧へ戻る"}]}]]}]]}],null,["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"lQSORqPw_Q52hDz_JujdS"}
+開発の経緯は [Issue #89](https://github.com/illionillion/privacy-masking-app/issues/89) を参照してください。Pull Request 公開後に本記事へリンクを追記します。0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"カスタムマスク語句（人名・社名の登録）を追加"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["公開日",": ","2026年6月11日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":[["$","$L2",null,{"content":"$3"}],["$","p",null,{"className":"pt-2","children":["$","$L4",null,{"href":"/updates","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"更新情報一覧へ戻る"}]}]]}]]}],null,["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"pf525YF3C69NLnH_JLBXO"}
 7:null

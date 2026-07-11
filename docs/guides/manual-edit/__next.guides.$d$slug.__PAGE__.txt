@@ -1,9 +1,10 @@
 1:"$Sreact.fragment"
-2:I[2709,["573","static/chunks/573-dc743d1af8dfaed0.js","235","static/chunks/235-f332fb7a9a6635e6.js","54","static/chunks/app/guides/%5Bslug%5D/page-c374ab0bed937bf7.js"],"MarkdownContent"]
-4:I[2573,["573","static/chunks/573-dc743d1af8dfaed0.js","235","static/chunks/235-f332fb7a9a6635e6.js","54","static/chunks/app/guides/%5Bslug%5D/page-c374ab0bed937bf7.js"],""]
-5:I[5017,[],"OutletBoundary"]
-6:"$Sreact.suspense"
-3:Ta0c,## 編集モードで手動で編集する
+2:I[2581,["573","static/chunks/573-dc743d1af8dfaed0.js","235","static/chunks/235-f332fb7a9a6635e6.js","137","static/chunks/137-74b38e5a7d58d95f.js","54","static/chunks/app/guides/%5Bslug%5D/page-54dc57a98199901a.js"],"MarkdownWithToc"]
+3:I[7170,["573","static/chunks/573-dc743d1af8dfaed0.js","235","static/chunks/235-f332fb7a9a6635e6.js","137","static/chunks/137-74b38e5a7d58d95f.js","54","static/chunks/app/guides/%5Bslug%5D/page-54dc57a98199901a.js"],"MarkdownContent"]
+5:I[2573,["573","static/chunks/573-dc743d1af8dfaed0.js","235","static/chunks/235-f332fb7a9a6635e6.js","137","static/chunks/137-74b38e5a7d58d95f.js","54","static/chunks/app/guides/%5Bslug%5D/page-54dc57a98199901a.js"],""]
+6:I[5017,[],"OutletBoundary"]
+7:"$Sreact.suspense"
+4:Ta0c,## 編集モードで手動で編集する
 
 編集ボタンを押すと編集モーダルが開き、手動でマスクを調整できます。
 
@@ -88,5 +89,5 @@
 
 `すべてクリア` を押すと、読み込んだ画像をまとめて削除できます。
 
-![すべてクリア](/guides/manual-edit/reset.png)0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","p",null,{"className":"text-xs font-semibold tracking-wide text-indigo-600","children":["ガイド ",2]}],["$","h1",null,{"className":"mt-2 text-2xl font-bold tracking-tight text-zinc-900","children":"手動での編集の仕方"}],["$","p",null,{"className":"mt-3 text-sm leading-relaxed text-zinc-600","children":"自動検出後にマスク範囲を追加・調整して、隠したい場所を手動で編集する方法を説明します。"}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":[["$","$L2",null,{"content":"$3"}],["$","p",null,{"className":"pt-2","children":["$","$L4",null,{"href":"/guides","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"使い方ガイド一覧へ戻る"}]}]]}]]}],null,["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"lQSORqPw_Q52hDz_JujdS"}
-7:null
+![すべてクリア](/guides/manual-edit/reset.png)0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"text":"編集モードで手動で編集する","id":"編集モードで手動で編集する"},{"text":"すでにあるマスクを調整する","id":"すでにあるマスクを調整する"},{"text":"マスキングの種類を変更する","id":"マスキングの種類を変更する"},{"text":"誤判定・不要なマスキングは削除","id":"誤判定・不要なマスキングは削除"},{"text":"足りない場所にマスクを追加する","id":"足りない場所にマスクを追加する"},{"text":"拡大・縮小して細かく編集する","id":"拡大・縮小して細かく編集する"},{"text":"再検出","id":"再検出"},{"text":"保存","id":"保存"},{"text":"読み込んだ画像をリセットする","id":"読み込んだ画像をリセットする"}],"header":[["$","p",null,{"className":"text-xs font-semibold tracking-wide text-indigo-600","children":["ガイド ",2]}],["$","h1",null,{"className":"mt-2 text-2xl font-bold tracking-tight text-zinc-900","children":"手動での編集の仕方"}],["$","p",null,{"className":"mt-3 text-sm leading-relaxed text-zinc-600","children":"自動検出後にマスク範囲を追加・調整して、隠したい場所を手動で編集する方法を説明します。"}]],"children":[["$","$L3",null,{"content":"$4"}],["$","p",null,{"className":"pt-2","children":["$","$L5",null,{"href":"/guides","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"使い方ガイド一覧へ戻る"}]}]]}],null,["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"pf525YF3C69NLnH_JLBXO"}
+8:null
