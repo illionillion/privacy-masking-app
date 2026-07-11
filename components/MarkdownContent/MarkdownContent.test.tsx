@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import { MarkdownContent } from "./index";
 
@@ -47,6 +48,40 @@ describe("MarkdownContent", () => {
 
     const heading = screen.getByRole("heading", { level: 2, name: "第1条（適用）" });
     expect(heading).toHaveAttribute("id", "第1条適用");
+    expect(heading).toHaveClass("scroll-mt-24");
+  });
+
+  it("重複 h2 には連番 id を付与する", () => {
+    render(<MarkdownContent content={["## まとめ", "", "## まとめ"].join("\n")} />);
+
+    const headings = screen.getAllByRole("heading", { level: 2, name: "まとめ" });
+    expect(headings[0]).toHaveAttribute("id", "まとめ");
+    expect(headings[1]).toHaveAttribute("id", "まとめ-2");
+  });
+
+  it("親の再レンダー後も h2 id がずれない", async () => {
+    const user = userEvent.setup();
+
+    function Wrapper({ content }: { content: string }) {
+      const [count, setCount] = useState(0);
+
+      return (
+        <div>
+          <button type="button" onClick={() => setCount((value) => value + 1)}>
+            rerender {count}
+          </button>
+          <MarkdownContent content={content} />
+        </div>
+      );
+    }
+
+    render(<Wrapper content={["## まとめ", "", "## まとめ"].join("\n")} />);
+
+    await user.click(screen.getByRole("button", { name: "rerender 0" }));
+
+    const headings = screen.getAllByRole("heading", { level: 2, name: "まとめ" });
+    expect(headings[0]).toHaveAttribute("id", "まとめ");
+    expect(headings[1]).toHaveAttribute("id", "まとめ-2");
   });
 
   it("details 記法を開閉ブロックとして表示する", () => {
@@ -119,6 +154,17 @@ describe("MarkdownContent", () => {
     expect(screen.getByText("公開する本文")).toBeInTheDocument();
     expect(screen.getByText("続きの本文")).toBeInTheDocument();
     expect(screen.queryByText("画像 TODO")).not.toBeInTheDocument();
+  });
+
+  it("HTML コメント内の h2 は id 割り当てに含めない", () => {
+    render(
+      <MarkdownContent
+        content={["<!--", "## コメント内見出し", "-->", "## 実際の見出し"].join("\n")}
+      />
+    );
+
+    const heading = screen.getByRole("heading", { level: 2, name: "実際の見出し" });
+    expect(heading).toHaveAttribute("id", "実際の見出し");
   });
 
   it("テーブルに表示用スタイルを適用する", () => {
