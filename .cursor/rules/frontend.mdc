@@ -103,3 +103,5 @@ pnpm test:coverage               # カバレッジ確認
 - テストの意図が明確なテスト名を付ける
 - モックは必要最小限にする
 - `beforeEach` で `vi.clearAllMocks()` を実行する
+- **ユーザー操作のシミュレーション**: クリック・入力・キーボード・ファイル選択は `userEvent.setup()` を使う。DnD / wheel / touch / IME composition / カスタム Event など相当 API が無い・低レベル制御が必要な場合のみ `fireEvent` を許可する
+- **条件付きアサーション禁止**: テスト内の `if` で `expect` を囲まない。ケース分割や比較ヘルパーで必ず検証する
