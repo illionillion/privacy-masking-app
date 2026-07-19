@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { CustomMaskTermsModal } from "./CustomMaskTermsModal";
 
@@ -15,17 +16,17 @@ describe("CustomMaskTermsModal", () => {
     openConfirm.mockReset();
     openConfirm.mockResolvedValue(true);
   });
-  it("語句を追加して保存できる", () => {
+
+  it("語句を追加して保存できる", async () => {
+    const user = userEvent.setup();
     const onSave = vi.fn();
     const onClose = vi.fn();
 
     render(<CustomMaskTermsModal isOpen terms={[]} onClose={onClose} onSave={onSave} />);
 
-    fireEvent.change(screen.getByPlaceholderText("語句を入力"), {
-      target: { value: "山田太郎" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "追加" }));
-    fireEvent.click(screen.getByRole("button", { name: "保存" }));
+    await user.type(screen.getByPlaceholderText("語句を入力"), "山田太郎");
+    await user.click(screen.getByRole("button", { name: "追加" }));
+    await user.click(screen.getByRole("button", { name: "保存" }));
 
     expect(onSave).toHaveBeenCalledWith([
       expect.objectContaining({ text: "山田太郎", enabled: true }),
@@ -33,23 +34,27 @@ describe("CustomMaskTermsModal", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("追加後は入力欄をクリアする", () => {
+  it("追加後は入力欄をクリアする", async () => {
+    const user = userEvent.setup();
     render(<CustomMaskTermsModal isOpen terms={[]} onClose={vi.fn()} onSave={vi.fn()} />);
 
     const input = screen.getByPlaceholderText("語句を入力");
-    fireEvent.change(input, { target: { value: "山田太郎" } });
-    fireEvent.click(screen.getByRole("button", { name: "追加" }));
+    await user.type(input, "山田太郎");
+    await user.click(screen.getByRole("button", { name: "追加" }));
 
     expect(input).toHaveValue("");
     expect(screen.getByLabelText("山田太郎 を編集")).toBeInTheDocument();
   });
 
-  it("IME 確定の Enter では追加しない", () => {
+  it("IME 確定の Enter では追加しない", async () => {
+    const user = userEvent.setup();
     render(<CustomMaskTermsModal isOpen terms={[]} onClose={vi.fn()} onSave={vi.fn()} />);
 
     const input = screen.getByPlaceholderText("語句を入力");
-    fireEvent.change(input, { target: { value: "山田太郎" } });
+    await user.type(input, "山田太郎");
     fireEvent.compositionStart(input);
+    // IME 合成中の Enter は userEvent では再現しづらいため低レベル API を使う
+    // eslint-disable-next-line testing-library/prefer-user-event -- composition 中の keyDown 検証
     fireEvent.keyDown(input, { key: "Enter" });
     fireEvent.compositionEnd(input);
 
@@ -58,29 +63,29 @@ describe("CustomMaskTermsModal", () => {
   });
 
   it("変更後のキャンセルで確認に応じたときだけ閉じる", async () => {
+    const user = userEvent.setup();
     const onClose = vi.fn();
     openConfirm.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
 
     render(<CustomMaskTermsModal isOpen terms={[]} onClose={onClose} onSave={vi.fn()} />);
 
-    fireEvent.change(screen.getByPlaceholderText("語句を入力"), {
-      target: { value: "山田太郎" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+    await user.type(screen.getByPlaceholderText("語句を入力"), "山田太郎");
+    await user.click(screen.getByRole("button", { name: "キャンセル" }));
 
     await waitFor(() => {
       expect(openConfirm).toHaveBeenCalledTimes(1);
     });
     expect(onClose).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+    await user.click(screen.getByRole("button", { name: "キャンセル" }));
 
     await waitFor(() => {
       expect(onClose).toHaveBeenCalledTimes(1);
     });
   });
 
-  it("空白差だけの重複語句は追加しない", () => {
+  it("空白差だけの重複語句は追加しない", async () => {
+    const user = userEvent.setup();
     render(
       <CustomMaskTermsModal
         isOpen
@@ -91,8 +96,8 @@ describe("CustomMaskTermsModal", () => {
     );
 
     const input = screen.getByPlaceholderText("語句を入力");
-    fireEvent.change(input, { target: { value: "山田 太郎" } });
-    fireEvent.click(screen.getByRole("button", { name: "追加" }));
+    await user.type(input, "山田 太郎");
+    await user.click(screen.getByRole("button", { name: "追加" }));
 
     expect(screen.getAllByRole("textbox", { name: /を編集/ })).toHaveLength(1);
     expect(input).toHaveValue("");

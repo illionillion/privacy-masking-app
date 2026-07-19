@@ -31,11 +31,10 @@ describe("normalizeUploadFiles", () => {
     const file = new File(["content"], "photo.heic", { type: "image/heic" });
     const result = await normalizeUploadFiles([file]);
     expect(convertHeicToJpeg).toHaveBeenCalledWith(file);
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.files[0]?.type).toBe("image/jpeg");
-      expect(result.files[0]?.name).toBe("photo.jpg");
-    }
+    expect(result).toEqual({
+      ok: true,
+      files: [expect.objectContaining({ type: "image/jpeg", name: "photo.jpg" })],
+    });
   });
 
   it("iOS で type が空の .heic も変換対象にする", async () => {
@@ -77,10 +76,9 @@ describe("normalizeUploadFiles", () => {
     const invalid = new File(["content"], "test.txt", { type: "text/plain" });
     const result = await normalizeUploadFiles([heic, invalid]);
     expect(convertHeicToJpeg).toHaveBeenCalledWith(heic);
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.files).toHaveLength(1);
-      expect(result.files[0]?.type).toBe("image/jpeg");
-    }
+    expect(result).toEqual({
+      ok: true,
+      files: [expect.objectContaining({ type: "image/jpeg" })],
+    });
   });
 });

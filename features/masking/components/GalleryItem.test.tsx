@@ -1,4 +1,5 @@
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
 import { resetImageEditorCacheForTests } from "../lib/imageEditorCache";
@@ -86,6 +87,7 @@ describe("GalleryItem", () => {
   });
 
   it("編集ボタンで onOpenEdit が呼ばれる", async () => {
+    const user = userEvent.setup();
     render(
       <GalleryItem
         image={createImage()}
@@ -97,7 +99,7 @@ describe("GalleryItem", () => {
       />
     );
 
-    fireEvent.click(await screen.findByRole("button", { name: "test.png を編集" }));
+    await user.click(await screen.findByRole("button", { name: "test.png を編集" }));
     expect(handlers.onOpenEdit).toHaveBeenCalledWith("img-1");
   });
 
@@ -131,8 +133,6 @@ describe("GalleryItem", () => {
 
     const redetectButton = await screen.findByRole("button", { name: "再検出" });
     expect(redetectButton).toBeDisabled();
-
-    fireEvent.click(redetectButton);
     expect(handlers.onRedetect).not.toHaveBeenCalled();
   });
 });

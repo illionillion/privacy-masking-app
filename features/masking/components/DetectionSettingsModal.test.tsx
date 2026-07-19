@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { DetectionSettingsModal } from "./DetectionSettingsModal";
 import { DEFAULT_FUSELY_PREFS } from "@/lib/preferences";
@@ -16,7 +17,9 @@ describe("DetectionSettingsModal", () => {
     openConfirm.mockReset();
     openConfirm.mockResolvedValue(true);
   });
-  it("保存時に編集内容を onSave へ渡す", () => {
+
+  it("保存時に編集内容を onSave へ渡す", async () => {
+    const user = userEvent.setup();
     const onSave = vi.fn();
     const onClose = vi.fn();
 
@@ -29,8 +32,8 @@ describe("DetectionSettingsModal", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("checkbox", { name: /顔を自動検出/ }));
-    fireEvent.click(screen.getByRole("button", { name: "保存" }));
+    await user.click(screen.getByRole("checkbox", { name: /顔を自動検出/ }));
+    await user.click(screen.getByRole("button", { name: "保存" }));
 
     expect(onSave).toHaveBeenCalledWith({
       autoDetectFace: false,
@@ -39,7 +42,8 @@ describe("DetectionSettingsModal", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("未変更のキャンセルでは確認ダイアログを出さない", () => {
+  it("未変更のキャンセルでは確認ダイアログを出さない", async () => {
+    const user = userEvent.setup();
     const onClose = vi.fn();
 
     render(
@@ -51,13 +55,14 @@ describe("DetectionSettingsModal", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+    await user.click(screen.getByRole("button", { name: "キャンセル" }));
 
     expect(openConfirm).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
   });
 
   it("変更後のキャンセルで確認に応じたときだけ閉じる", async () => {
+    const user = userEvent.setup();
     const onClose = vi.fn();
     openConfirm.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
 
@@ -70,15 +75,15 @@ describe("DetectionSettingsModal", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("checkbox", { name: /顔を自動検出/ }));
-    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+    await user.click(screen.getByRole("checkbox", { name: /顔を自動検出/ }));
+    await user.click(screen.getByRole("button", { name: "キャンセル" }));
 
     await waitFor(() => {
       expect(openConfirm).toHaveBeenCalledTimes(1);
     });
     expect(onClose).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+    await user.click(screen.getByRole("button", { name: "キャンセル" }));
 
     await waitFor(() => {
       expect(onClose).toHaveBeenCalledTimes(1);
@@ -100,7 +105,8 @@ describe("DetectionSettingsModal", () => {
     });
   });
 
-  it("ダイアログコンテナにフォーカスがあるとき Tab で最初の要素へ循環する", () => {
+  it("ダイアログコンテナにフォーカスがあるとき Tab で最初の要素へ循環する", async () => {
+    const user = userEvent.setup();
     render(
       <DetectionSettingsModal
         isOpen
@@ -113,12 +119,13 @@ describe("DetectionSettingsModal", () => {
     const dialog = screen.getByRole("dialog");
     dialog.focus();
 
-    fireEvent.keyDown(dialog, { key: "Tab" });
+    await user.tab();
 
     expect(screen.getByRole("checkbox", { name: /顔を自動検出/ })).toHaveFocus();
   });
 
-  it("ダイアログコンテナにフォーカスがあるとき Shift+Tab で最後の要素へ循環する", () => {
+  it("ダイアログコンテナにフォーカスがあるとき Shift+Tab で最後の要素へ循環する", async () => {
+    const user = userEvent.setup();
     render(
       <DetectionSettingsModal
         isOpen
@@ -131,7 +138,7 @@ describe("DetectionSettingsModal", () => {
     const dialog = screen.getByRole("dialog");
     dialog.focus();
 
-    fireEvent.keyDown(dialog, { key: "Tab", shiftKey: true });
+    await user.tab({ shift: true });
 
     expect(screen.getByRole("button", { name: "保存" })).toHaveFocus();
   });

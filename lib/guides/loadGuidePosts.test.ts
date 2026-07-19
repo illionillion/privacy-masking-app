@@ -6,19 +6,24 @@ import { assertGuidePostFrontmatter, guideSlugFromFilename } from "@/lib/guides/
 import { GuidePostNotFoundError } from "@/lib/guides/notFoundError";
 import { loadAllGuidePosts, loadGuidePost, loadGuidePostSlugs } from "./loadGuidePosts";
 
+/**
+ * ガイド記事の並び（order 昇順、同じ order は slug 昇順）を比較する。
+ */
+function compareGuidePostsByOrderAsc(
+  a: { order: number; slug: string },
+  b: { order: number; slug: string }
+): number {
+  if (a.order !== b.order) {
+    return a.order - b.order;
+  }
+  return a.slug.localeCompare(b.slug);
+}
+
 describe("loadGuidePosts", () => {
   it("使い方ガイドを order 昇順（同じ order は slug 昇順）で返す", () => {
     const posts = loadAllGuidePosts();
 
-    for (let index = 1; index < posts.length; index += 1) {
-      const previous = posts[index - 1]!;
-      const current = posts[index]!;
-
-      expect(previous.order).toBeLessThanOrEqual(current.order);
-      if (previous.order === current.order) {
-        expect(previous.slug.localeCompare(current.slug)).toBeLessThanOrEqual(0);
-      }
-    }
+    expect([...posts].sort(compareGuidePostsByOrderAsc)).toEqual(posts);
 
     expect(posts.every((post) => post.pageTitle.includes("使い方ガイド"))).toBe(true);
     expect(posts.every((post) => post.canonicalPath.startsWith("guides/"))).toBe(true);

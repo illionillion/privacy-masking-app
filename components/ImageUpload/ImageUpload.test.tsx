@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { toast } from "sonner";
 import { ImageUpload } from "./index";
@@ -57,11 +58,11 @@ describe("ImageUpload", () => {
   });
 
   it("不正なファイル形式のときエラーを表示する", async () => {
+    const user = userEvent.setup({ applyAccept: false });
     render(<ImageUpload onUpload={vi.fn()} />);
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(["content"], "test.txt", { type: "text/plain" });
-    Object.defineProperty(input, "files", { value: [file] });
-    fireEvent.change(input);
+    await user.upload(input, file);
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
         "JPEG / PNG / WebP / GIF / HEIC 形式の画像を選択してください"
@@ -70,39 +71,39 @@ describe("ImageUpload", () => {
   });
 
   it("サイズ超過ファイルのときエラーを表示する", async () => {
+    const user = userEvent.setup();
     render(<ImageUpload onUpload={vi.fn()} />);
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     const largeFile = new File(["x".repeat(1)], "large.jpg", {
       type: "image/jpeg",
     });
     Object.defineProperty(largeFile, "size", { value: 21 * 1024 * 1024 });
-    Object.defineProperty(input, "files", { value: [largeFile] });
-    fireEvent.change(input);
+    await user.upload(input, largeFile);
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("ファイルサイズは20MB以下にしてください");
     });
   });
 
   it("有効な画像ファイルを選択するとonUploadが呼ばれる", async () => {
+    const user = userEvent.setup();
     const onUpload = vi.fn();
     render(<ImageUpload onUpload={onUpload} />);
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(["content"], "photo.jpg", { type: "image/jpeg" });
-    Object.defineProperty(input, "files", { value: [file] });
-    fireEvent.change(input);
+    await user.upload(input, file);
     await waitFor(() => {
       expect(onUpload).toHaveBeenCalledWith([file]);
     });
   });
 
   it("複数の有効ファイルを選択すると配列でonUploadが呼ばれる", async () => {
+    const user = userEvent.setup();
     const onUpload = vi.fn();
     render(<ImageUpload onUpload={onUpload} />);
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file1 = new File(["content1"], "photo1.jpg", { type: "image/jpeg" });
     const file2 = new File(["content2"], "photo2.png", { type: "image/png" });
-    Object.defineProperty(input, "files", { value: [file1, file2] });
-    fireEvent.change(input);
+    await user.upload(input, [file1, file2]);
     await waitFor(() => {
       expect(onUpload).toHaveBeenCalledWith([file1, file2]);
     });
