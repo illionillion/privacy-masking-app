@@ -42,6 +42,16 @@ describe("loadBlogPosts", () => {
     expect(post.tags).toContain("SNS");
   });
 
+  it("子どもの写真記事を読み込む", () => {
+    const post = loadBlogPost("2026-07-22-child-photo-online-privacy");
+
+    expect(post.title).toContain("子どもの写真");
+    expect(post.summary.length).toBeGreaterThan(0);
+    expect(post.content).toContain("投稿前チェックリスト");
+    expect(post.category).toBe("プライバシー");
+    expect(post.tags).toContain("子ども");
+  });
+
   it("不正な slug を拒否する", () => {
     expect(() => loadBlogPost("../privacy")).toThrow(BlogPostNotFoundError);
   });
