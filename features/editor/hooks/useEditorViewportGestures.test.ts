@@ -1,4 +1,5 @@
 import { fireEvent, renderHook, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, beforeEach, afterEach, type Mock } from "vitest";
 import type { MouseEvent as ReactMouseEvent, RefObject } from "react";
 import {
@@ -121,24 +122,26 @@ describe("useEditorViewportGestures", () => {
     window.dispatchEvent(new KeyboardEvent("keyup", { code: "Space", bubbles: true }));
   });
 
-  it("INPUT フォーカス中は Space パンを開始しない", () => {
+  it("INPUT フォーカス中は Space パンを開始しない", async () => {
+    const user = userEvent.setup();
     const { hook } = mountGestures();
     const input = document.createElement("input");
     document.body.appendChild(input);
     input.focus();
 
-    fireEvent.keyDown(input, { code: "Space", key: " " });
+    await user.keyboard(" ");
 
     expect(hook.result.current.isSpacePanMode).toBe(false);
   });
 
-  it("button フォーカス中は Space パンを開始しない", () => {
+  it("button フォーカス中は Space パンを開始しない", async () => {
+    const user = userEvent.setup();
     const { hook } = mountGestures();
     const button = document.createElement("button");
     document.body.appendChild(button);
     button.focus();
 
-    fireEvent.keyDown(button, { code: "Space", key: " " });
+    await user.keyboard(" ");
 
     expect(hook.result.current.isSpacePanMode).toBe(false);
   });

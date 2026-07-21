@@ -5,22 +5,26 @@ vi.mock("server-only", () => ({}));
 import { loadAllBlogPosts, loadBlogPost, loadBlogPostSlugs } from "./loadBlogPosts";
 import { BlogPostNotFoundError } from "./notFoundError";
 
+/**
+ * ブログ記事の並び（日付降順、同日は slug 降順）を比較する。
+ */
+function compareBlogPostsByDateDesc(
+  a: { date: string; slug: string },
+  b: { date: string; slug: string }
+): number {
+  const dateCompare = b.date.localeCompare(a.date);
+  if (dateCompare !== 0) {
+    return dateCompare;
+  }
+  return b.slug.localeCompare(a.slug);
+}
+
 describe("loadBlogPosts", () => {
   it("ブログ記事を日付降順（同日は slug 降順）で返す", () => {
     const posts = loadAllBlogPosts();
 
     expect(posts.length).toBeGreaterThan(0);
-
-    for (let index = 1; index < posts.length; index += 1) {
-      const previous = posts[index - 1]!;
-      const current = posts[index]!;
-      const dateCompare = previous.date.localeCompare(current.date);
-
-      expect(dateCompare).toBeGreaterThanOrEqual(0);
-      if (dateCompare === 0) {
-        expect(previous.slug.localeCompare(current.slug)).toBeGreaterThanOrEqual(0);
-      }
-    }
+    expect([...posts].sort(compareBlogPostsByDateDesc)).toEqual(posts);
 
     expect(posts.every((post) => post.pageTitle.includes("ブログ"))).toBe(true);
     expect(posts.every((post) => post.canonicalPath.startsWith("blog/"))).toBe(true);

@@ -554,17 +554,17 @@ describe("detectPersonalInfoInLine", () => {
   });
 
   it("複数の単語にまたがるマッチのbboxを統合する", () => {
-    const result = detectPersonalInfoInLine("user @example.com", [
-      { text: "user", bbox: { x0: 0, y0: 0, x1: 40, y1: 20 } },
-      { text: "@example.com", bbox: { x0: 45, y0: 0, x1: 130, y1: 20 } },
+    const result = detectPersonalInfoInLine("user@example.com", [
+      { text: "user@", bbox: { x0: 0, y0: 0, x1: 40, y1: 20 } },
+      { text: "example.com", bbox: { x0: 45, y0: 0, x1: 130, y1: 20 } },
     ]);
-    /** "user@example.com" が1単語にマッチするかは認識結果次第だが
-     *  両単語のbboxを統合した結果を確認 */
-    const emailMatch = result.find((r) => r.patternType === "email");
-    if (emailMatch) {
-      expect(emailMatch.x).toBe(0);
-      expect(emailMatch.width).toBe(130);
-    }
+    expect(result).toContainEqual(
+      expect.objectContaining({
+        patternType: "email",
+        x: 0,
+        width: 130,
+      })
+    );
   });
 
   it("同じ範囲のテキストが複数パターンにマッチしても重複を返さない", () => {

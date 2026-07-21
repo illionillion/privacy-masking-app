@@ -5,22 +5,26 @@ vi.mock("server-only", () => ({}));
 import { loadAllUpdatePosts, loadUpdatePost, loadUpdatePostSlugs } from "./loadUpdatePosts";
 import { UpdatePostNotFoundError } from "./updatePostNotFoundError";
 
+/**
+ * 更新記事の並び（日付降順、同日は slug 降順）を比較する。
+ */
+function compareUpdatePostsByDateDesc(
+  a: { date: string; slug: string },
+  b: { date: string; slug: string }
+): number {
+  const dateCompare = b.date.localeCompare(a.date);
+  if (dateCompare !== 0) {
+    return dateCompare;
+  }
+  return b.slug.localeCompare(a.slug);
+}
+
 describe("loadUpdatePosts", () => {
   it("更新記事を日付降順（同日は slug 降順）で返す", () => {
     const posts = loadAllUpdatePosts();
 
     expect(posts.length).toBeGreaterThan(0);
-
-    for (let index = 1; index < posts.length; index += 1) {
-      const previous = posts[index - 1]!;
-      const current = posts[index]!;
-      const dateCompare = previous.date.localeCompare(current.date);
-
-      expect(dateCompare).toBeGreaterThanOrEqual(0);
-      if (dateCompare === 0) {
-        expect(previous.slug.localeCompare(current.slug)).toBeGreaterThanOrEqual(0);
-      }
-    }
+    expect([...posts].sort(compareUpdatePostsByDateDesc)).toEqual(posts);
 
     expect(posts.every((post) => post.pageTitle.includes("更新情報"))).toBe(true);
     expect(posts.every((post) => post.canonicalPath.startsWith("updates/"))).toBe(true);
