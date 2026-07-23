@@ -37,6 +37,19 @@
     "url": "/blog/2026-07-08-event-photo-face-masking"
   },
   {
+    "id": "blog:2026-07-22-child-photo-online-privacy",
+    "type": "blog",
+    "title": "子どもの写真をネットに上げる前に注意したいこと",
+    "summary": "子どもの写真を SNS やグループに共有する前に確認したい、写り込み・拡散・将来のリスクと、投稿前のチェックポイントをまとめます。",
+    "tags": [
+      "SNS",
+      "子ども",
+      "顔隠し",
+      "個人情報"
+    ],
+    "url": "/blog/2026-07-22-child-photo-online-privacy"
+  },
+  {
     "id": "update:2026-04-24-image-upload-mobile-ux",
     "type": "update",
     "title": "画像アップロードの操作性改善とモバイル対応",
