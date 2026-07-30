@@ -1,6 +1,6 @@
 1:"$Sreact.fragment"
-2:I[2573,["573","static/chunks/573-dc743d1af8dfaed0.js","783","static/chunks/app/lp/page-f1dd065ad7f82214.js"],""]
-3:I[5017,[],"OutletBoundary"]
+2:I[2005,["5","static/chunks/5-45a81fb9158df9e5.js","783","static/chunks/app/lp/page-9fd1d2e143f6865e.js"],""]
+3:I[8849,[],"OutletBoundary"]
 4:"$Sreact.suspense"
-0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto flex max-w-xl flex-1 flex-col items-center justify-center px-4 py-16 text-center","children":[["$","p",null,{"className":"text-zinc-600","children":"サービス紹介ページはトップ（/）に移動しました。"}],["$","$L2",null,{"href":"/","className":"mt-4 text-sm font-medium text-indigo-600 underline-offset-4 hover:underline","children":"トップへ"}]]}],null,["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"skEVp8A9t12A9FTGKsATK"}
+0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto flex max-w-xl flex-1 flex-col items-center justify-center px-4 py-16 text-center","children":[["$","p",null,{"className":"text-zinc-600","children":"サービス紹介ページはトップ（/）に移動しました。"}],["$","$L2",null,{"href":"/","className":"mt-4 text-sm font-medium text-indigo-600 underline-offset-4 hover:underline","children":"トップへ"}]]}],null,["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"PPW75wqY4FYo-rkBn1HKf"}
 5:null
