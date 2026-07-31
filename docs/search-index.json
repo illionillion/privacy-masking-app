@@ -50,6 +50,19 @@
     "url": "/blog/2026-07-22-child-photo-online-privacy"
   },
   {
+    "id": "blog:2026-07-31-screenshot-pii-risk",
+    "type": "blog",
+    "title": "スクショや SNS 投稿に個人情報が写り込むリスク",
+    "summary": "スクリーンショットや SNS 投稿に氏名・住所・チャット内容などが写り込むリスクと、公開前に隠しておきたいポイントをチェックリスト形式でまとめます。",
+    "tags": [
+      "SNS",
+      "スクリーンショット",
+      "個人情報",
+      "写り込み"
+    ],
+    "url": "/blog/2026-07-31-screenshot-pii-risk"
+  },
+  {
     "id": "update:2026-04-24-image-upload-mobile-ux",
     "type": "update",
     "title": "画像アップロードの操作性改善とモバイル対応",

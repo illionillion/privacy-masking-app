@@ -1,0 +1,103 @@
+1:"$Sreact.fragment"
+2:I[8047,["5","static/chunks/5-45a81fb9158df9e5.js","736","static/chunks/736-5b2a073f2431e0fa.js","378","static/chunks/378-6c2454311409839a.js","370","static/chunks/370-020fe787b9ef0b29.js","177","static/chunks/app/layout-f4900110bec96245.js"],"SerwistRegistration"]
+3:I[3654,["5","static/chunks/5-45a81fb9158df9e5.js","736","static/chunks/736-5b2a073f2431e0fa.js","378","static/chunks/378-6c2454311409839a.js","370","static/chunks/370-020fe787b9ef0b29.js","177","static/chunks/app/layout-f4900110bec96245.js"],"Header"]
+4:I[2564,[],""]
+5:I[5346,[],""]
+6:I[2005,["5","static/chunks/5-45a81fb9158df9e5.js","511","static/chunks/511-32d70babdb3d5f32.js","141","static/chunks/141-f5c91c03ce0192eb.js","953","static/chunks/app/blog/%5Bslug%5D/page-c19fb4f46bdc7e54.js"],""]
+16:I[6960,[],"default",1]
+:HL["/_next/static/media/22a5144ee8d83bca-s.p.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/media/7d4881bb7e1bf84d-s.p.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/_next/static/css/0944674ff78a94d6.css","style"]
+0:{"P":null,"c":["","blog","2026-07-31-screenshot-pii-risk"],"q":"","i":false,"f":[[["",{"children":["blog",{"children":[["slug","2026-07-31-screenshot-pii-risk","d",null],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",16],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/0944674ff78a94d6.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"ja","className":"__variable_246ccd __variable_c29908 h-full antialiased","children":[["$","head",null,{"children":["$","script",null,{"async":true,"src":"https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5141642513537299","crossOrigin":"anonymous"}]}],["$","body",null,{"className":"flex min-h-full flex-col bg-zinc-50 text-zinc-900","children":[["$","script",null,{"type":"application/ld+json","suppressHydrationWarning":true,"dangerouslySetInnerHTML":{"__html":"{\"@context\":\"https://schema.org\",\"@type\":\"WebApplication\",\"name\":\"伏せ太郎\",\"alternateName\":\"Fusely\",\"url\":\"https://fusely-app.pages.dev/app\",\"description\":\"伏せ太郎（Fusely）は顔隠しWebアプリ。写真・スクショの顔・文字を検出してマスキングできます。検出できない部分は手動で調整・追加できます。自動マスキングは無料。サーバーへ画像を送らず、インストール・会員登録も不要です。\",\"applicationCategory\":\"MultimediaApplication\",\"operatingSystem\":\"Any\",\"offers\":{\"@type\":\"Offer\",\"price\":\"0\",\"priceCurrency\":\"JPY\"},\"featureList\":[\"ブラウザでの顔隠し\",\"顔・文字の検出とマスキング\",\"検出できない部分の手動調整\",\"スクショ・写真の個人情報処理\"]}"}}],["$","$L2",null,{}],["$","$L3",null,{}],["$","main",null,{"className":"flex flex-1 flex-col","children":["$","$L4",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L5",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[["$","div",null,{"className":"mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center px-4 py-16 text-center","children":[["$","p",null,{"className":"text-5xl font-bold tabular-nums tracking-tight text-indigo-600 sm:text-6xl","children":"404"}],["$","h1",null,{"className":"mt-4 text-2xl font-bold tracking-tight text-zinc-900 sm:mt-5 sm:text-3xl","children":"ページが見つかりません"}],["$","p",null,{"className":"mt-4 max-w-md text-pretty text-zinc-600","children":"お探しのページは移動または削除された可能性があります。URL をご確認のうえ、トップからお試しください。"}],["$","div",null,{"className":"mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center","children":[["$","$L6",null,{"href":"/","className":"inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-5 py-2.5 text-sm font-semibold text-zinc-800 transition-colors hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400","children":"トップに戻る"}],["$","$L6",null,{"href":"/app","className":"inline-flex items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600","children":"マスキングツールへ"}]]}]]}],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}],["$","footer",null,{"className":"mt-auto border-t border-zinc-200/90 bg-gradient-to-b from-zinc-100 to-zinc-100/95 shadow-[inset_0_1px_0_0_rgb(255_255_255_/_.45)]","children":["$","div",null,{"className":"mx-auto max-w-5xl px-4 pb-8 pt-10","children":[["$","nav",null,{"aria-label":"フッターナビゲーション","children":["$","ul",null,{"className":"grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6","children":[["$","li",null,{"className":"border-t border-zinc-200 pt-4 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0 first:border-t-0 first:pt-0 sm:first:border-l-0 sm:first:pl-0","children":[["$","p",null,{"className":"text-xs font-semibold tracking-wide text-zinc-900","children":"アプリ"}],["$","ul",null,{"className":"mt-3 space-y-2","children":["$","li",null,{"children":["$","$L6",null,{"href":"/app","className":"text-sm text-zinc-600 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline","children":"マスキングツール"}]}]}]]}],["$","li",null,{"className":"border-t border-zinc-200 pt-4 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0 first:border-t-0 first:pt-0 sm:first:border-l-0 sm:first:pl-0","children":["$L7","$L8"]}],"$L9","$La"]}]}],"$Lb"]}]}],"$Lc","$Ld","$Le","$Lf","$L10"]}]]}]]}],{"children":["$L11",{"children":["$L12",{"children":["$L13",{},null,false,null]},null,false,"$@14"]},null,false,"$@14"]},null,false,null],"$L15",false]],"m":"$undefined","G":["$16",[]],"S":true,"h":null,"s":"$undefined","l":"$undefined","p":"$undefined","d":"$undefined","b":"Mp6DoOjPr9CRrnpyVYT5x"}
+17:I[5111,["5","static/chunks/5-45a81fb9158df9e5.js","736","static/chunks/736-5b2a073f2431e0fa.js","378","static/chunks/378-6c2454311409839a.js","370","static/chunks/370-020fe787b9ef0b29.js","177","static/chunks/app/layout-f4900110bec96245.js"],"SiteFooterSearchTrigger"]
+18:I[9801,["5","static/chunks/5-45a81fb9158df9e5.js","736","static/chunks/736-5b2a073f2431e0fa.js","378","static/chunks/378-6c2454311409839a.js","370","static/chunks/370-020fe787b9ef0b29.js","177","static/chunks/app/layout-f4900110bec96245.js"],"BackToTopButton"]
+19:I[9578,["5","static/chunks/5-45a81fb9158df9e5.js","736","static/chunks/736-5b2a073f2431e0fa.js","378","static/chunks/378-6c2454311409839a.js","370","static/chunks/370-020fe787b9ef0b29.js","177","static/chunks/app/layout-f4900110bec96245.js"],"SearchIndexPreloader"]
+1a:I[7995,["5","static/chunks/5-45a81fb9158df9e5.js","736","static/chunks/736-5b2a073f2431e0fa.js","378","static/chunks/378-6c2454311409839a.js","370","static/chunks/370-020fe787b9ef0b29.js","177","static/chunks/app/layout-f4900110bec96245.js"],"SearchModal"]
+1b:I[6498,["5","static/chunks/5-45a81fb9158df9e5.js","736","static/chunks/736-5b2a073f2431e0fa.js","378","static/chunks/378-6c2454311409839a.js","370","static/chunks/370-020fe787b9ef0b29.js","177","static/chunks/app/layout-f4900110bec96245.js"],"ConfirmDialog"]
+1c:I[7761,["5","static/chunks/5-45a81fb9158df9e5.js","736","static/chunks/736-5b2a073f2431e0fa.js","378","static/chunks/378-6c2454311409839a.js","370","static/chunks/370-020fe787b9ef0b29.js","177","static/chunks/app/layout-f4900110bec96245.js"],"ToasterProvider"]
+1e:I[8849,[],"OutletBoundary"]
+1f:"$Sreact.suspense"
+22:I[8849,[],"ViewportBoundary"]
+24:I[8849,[],"MetadataBoundary"]
+7:["$","p",null,{"className":"text-xs font-semibold tracking-wide text-zinc-900","children":"ガイド・お知らせ"}]
+8:["$","ul",null,{"className":"mt-3 space-y-2","children":[["$","li",null,{"children":["$","$L17",null,{"className":"text-sm text-zinc-600 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline"}]}],["$","li",null,{"children":["$","$L6",null,{"href":"/guides","className":"text-sm text-zinc-600 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline","children":"使い方ガイド"}]}],["$","li",null,{"children":["$","$L6",null,{"href":"/blog","className":"text-sm text-zinc-600 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline","children":"ブログ"}]}],["$","li",null,{"children":["$","$L6",null,{"href":"/faq","className":"text-sm text-zinc-600 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline","children":"よくある質問（FAQ）"}]}],["$","li",null,{"children":["$","$L6",null,{"href":"/updates","className":"text-sm text-zinc-600 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline","children":"更新情報"}]}]]}]
+9:["$","li",null,{"className":"border-t border-zinc-200 pt-4 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0 first:border-t-0 first:pt-0 sm:first:border-l-0 sm:first:pl-0","children":[["$","p",null,{"className":"text-xs font-semibold tracking-wide text-zinc-900","children":"規約・ポリシー"}],["$","ul",null,{"className":"mt-3 space-y-2","children":[["$","li",null,{"children":["$","$L6",null,{"href":"/privacy","className":"text-sm text-zinc-600 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline","children":"プライバシーポリシー"}]}],["$","li",null,{"children":["$","$L6",null,{"href":"/terms","className":"text-sm text-zinc-600 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline","children":"利用規約"}]}]]}]]}]
+a:["$","li",null,{"className":"border-t border-zinc-200 pt-4 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0 first:border-t-0 first:pt-0 sm:first:border-l-0 sm:first:pl-0","children":[["$","p",null,{"className":"text-xs font-semibold tracking-wide text-zinc-900","children":"開発・連絡"}],["$","ul",null,{"className":"mt-3 space-y-2","children":[["$","li",null,{"children":["$","a",null,{"href":"https://github.com/illionillion/privacy-masking-app/issues","className":"text-sm text-zinc-600 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline inline-flex items-center gap-0.5","target":"_blank","rel":"noopener noreferrer","children":["GitHub Issues",["$","span",null,{"className":"sr-only","children":"（新しいタブで開く）"}]]}]}],["$","li",null,{"children":["$","a",null,{"href":"https://github.com/illionillion/privacy-masking-app/discussions","className":"text-sm text-zinc-600 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline inline-flex items-center gap-0.5","target":"_blank","rel":"noopener noreferrer","children":["GitHub Discussions",["$","span",null,{"className":"sr-only","children":"（新しいタブで開く）"}]]}]}],["$","li",null,{"children":["$","a",null,{"href":"https://github.com/illionillion/privacy-masking-app","className":"text-sm text-zinc-600 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline inline-flex items-center gap-0.5","target":"_blank","rel":"noopener noreferrer","children":["ソースコード",["$","span",null,{"className":"sr-only","children":"（新しいタブで開く）"}]]}]}]]}]]}]
+b:["$","p",null,{"className":"mt-6 text-xs leading-relaxed text-zinc-500","children":"お問い合わせ・不具合報告は GitHub Issues、ご質問・議論は GitHub Discussions をご利用ください。"}]
+c:["$","$L18",null,{}]
+d:["$","$L19",null,{}]
+e:["$","$L1a",null,{}]
+f:["$","$L1b",null,{}]
+10:["$","$L1c",null,{}]
+11:["$","$1","c",{"children":[null,["$","$L4",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L5",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}]
+12:["$","$1","c",{"children":[null,["$","$L4",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L5",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}]
+13:["$","$1","c",{"children":["$L1d",null,["$","$L1e",null,{"children":["$","$1f",null,{"name":"Next.MetadataOutlet","children":"$@20"}]}]]}]
+21:[]
+14:"$W21"
+15:["$","$1","h",{"children":[null,["$","$L22",null,{"children":"$L23"}],["$","div",null,{"hidden":true,"children":["$","$L24",null,{"children":["$","$1f",null,{"name":"Next.Metadata","children":"$L25"}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}]
+26:I[1261,["5","static/chunks/5-45a81fb9158df9e5.js","511","static/chunks/511-32d70babdb3d5f32.js","141","static/chunks/141-f5c91c03ce0192eb.js","953","static/chunks/app/blog/%5Bslug%5D/page-c19fb4f46bdc7e54.js"],"MarkdownWithToc"]
+27:I[4196,["5","static/chunks/5-45a81fb9158df9e5.js","511","static/chunks/511-32d70babdb3d5f32.js","141","static/chunks/141-f5c91c03ce0192eb.js","953","static/chunks/app/blog/%5Bslug%5D/page-c19fb4f46bdc7e54.js"],"MarkdownContent"]
+28:T1368,チャットのやり取りを共有したい、アプリの画面を報告したい、日常の一コマを SNS に載せたい。そんなとき、ついそのままスクリーンショットを撮って投稿してしまうことがあります。意図した内容以外に、**氏名・住所・電話番号・メール・ID・通知内容**などが写り込んでいると、公開後に取り返しにくいリスクになります。
+
+## なぜスクショの写り込みが見落とされやすいか
+
+写真と違い、スクショは「画面全体」を一度に切り取るため、主役以外の情報が入りやすいです。
+
+- 通知バーに届いたメッセージやメール件名が残る
+- 別タブやバックグラウンドのプレビューが端に見える
+- チャットの前後の吹き出しに、別の話題や個人名が残る
+- 拡大せずに見ると、小さな文字やアイコンが気にならない
+- 「自分の画面だから大丈夫」と感じ、第三者視点での確認が抜けやすい
+
+一度ネットやグループに出ると、スクショの再スクショや保存で広がりやすく、元投稿を消してもコピーが残ることがあります。AI 学習や検索・転載の対象になる可能性も、投稿時点では把握しきれないことがあります。
+
+## 特に写り込みやすい個人情報
+
+次のような情報が画面に入っていないか、投稿前に拡大して確認してみてください。
+
+- 氏名、ハンドルネームと実名の対応が分かる表示
+- 住所、郵便番号、地図のピン、配達完了画面
+- 電話番号、メールアドレス、会員番号、注文番号
+- クレジットカードや口座の下数桁、請求金額の明細
+- チャットの相手名・アイコン・所属・勤務先が分かる文脈
+- 学校・職場・医療機関の予約画面やマイページ
+- 他の人の顔写真やプロフィール画像のサムネイル
+
+「ぼかし忘れ」で一番多いのは、**本題の周辺**です。主役の吹き出しは丁寧に見ても、上下の通知やサイドのリストは見落とされがちです。
+
+## 投稿前チェックリスト
+
+スクショや画面共有を SNS・チャット・問い合わせ先に送る前に、次を確認してみてください。
+
+1. **通知バー・ステータスバー** — メッセージ、メール、着信のプレビューは出ていないか
+2. **本題以外の吹き出し・一覧** — 前後の会話、他スレッド、サイドバーに個人情報はないか
+3. **氏名・連絡先** — 名前、電話、メール、ID、住所が文字として読めるか
+4. **顔・アイコン** — 自分以外の人物が特定できる見た目で写っていないか
+5. **地図・位置** — 自宅や勤務先が特定できる縮尺・ピンになっていないか
+6. **公開範囲** — 全員公開が必要か。限定公開や個別送付で足りないか
+7. **キャプション** — スクショ本体を隠しても、文章側で個人を特定していないか
+
+迷ったら、「必要な範囲だけ切り抜く」「個人情報っぽい箇所はすべて隠す」のどちらかを先にやってから共有するのが安全です。隠したからといって、共有そのものが常に許可不要になるわけではありません。相手やサービスのルールもあわせて確認してください。
+
+## 個人情報を隠してから共有する
+
+写り込みをゼロにするのは難しいので、**公開前に判読できない状態にする**習慣が現実的です。
+
+- 氏名・住所・番号などの文字にモザイクや塗りつぶしを入れる
+- 顔やアイコンも必要に応じて隠す
+- 切り抜き後に、端に別情報が残っていないかもう一度見る
+- 同じ内容を複数枚送る場合は、枚ごとに写り込みを確認する
+
+ブラウザで完結するマスキングツールなら、画像を外部サーバーへ送らずに文字や顔を隠してから保存できます。伏せ太郎（Fusely）では、顔の自動検出に加えて、手動で領域を選んでマスクできます。スクショの文字隠しにも使いやすいです。
+
+- [マスキングツールを開く](/app)
+- [画像の読み込み方](/guides/image-import)
+- [手動での編集の仕方](/guides/manual-edit)
+
+## まとめ
+
+スクショや SNS 投稿の写り込みは、「悪意」より「見落とし」で起きやすい事故です。通知・周辺の会話・小さな文字まで含めて見直すだけで、個人情報の露出をかなり減らせます。「隠せば絶対安全」ではありませんが、**公開前に拡大して確認し、怪しい箇所は隠す**習慣は、自分と周囲のプライバシーを守る現実的な一手です。送る前に、一度画面を拡大してみてください。1d:["$","$L26",null,{"headings":[{"text":"なぜスクショの写り込みが見落とされやすいか","id":"なぜスクショの写り込みが見落とされやすいか"},{"text":"特に写り込みやすい個人情報","id":"特に写り込みやすい個人情報"},{"text":"投稿前チェックリスト","id":"投稿前チェックリスト"},{"text":"個人情報を隠してから共有する","id":"個人情報を隠してから共有する"},{"text":"まとめ","id":"まとめ"}],"header":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"スクショや SNS 投稿に個人情報が写り込むリスク"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["公開日: ","2026年7月31日"]}],["$","p",null,{"className":"mt-3 text-xs font-semibold tracking-wide text-indigo-600","children":"プライバシー"}],["$","ul",null,{"className":"mt-3 flex flex-wrap gap-2","children":[["$","li","SNS",{"className":"rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600","children":"SNS"}],["$","li","スクリーンショット",{"className":"rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600","children":"スクリーンショット"}],["$","li","個人情報",{"className":"rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600","children":"個人情報"}],["$","li","写り込み",{"className":"rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600","children":"写り込み"}]]}]],"children":[["$","$L27",null,{"content":"$28"}],["$","p",null,{"className":"pt-2","children":["$","$L6",null,{"href":"/blog","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"ブログ一覧へ戻る"}]}]]}]
+23:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#fafafa"}]]
+29:I[4644,[],"IconMark"]
+20:null
+25:[["$","title","0",{"children":"スクショや SNS 投稿に個人情報が写り込むリスク | ブログ | 伏せ太郎（Fusely）"}],["$","meta","1",{"name":"description","content":"スクリーンショットや SNS 投稿に氏名・住所・チャット内容などが写り込むリスクと、公開前に隠しておきたいポイントをチェックリスト形式でまとめます。"}],["$","meta","2",{"name":"application-name","content":"伏せ太郎 | Fusely"}],["$","link","3",{"rel":"manifest","href":"/manifest.webmanifest","crossOrigin":"$undefined"}],["$","meta","4",{"name":"keywords","content":"伏せ太郎,Fusely,ブラウザ 顔隠し,画像 個人情報 マスキング,スクショ 個人情報 隠す,写真 個人情報 消す,AI マスキング,自動 マスキング 無料,顔隠し Webアプリ,アップロード不要 マスキング,顔隠し,個人情報 保護,モザイク,ぼかし,黒塗り"}],["$","meta","5",{"name":"google-adsense-account","content":"ca-pub-5141642513537299"}],["$","link","6",{"rel":"canonical","href":"https://fusely-app.pages.dev/blog/2026-07-31-screenshot-pii-risk"}],["$","meta","7",{"name":"format-detection","content":"telephone=no"}],["$","meta","8",{"name":"google-site-verification","content":"h8_qALSr2HLxo3u0KCmFKOB-BfRPs6Wh_oPvaYGu1kU"}],["$","meta","9",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","10",{"name":"apple-mobile-web-app-title","content":"伏せ太郎"}],["$","meta","11",{"name":"apple-mobile-web-app-status-bar-style","content":"default"}],["$","meta","12",{"property":"og:title","content":"スクショや SNS 投稿に個人情報が写り込むリスク | ブログ | 伏せ太郎（Fusely）"}],["$","meta","13",{"property":"og:description","content":"スクリーンショットや SNS 投稿に氏名・住所・チャット内容などが写り込むリスクと、公開前に隠しておきたいポイントをチェックリスト形式でまとめます。"}],["$","meta","14",{"property":"og:url","content":"https://fusely-app.pages.dev/blog/2026-07-31-screenshot-pii-risk"}],["$","meta","15",{"property":"og:image","content":"https://fusely-app.pages.dev/hero.png"}],["$","meta","16",{"property":"og:image:width","content":"1731"}],["$","meta","17",{"property":"og:image:height","content":"909"}],["$","meta","18",{"property":"og:image:alt","content":"伏せ太郎 | Fusely - 画像内の顔・文字を、すばやくマスキング"}],["$","meta","19",{"name":"twitter:card","content":"summary_large_image"}],["$","meta","20",{"name":"twitter:title","content":"スクショや SNS 投稿に個人情報が写り込むリスク | ブログ | 伏せ太郎（Fusely）"}],["$","meta","21",{"name":"twitter:description","content":"スクリーンショットや SNS 投稿に氏名・住所・チャット内容などが写り込むリスクと、公開前に隠しておきたいポイントをチェックリスト形式でまとめます。"}],["$","meta","22",{"name":"twitter:image","content":"https://fusely-app.pages.dev/hero.png"}],["$","link","23",{"rel":"icon","href":"favicon.ico"}],["$","link","24",{"rel":"apple-touch-icon","href":"/icons/apple-touch-icon.png"}],["$","$L29","25",{}]]
