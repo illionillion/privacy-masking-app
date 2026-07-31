@@ -52,6 +52,16 @@ describe("loadBlogPosts", () => {
     expect(post.tags).toContain("子ども");
   });
 
+  it("スクショの個人情報写り込み記事を読み込む", () => {
+    const post = loadBlogPost("2026-07-31-screenshot-pii-risk");
+
+    expect(post.title).toContain("スクショ");
+    expect(post.summary.length).toBeGreaterThan(0);
+    expect(post.content).toContain("投稿前チェックリスト");
+    expect(post.category).toBe("プライバシー");
+    expect(post.tags).toContain("スクリーンショット");
+  });
+
   it("不正な slug を拒否する", () => {
     expect(() => loadBlogPost("../privacy")).toThrow(BlogPostNotFoundError);
   });
