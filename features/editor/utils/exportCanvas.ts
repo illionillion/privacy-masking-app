@@ -1,4 +1,5 @@
 import { MAX_CANVAS_DIMENSION } from "@/lib/canvas";
+import { pickStampImage } from "../lib/pickStampImage";
 import type { PaintStroke, StampRegion } from "../types";
 
 /** モザイクブロックの最小サイズ（px） */
@@ -23,14 +24,7 @@ function pickExportStampImage(
   region: StampRegion,
   stampImages: Map<string, HTMLImageElement>
 ): HTMLImageElement | null {
-  if (region.stampFileName) {
-    return stampImages.get(region.stampFileName) ?? null;
-  }
-  const stampImagesArray = Array.from(stampImages.values());
-  if (stampImagesArray.length === 0) return null;
-  const idHash = region.id.split("").reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) | 0, 0);
-  const stampIndex = Math.abs(idHash) % stampImagesArray.length;
-  return stampImagesArray[stampIndex] ?? null;
+  return pickStampImage(region, stampImages);
 }
 
 /**

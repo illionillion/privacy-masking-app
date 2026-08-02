@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { STAMP_FILE_NAMES } from "../constants";
 import { createEditorSnapshotFromDetections } from "../lib/editorSnapshot";
 import { generateUUID } from "../lib/generateUUID";
+import { resolveStampFileName } from "../lib/pickStampImage";
 import type {
   EditorMode,
   EditorStateSnapshot,
@@ -69,8 +71,16 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
       const stampRegion = stampRegions.find((region) => region.id === id);
       if (!stampRegion) return;
       _setSelectedStampType(stampRegion.stampType);
-      if (stampRegion.stampFileName) {
-        _setSelectedStampFileName(stampRegion.stampFileName);
+      if (stampRegion.stampType !== "stamp-face") return;
+
+      const fileName = resolveStampFileName(stampRegion, STAMP_FILE_NAMES);
+      if (!fileName) return;
+      _setSelectedStampFileName(fileName);
+      /** 旧スナップショット等で stampFileName 未設定の領域は、表示と揃えてバックフィルする */
+      if (!stampRegion.stampFileName) {
+        setStampRegions((prev) =>
+          prev.map((region) => (region.id === id ? { ...region, stampFileName: fileName } : region))
+        );
       }
     },
     [stampRegions]
