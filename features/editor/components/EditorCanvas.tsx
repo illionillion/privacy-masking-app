@@ -17,6 +17,7 @@ import {
 import type { EditorMode, PaintStroke, StampRegion, StampType } from "../types";
 import { shouldShowEditorTransformer } from "../lib/editorCanvasInteraction";
 import { isEditableKeyboardTarget } from "../lib/isEditableKeyboardTarget";
+import { stampRegionUpdatesFromTransformEnd } from "../lib/stampRegionTransform";
 import { stagePointerToContentSpace } from "../lib/viewZoom";
 import { useEditorViewport } from "../hooks/useEditorViewport";
 import { useEditorViewportGestures } from "../hooks/useEditorViewportGestures";
@@ -474,29 +475,33 @@ export function EditorCanvas({
   }
 
   /**
-   * 形状のトランスフォーム終了時にサイズ・位置を元画像空間に変換して更新する
+   * 形状のトランスフォーム終了時にサイズ・位置・回転を元画像空間へ保存する
+   *
+   * AABB（外接矩形）は焼かず、scale は width/height に、rotation は角度として保持する。
    *
    * @param id - 領域のID
-   * @param kind - 領域の種別
    * @param node - Konva ノード
    */
   function handleTransformEnd(id: string, node: Konva.Node) {
-    // Group は width()/height() が常に 0 を返すため、スケールリセット前に
-    // getClientRect() でビジュアル上の実サイズ・位置を取得する
-    const parent = node.getParent();
-    const clientRect = parent
-      ? node.getClientRect({ relativeTo: parent, skipStroke: true })
-      : node.getClientRect({ skipStroke: true });
+    const region = stampRegions.find((r) => r.id === id);
+    if (!region) return;
+
+    const updates = stampRegionUpdatesFromTransformEnd(
+      region,
+      {
+        x: node.x(),
+        y: node.y(),
+        scaleX: node.scaleX(),
+        scaleY: node.scaleY(),
+        rotation: node.rotation(),
+      },
+      scaleX,
+      scaleY
+    );
 
     node.scaleX(1);
     node.scaleY(1);
-
-    const newX = clientRect.x / scaleX;
-    const newY = clientRect.y / scaleY;
-    const newW = clientRect.width / scaleX;
-    const newH = clientRect.height / scaleY;
-
-    onUpdateStampRegion(id, { x: newX, y: newY, width: newW, height: newH });
+    onUpdateStampRegion(id, updates);
   }
 
   const isStampRegionInteractive = mode === "select" || mode === "rect";

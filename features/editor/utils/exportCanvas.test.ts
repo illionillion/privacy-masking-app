@@ -18,8 +18,11 @@ function makeCtxMock() {
   const strokeCalls: number[] = [];
   const getImageDataCalls: FillRectCall[] = [];
   const saveRestoreCalls: string[] = [];
+  const translateCalls: [number, number][] = [];
+  const rotateCalls: number[] = [];
 
   const ctx = {
+    canvas: { width: 200, height: 200 } as HTMLCanvasElement,
     drawImage: vi.fn(),
     fillRect: vi.fn((...args: number[]) => fillRectCalls.push(args as FillRectCall)),
     beginPath: vi.fn(() => beginPathCalls.push(1)),
@@ -28,6 +31,8 @@ function makeCtxMock() {
     stroke: vi.fn(() => strokeCalls.push(1)),
     rect: vi.fn(),
     clip: vi.fn(),
+    translate: vi.fn((...args: number[]) => translateCalls.push(args as [number, number])),
+    rotate: vi.fn((angle: number) => rotateCalls.push(angle)),
     save: vi.fn(() => saveRestoreCalls.push("save")),
     restore: vi.fn(() => saveRestoreCalls.push("restore")),
     getImageData: vi.fn((x: number, y: number, w: number, h: number) => {
@@ -49,6 +54,8 @@ function makeCtxMock() {
     strokeCalls,
     getImageDataCalls,
     saveRestoreCalls,
+    translateCalls,
+    rotateCalls,
   };
 }
 
@@ -97,7 +104,10 @@ describe("exportEditorCanvas", () => {
     ];
     await exportEditorCanvas(img, stampRegions, [], new Map());
     expect(ctxMock.ctx.fillStyle).toBe("#000000");
-    expect(ctxMock.fillRectCalls.some(([x]) => x === 10)).toBe(true);
+    expect(ctxMock.translateCalls.some(([x, y]) => x === 10 && y === 10)).toBe(true);
+    expect(
+      ctxMock.fillRectCalls.some(([x, y, w, h]) => x === 0 && y === 0 && w === 50 && h === 50)
+    ).toBe(true);
   });
 
   it("mosaic スタンプ領域でモザイク処理（getImageData）を呼び出す", async () => {
@@ -200,7 +210,33 @@ describe("exportEditorCanvas", () => {
       },
     ];
     await exportEditorCanvas(img, stampRegions, [], new Map());
-    expect(ctxMock.fillRectCalls.some(([x]) => x === 5)).toBe(true);
+    expect(ctxMock.translateCalls.some(([x, y]) => x === 5 && y === 5)).toBe(true);
+    expect(
+      ctxMock.fillRectCalls.some(([x, y, w, h]) => x === 0 && y === 0 && w === 40 && h === 40)
+    ).toBe(true);
+  });
+
+  it("rotation 付き fill-black は rotate を適用する", async () => {
+    const img = makeImageElement(200, 200);
+    const stampRegions: StampRegion[] = [
+      {
+        id: "s-rot",
+        x: 10,
+        y: 20,
+        width: 30,
+        height: 40,
+        rotation: 45,
+        stampType: "fill-black",
+        isEnabled: true,
+        source: "manual",
+      },
+    ];
+    await exportEditorCanvas(img, stampRegions, [], new Map());
+    expect(ctxMock.translateCalls.some(([x, y]) => x === 10 && y === 20)).toBe(true);
+    expect(ctxMock.rotateCalls.some((rad) => Math.abs(rad - Math.PI / 4) < 1e-9)).toBe(true);
+    expect(
+      ctxMock.fillRectCalls.some(([x, y, w, h]) => x === 0 && y === 0 && w === 30 && h === 40)
+    ).toBe(true);
   });
 
   it("ペイントストロークを描画する", async () => {

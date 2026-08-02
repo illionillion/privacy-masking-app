@@ -4,6 +4,7 @@ import Konva from "konva";
 import { Fragment } from "react";
 import { Group, Image as KonvaImage, Rect } from "react-konva";
 import { pickStampImage } from "../lib/pickStampImage";
+import { getStampRegionRotationDeg } from "../lib/stampRegionTransform";
 import type { StampRegion, StampType } from "../types";
 import { EditorStampEffectPreview } from "./EditorStampEffectPreview";
 
@@ -51,6 +52,7 @@ export function EditorStampRegionNode({
   const ry = region.y * scaleY;
   const w = region.width * scaleX;
   const h = region.height * scaleY;
+  const rotation = getStampRegionRotationDeg(region);
   const squareStampSize = Math.max(w, h);
   const squareStampX = (w - squareStampSize) / 2;
   const squareStampY = (h - squareStampSize) / 2;
@@ -63,12 +65,13 @@ export function EditorStampRegionNode({
     <Fragment>
       {isEffectStamp && (
         /* blur / mosaic の見た目は操作ノードと分離し、Transformer の計算へ影響させない */
-        <Group x={rx} y={ry} listening={false}>
+        <Group x={rx} y={ry} rotation={rotation} listening={false}>
           <EditorStampEffectPreview
             kind={region.stampType as "blur" | "mosaic"}
             bgImage={bgImage}
             offsetX={-rx}
             offsetY={-ry}
+            counterRotation={-rotation}
             stageWidth={stageWidth}
             stageHeight={stageHeight}
             w={w}
@@ -81,6 +84,7 @@ export function EditorStampRegionNode({
         id={region.id}
         x={rx}
         y={ry}
+        rotation={rotation}
         draggable={isInteractive}
         onClick={() => isInteractive && onSelect()}
         onTap={() => isInteractive && onSelect()}

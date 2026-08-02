@@ -1,5 +1,6 @@
 import { MAX_CANVAS_DIMENSION } from "@/lib/canvas";
 import { pickStampImage } from "../lib/pickStampImage";
+import { getStampRegionRotationDeg } from "../lib/stampRegionTransform";
 import type { PaintStroke, StampRegion } from "../types";
 
 /** モザイクブロックの最小サイズ（px） */
@@ -28,7 +29,7 @@ function pickExportStampImage(
 }
 
 /**
- * モザイク処理を Canvas に適用する
+ * モザイク処理を Canvas に適用する（軸平行のローカル矩形向け）
  *
  * @param ctx - 2D コンテキスト
  * @param x - 矩形の X 座標
@@ -68,16 +69,54 @@ function applyMosaic(
 }
 
 /**
+ * 回転を考慮してモザイクを適用する
+ *
+ * ローカル矩形へ逆変換サンプリング → モザイク → 回転して描画する。
+ */
+function applyMosaicRotated(
+  ctx: CanvasRenderingContext2D,
+  sx: number,
+  sy: number,
+  sw: number,
+  sh: number,
+  rotationDeg: number
+): void {
+  const width = Math.max(1, Math.round(sw));
+  const height = Math.max(1, Math.round(sh));
+  const rad = (rotationDeg * Math.PI) / 180;
+  const offscreen = document.createElement("canvas");
+  offscreen.width = width;
+  offscreen.height = height;
+  const offCtx = offscreen.getContext("2d");
+  if (!offCtx) return;
+
+  offCtx.save();
+  offCtx.rotate(-rad);
+  offCtx.translate(-sx, -sy);
+  offCtx.drawImage(ctx.canvas, 0, 0);
+  offCtx.restore();
+
+  applyMosaic(offCtx, 0, 0, width, height);
+
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.rotate(rad);
+  ctx.drawImage(offscreen, 0, 0);
+  ctx.restore();
+}
+
+/**
  * ぼかし処理を Canvas に適用する
  *
  * @param ctx - 2D コンテキスト
  * @param imageSource - 元画像要素
- * @param x - 矩形の X 座標
+ * @param x - 矩形の X 座標（キャンバス空間、回転前の左上）
  * @param y - 矩形の Y 座標
  * @param width - 矩形の幅
  * @param height - 矩形の高さ
  * @param scaleX - X 方向スケール
  * @param scaleY - Y 方向スケール
+ * @param rotationDeg - 回転角（度）。左上原点
  */
 function applyBlur(
   ctx: CanvasRenderingContext2D,
@@ -87,12 +126,18 @@ function applyBlur(
   width: number,
   height: number,
   scaleX: number,
-  scaleY: number
+  scaleY: number,
+  rotationDeg = 0
 ): void {
+  const rad = (rotationDeg * Math.PI) / 180;
   ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rad);
   ctx.beginPath();
-  ctx.rect(x, y, width, height);
+  ctx.rect(0, 0, width, height);
   ctx.clip();
+  ctx.rotate(-rad);
+  ctx.translate(-x, -y);
   const blurRadius = Math.max(
     MIN_BLUR_RADIUS,
     Math.round(Math.min(width, height) / BLUR_RADIUS_DIVISOR)
@@ -106,6 +151,24 @@ function applyBlur(
     Math.round(imageSource.height * scaleY)
   );
   ctx.filter = "none";
+  ctx.restore();
+}
+
+/**
+ * 領域ローカル座標（左上原点・回転込み）で描画コールバックを実行する
+ */
+function withStampRegionTransform(
+  ctx: CanvasRenderingContext2D,
+  sx: number,
+  sy: number,
+  rotationDeg: number,
+  draw: () => void
+): void {
+  const rad = (rotationDeg * Math.PI) / 180;
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.rotate(rad);
+  draw();
   ctx.restore();
 }
 
@@ -148,41 +211,52 @@ export async function exportEditorCanvas(
   /** 有効なマスキング領域を種別に応じて描画 */
   for (const region of stampRegions) {
     if (!region.isEnabled) continue;
-    const sx = Math.round(region.x * scaleX);
-    const sy = Math.round(region.y * scaleY);
-    const sw = Math.round(region.width * scaleX);
-    const sh = Math.round(region.height * scaleY);
+    const sx = region.x * scaleX;
+    const sy = region.y * scaleY;
+    const sw = region.width * scaleX;
+    const sh = region.height * scaleY;
+    const rotationDeg = getStampRegionRotationDeg(region);
 
     switch (region.stampType) {
       case "fill-black":
-        ctx.fillStyle = "#000000";
-        ctx.fillRect(sx, sy, sw, sh);
+        withStampRegionTransform(ctx, sx, sy, rotationDeg, () => {
+          ctx.fillStyle = "#000000";
+          ctx.fillRect(0, 0, sw, sh);
+        });
         break;
 
       case "mosaic":
-        applyMosaic(ctx, sx, sy, sw, sh);
+        if (rotationDeg === 0) {
+          applyMosaic(ctx, Math.round(sx), Math.round(sy), Math.round(sw), Math.round(sh));
+        } else {
+          applyMosaicRotated(ctx, sx, sy, sw, sh, rotationDeg);
+        }
         break;
 
       case "blur":
-        applyBlur(ctx, imageElement, sx, sy, sw, sh, scaleX, scaleY);
+        applyBlur(ctx, imageElement, sx, sy, sw, sh, scaleX, scaleY, rotationDeg);
         break;
 
       case "stamp-face": {
         const stamp = pickExportStampImage(region, stampImages);
         if (stamp) {
-          const centerX = sx + sw / 2;
-          const centerY = sy + sh / 2;
-          const stampSize = Math.max(sw, sh);
-          ctx.drawImage(
-            stamp,
-            centerX - stampSize / 2,
-            centerY - stampSize / 2,
-            stampSize,
-            stampSize
-          );
+          withStampRegionTransform(ctx, sx, sy, rotationDeg, () => {
+            const centerX = sw / 2;
+            const centerY = sh / 2;
+            const stampSize = Math.max(sw, sh);
+            ctx.drawImage(
+              stamp,
+              centerX - stampSize / 2,
+              centerY - stampSize / 2,
+              stampSize,
+              stampSize
+            );
+          });
         } else {
-          ctx.fillStyle = "rgba(0,0,0,0.5)";
-          ctx.fillRect(sx, sy, sw, sh);
+          withStampRegionTransform(ctx, sx, sy, rotationDeg, () => {
+            ctx.fillStyle = "rgba(0,0,0,0.5)";
+            ctx.fillRect(0, 0, sw, sh);
+          });
         }
         break;
       }

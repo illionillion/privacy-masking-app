@@ -19,6 +19,11 @@ export interface StampRegion {
   width: number;
   /** 高さ（元画像ピクセル空間） */
   height: number;
+  /**
+   * 回転角（度、時計回り）。Konva Group と同じく領域の左上を原点とする。
+   * 未設定・0 は無回転。
+   */
+  rotation?: number;
   /** マスキング種別 */
   stampType: StampType;
   /** stamp-face 種別で使用するスタンプ画像のファイル名 */
