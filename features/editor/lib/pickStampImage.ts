@@ -27,7 +27,8 @@ export function resolveStampFileName(
  * スタンプ画像マップから画像を選択する
  *
  * region.stampFileName が設定されている場合はそれを優先し、
- * 未設定の場合は region.id ハッシュで決定的に選択する。
+ * 未設定の場合は STAMP_FILE_NAMES（カタログ順）に対する id ハッシュで決定的に選ぶ。
+ * Map の挿入順（画像 onload 完了順）には依存しない。
  *
  * @param region - StampRegion
  * @param stampImages - ファイル名をキーにした HTMLImageElement の Map
@@ -38,7 +39,7 @@ export function pickStampImage(
   stampImages: Map<string, HTMLImageElement>
 ): HTMLImageElement | null {
   if (stampImages.size === 0) return null;
-  const fileName = resolveStampFileName(region, Array.from(stampImages.keys()));
+  const fileName = resolveStampFileName(region, STAMP_FILE_NAMES);
   if (!fileName) return null;
   return stampImages.get(fileName) ?? null;
 }
