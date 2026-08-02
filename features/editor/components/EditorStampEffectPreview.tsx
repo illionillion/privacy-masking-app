@@ -48,6 +48,11 @@ export interface EditorStampEffectPreviewProps {
   offsetX: number;
   /** グループ内での画像 Y オフセット（= -(領域Y * scaleY)） */
   offsetY: number;
+  /**
+   * 親 Group の回転を打ち消し、背景画像がステージ座標と一致するようにする角度（度）
+   * 親が rotation=R のとき -R を渡す
+   */
+  counterRotation?: number;
   stageWidth: number;
   stageHeight: number;
   w: number;
@@ -64,6 +69,7 @@ export function EditorStampEffectPreview({
   bgImage,
   offsetX,
   offsetY,
+  counterRotation = 0,
   stageWidth,
   stageHeight,
   w,
@@ -86,20 +92,22 @@ export function EditorStampEffectPreview({
       pixelRatio: 1,
     });
     group.getLayer()?.batchDraw();
-  }, [kind, bgImage, offsetX, offsetY, stageWidth, stageHeight, w, h]);
+  }, [kind, bgImage, offsetX, offsetY, counterRotation, stageWidth, stageHeight, w, h]);
 
   const filters = kind === "blur" ? [Konva.Filters.Blur] : [pixelateFilter];
 
   return (
     <Group ref={groupRef} clipX={0} clipY={0} clipWidth={w} clipHeight={h} filters={filters}>
-      <KonvaImage
-        image={bgImage}
-        x={offsetX}
-        y={offsetY}
-        width={stageWidth}
-        height={stageHeight}
-        listening={false}
-      />
+      <Group rotation={counterRotation} listening={false}>
+        <KonvaImage
+          image={bgImage}
+          x={offsetX}
+          y={offsetY}
+          width={stageWidth}
+          height={stageHeight}
+          listening={false}
+        />
+      </Group>
     </Group>
   );
 }
