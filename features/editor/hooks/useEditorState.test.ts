@@ -46,6 +46,7 @@ describe("useEditorState", () => {
       isEnabled: true,
       source: "face-detection",
     });
+    expect(result.current.stampRegions[0]?.stampFileName).toBeTruthy();
     expect(result.current.stampRegions[1]).toMatchObject({
       id: "f-1",
       x: 100,
@@ -57,6 +58,61 @@ describe("useEditorState", () => {
       source: "ocr",
       text: "test@example.com",
     });
+  });
+
+  it("顔スタンプ領域を選択するとプルダウン用ファイル名が同期する", () => {
+    vi.stubGlobal("crypto", {
+      randomUUID: vi.fn().mockReturnValueOnce("face-sync-1").mockReturnValueOnce("ocr-sync-1"),
+    });
+    const { result } = renderHook(() => useEditorState("beaming_face_with_smiling_eyes-64.png"));
+    act(() => {
+      result.current.initFromDetections(
+        [{ x: 10, y: 20, width: 50, height: 60 }],
+        [{ x: 0, y: 0, width: 10, height: 10, text: "x" }]
+      );
+    });
+    const faceRegion = result.current.stampRegions[0];
+    expect(faceRegion?.stampType).toBe("stamp-face");
+    expect(faceRegion?.stampFileName).toBeTruthy();
+
+    act(() => {
+      result.current.selectItem(faceRegion!.id);
+    });
+    expect(result.current.selectedStampFileName).toBe(faceRegion!.stampFileName);
+  });
+
+  it("stampFileName 未設定の stamp-face を選択すると解決してバックフィルする", () => {
+    const { result } = renderHook(() => useEditorState("beaming_face_with_smiling_eyes-64.png"));
+    act(() => {
+      result.current.restoreSnapshot({
+        mode: "select",
+        stampRegions: [
+          {
+            id: "legacy-face",
+            x: 0,
+            y: 0,
+            width: 40,
+            height: 40,
+            stampType: "stamp-face",
+            isEnabled: true,
+            source: "face-detection",
+          },
+        ],
+        paintStrokes: [],
+        selectedId: null,
+        selectedStampType: "stamp-face",
+        selectedStampFileName: "beaming_face_with_smiling_eyes-64.png",
+        brushSize: 20,
+      });
+    });
+    act(() => {
+      result.current.selectItem("legacy-face");
+    });
+    expect(result.current.selectedStampFileName).toBeTruthy();
+    expect(result.current.selectedStampFileName).not.toBe("");
+    expect(result.current.stampRegions[0]?.stampFileName).toBe(
+      result.current.selectedStampFileName
+    );
   });
 
   it("addStampRegion でマスキング領域を追加できる", () => {
