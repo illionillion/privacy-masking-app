@@ -15,6 +15,9 @@ export function shouldShowEditorTransformer(
   if (selectedId === null) {
     return false;
   }
+  if (mode === "crop" || mode === "paint") {
+    return false;
+  }
   if (mode === "select") {
     return true;
   }

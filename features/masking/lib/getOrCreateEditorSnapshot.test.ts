@@ -67,6 +67,26 @@ describe("persistImageEditorSnapshot", () => {
     expect(getImageEditorSnapshot("img-1")?.selectedId).toBeNull();
     expect(getImageEditorSnapshot("img-1")?.stampRegions).toHaveLength(1);
   });
+
+  it("crop モードは select に戻してキャッシュする", () => {
+    const snapshot = createEditorSnapshotFromDetections(
+      [{ x: 0, y: 0, width: 10, height: 10 }],
+      [],
+      "a.png"
+    );
+    persistImageEditorSnapshot("img-1", {
+      ...snapshot,
+      mode: "crop",
+      cropRect: { x: 1, y: 2, width: 30, height: 40 },
+    });
+    expect(getImageEditorSnapshot("img-1")?.mode).toBe("select");
+    expect(getImageEditorSnapshot("img-1")?.cropRect).toEqual({
+      x: 1,
+      y: 2,
+      width: 30,
+      height: 40,
+    });
+  });
 });
 
 describe("isEditorSnapshotUsable", () => {

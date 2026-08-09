@@ -101,7 +101,8 @@ export function useEditorModal({
               imageElement,
               snapshot.stampRegions,
               snapshot.paintStrokes,
-              stampImages
+              stampImages,
+              snapshot.cropRect
             );
             if (!isMountedRef.current) {
               URL.revokeObjectURL(blobUrl);
@@ -164,7 +165,8 @@ export function useEditorModal({
               imageElement,
               baseline.stampRegions,
               baseline.paintStrokes,
-              stampImages
+              stampImages,
+              baseline.cropRect
             );
             if (!isMountedRef.current) {
               URL.revokeObjectURL(blobUrl);

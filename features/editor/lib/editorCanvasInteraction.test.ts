@@ -28,4 +28,8 @@ describe("shouldShowEditorTransformer", () => {
     expect(shouldShowEditorTransformer("rect", null, [stampRegion])).toBe(false);
     expect(shouldShowEditorTransformer("paint", "stamp-1", [stampRegion])).toBe(false);
   });
+
+  it("トリミングモードではスタンプ Transformer を表示しない", () => {
+    expect(shouldShowEditorTransformer("crop", "stamp-1", [stampRegion])).toBe(false);
+  });
 });

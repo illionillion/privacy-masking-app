@@ -81,7 +81,8 @@ export function GalleryItem({
       imageElementRef.current,
       snapshot.stampRegions,
       snapshot.paintStrokes,
-      stampImages
+      stampImages,
+      snapshot.cropRect
     )
       .then((blobUrl) => {
         if (cancelled) {

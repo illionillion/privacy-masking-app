@@ -32,6 +32,22 @@
     "url": "/blog/2026-07-08-event-photo-face-masking"
   },
   {
+    "id": "blog:2026-07-22-child-photo-online-privacy",
+    "type": "blog",
+    "title": "子どもの写真をネットに上げる前に注意したいこと",
+    "summary": "子どもの写真を SNS やグループに共有する前に確認したい、写り込み・拡散・将来のリスクと、投稿前のチェックポイントをまとめます。",
+    "tags": ["SNS", "子ども", "顔隠し", "個人情報"],
+    "url": "/blog/2026-07-22-child-photo-online-privacy"
+  },
+  {
+    "id": "blog:2026-07-31-screenshot-pii-risk",
+    "type": "blog",
+    "title": "スクショや SNS 投稿に個人情報が写り込むリスク",
+    "summary": "スクリーンショットや SNS 投稿に氏名・住所・チャット内容などが写り込むリスクと、公開前に隠しておきたいポイントをチェックリスト形式でまとめます。",
+    "tags": ["SNS", "スクリーンショット", "個人情報", "写り込み"],
+    "url": "/blog/2026-07-31-screenshot-pii-risk"
+  },
+  {
     "id": "update:2026-04-24-image-upload-mobile-ux",
     "type": "update",
     "title": "画像アップロードの操作性改善とモバイル対応",
@@ -150,6 +166,14 @@
     "summary": "ホーム画面への追加やアプリとしてのインストールに対応しました。オフライン時は手動マスキングのみ利用できます（自動検出はオフラインでは無効）。",
     "tags": [],
     "url": "/updates/2026-06-27-pwa-install-offline-manual-edit"
+  },
+  {
+    "id": "update:2026-08-09-editor-virtual-crop",
+    "type": "update",
+    "title": "編集画面でトリミングできるように",
+    "summary": "編集モーダルにトリミングを追加。範囲外は暗く表示したままマスクは残し、保存・ダウンロード時だけ切り抜き後の画像になります。",
+    "tags": [],
+    "url": "/updates/2026-08-09-editor-virtual-crop"
   },
   {
     "id": "faq:画像はサーバーに送信されますか",
