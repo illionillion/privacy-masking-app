@@ -16,7 +16,10 @@ import {
 } from "react-konva";
 import type { CropRect, EditorMode, PaintStroke, StampRegion, StampType } from "../types";
 import { clampCropRect, createFullImageCropRect } from "../lib/cropRect";
-import { shouldShowEditorTransformer } from "../lib/editorCanvasInteraction";
+import {
+  getEditorStageTouchAction,
+  shouldShowEditorTransformer,
+} from "../lib/editorCanvasInteraction";
 import { EditorCropOverlay } from "./EditorCropOverlay";
 import { isEditableKeyboardTarget } from "../lib/isEditableKeyboardTarget";
 import { stampRegionUpdatesFromTransformEnd } from "../lib/stampRegionTransform";
@@ -772,13 +775,8 @@ export function EditorCanvas({
         : "grab"
       : MODE_CURSORS[mode];
 
-  /** モーダル内: 選択モードは縦スクロールを優先、描画モードはタッチ操作をキャンバスに取る */
-  const stageTouchAction =
-    pinViewportControls && (mode === "paint" || mode === "rect")
-      ? "none"
-      : pinViewportControls
-        ? "pan-y"
-        : "none";
+  /** モーダル内: 選択モードは縦スクロールを優先、描画・crop はタッチ操作をキャンバスに取る */
+  const stageTouchAction = getEditorStageTouchAction(pinViewportControls, mode);
 
   const stageArea = (
     <div
