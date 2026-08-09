@@ -50,7 +50,8 @@ export function setImageEditorSnapshot(imageId: string, snapshot: EditorStateSna
  * @param snapshot - 保存するスナップショット
  */
 export function persistImageEditorSnapshot(imageId: string, snapshot: EditorStateSnapshot): void {
-  setImageEditorSnapshot(imageId, { ...snapshot, selectedId: null });
+  const mode = snapshot.mode === "crop" ? "select" : snapshot.mode;
+  setImageEditorSnapshot(imageId, { ...snapshot, selectedId: null, mode });
   markImageEditorInitialized(imageId);
 }
 

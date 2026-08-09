@@ -257,6 +257,48 @@ describe("exportEditorCanvas", () => {
     expect(ctxMock.strokeCalls.length).toBeGreaterThan(0);
   });
 
+  it("cropRect があるときソース矩形で切り出してキャンバスサイズを合わせる", async () => {
+    const img = makeImageElement(200, 200);
+    const canvasMock = {
+      width: 0,
+      height: 0,
+      getContext: vi.fn(() => ctxMock.ctx),
+      toBlob: vi.fn((cb: (blob: Blob | null) => void) => {
+        cb(new Blob(["png"], { type: "image/png" }));
+      }),
+    };
+    createElementSpy.mockReturnValue(canvasMock as unknown as HTMLElement);
+
+    await exportEditorCanvas(img, [], [], new Map(), { x: 40, y: 50, width: 80, height: 60 });
+
+    expect(canvasMock.width).toBe(80);
+    expect(canvasMock.height).toBe(60);
+    expect(ctxMock.ctx.drawImage).toHaveBeenCalledWith(img, 40, 50, 80, 60, 0, 0, 80, 60);
+  });
+
+  it("cropRect があるときスタンプ座標をソース原点基準にずらす", async () => {
+    const img = makeImageElement(200, 200);
+    const stampRegions: StampRegion[] = [
+      {
+        id: "s-crop",
+        x: 50,
+        y: 60,
+        width: 20,
+        height: 20,
+        stampType: "fill-black",
+        isEnabled: true,
+        source: "manual",
+      },
+    ];
+    await exportEditorCanvas(img, stampRegions, [], new Map(), {
+      x: 40,
+      y: 50,
+      width: 80,
+      height: 60,
+    });
+    expect(ctxMock.translateCalls.some(([x, y]) => x === 10 && y === 10)).toBe(true);
+  });
+
   it("ポイントが1点のみのストロークはスキップされる", async () => {
     const img = makeImageElement(200, 200);
     const paintStrokes: PaintStroke[] = [

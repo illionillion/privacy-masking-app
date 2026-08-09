@@ -49,5 +49,6 @@ export function createEditorSnapshotFromDetections(
     selectedStampType: "stamp-face",
     selectedStampFileName: initialStampFileName,
     brushSize: 20,
+    cropRect: null,
   };
 }

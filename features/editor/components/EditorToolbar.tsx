@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { MousePointer2, Pen, Plus } from "lucide-react";
+import { Crop, MousePointer2, Pen, Plus } from "lucide-react";
 import type React from "react";
 import type { LucideProps } from "lucide-react";
 import { useNarrowViewport } from "@/lib/useNarrowViewport";
@@ -26,6 +26,10 @@ interface EditorToolbarProps {
   onStampFileNameChange: (name: string) => void;
   onBrushSizeChange: (size: number) => void;
   onDeleteSelected: () => void;
+  /** トリミング復元（画像全体に戻す） */
+  onRestoreCrop?: () => void;
+  /** 復元できる適用済み crop があるか */
+  canRestoreCrop?: boolean;
 }
 
 /** モードボタンの定義 */
@@ -37,6 +41,7 @@ const MODE_BUTTONS: {
   { mode: "select", label: "選択", Icon: MousePointer2 },
   { mode: "rect", label: "追加", Icon: Plus },
   { mode: "paint", label: "ペイント", Icon: Pen },
+  { mode: "crop", label: "トリミング", Icon: Crop },
 ];
 
 /** ツールバーセクション間の縦線セパレーター */
@@ -141,6 +146,28 @@ interface BrushControlsProps {
   onBrushSizeChange: (size: number) => void;
 }
 
+interface CropRestoreButtonProps {
+  onRestore: () => void;
+  disabled: boolean;
+}
+
+/** トリミングを画像全体へ戻す */
+function CropRestoreButton({ onRestore, disabled }: CropRestoreButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onRestore}
+      disabled={disabled}
+      className={clsx([
+        "shrink-0 rounded-md border border-zinc-300 bg-white px-3 py-1 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50",
+        disabled && "cursor-not-allowed opacity-50",
+      ])}
+    >
+      復元
+    </button>
+  );
+}
+
 /** ペイントブラシサイズ */
 function BrushControls({ brushSize, onBrushSizeChange }: BrushControlsProps) {
   return (
@@ -166,7 +193,7 @@ function BrushControls({ brushSize, onBrushSizeChange }: BrushControlsProps) {
  *
  * モード切替の右にマスキング種別（矩形追加時 / スタンプ領域選択時）、
  * ペイントブラシ・削除は各モードに応じて表示する。
- * 削除は選択中アイテムがあるときモード問わず表示する。
+ * 削除は選択中アイテムがあるとき表示する（トリミングモードでは非表示）。
  * SP では 2 段レイアウトにしてモーダル内の高さ変動を抑える。
  */
 export function EditorToolbar({
@@ -182,10 +209,13 @@ export function EditorToolbar({
   onStampFileNameChange,
   onBrushSizeChange,
   onDeleteSelected,
+  onRestoreCrop,
+  canRestoreCrop = false,
 }: EditorToolbarProps) {
   const isNarrowViewport = useNarrowViewport();
-  const showStampControls = mode === "rect" || isStampSelected;
-  const showDeleteSelected = selectedId !== null;
+  const showStampControls = mode !== "crop" && (mode === "rect" || isStampSelected);
+  const showDeleteSelected = mode !== "crop" && selectedId !== null;
+  const showCropRestore = mode === "crop" && onRestoreCrop !== undefined;
 
   if (isNarrowViewport) {
     const reserveStampRow = mode === "select" || mode === "rect";
@@ -222,6 +252,10 @@ export function EditorToolbar({
           {mode === "paint" && (
             <BrushControls brushSize={brushSize} onBrushSizeChange={onBrushSizeChange} />
           )}
+
+          {showCropRestore && onRestoreCrop && (
+            <CropRestoreButton onRestore={onRestoreCrop} disabled={!canRestoreCrop} />
+          )}
         </div>
       </div>
     );
@@ -249,6 +283,13 @@ export function EditorToolbar({
           <>
             <Divider />
             <BrushControls brushSize={brushSize} onBrushSizeChange={onBrushSizeChange} />
+          </>
+        )}
+
+        {showCropRestore && onRestoreCrop && (
+          <>
+            <Divider />
+            <CropRestoreButton onRestore={onRestoreCrop} disabled={!canRestoreCrop} />
           </>
         )}
 

@@ -103,6 +103,7 @@ describe("useEditorState", () => {
         selectedStampType: "stamp-face",
         selectedStampFileName: "beaming_face_with_smiling_eyes-64.png",
         brushSize: 20,
+        cropRect: null,
       });
     });
     act(() => {
@@ -415,5 +416,70 @@ describe("useEditorState", () => {
     expect(result.current.paintStrokes[0].id).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
     );
+  });
+
+  it("updateCropRect はその場で cropRect に反映し、モードを抜けても残る", () => {
+    const { result } = renderHook(() => useEditorState());
+    act(() => {
+      result.current.onChangeMode("crop");
+    });
+    expect(result.current.mode).toBe("crop");
+    expect(result.current.cropRect).toBeNull();
+
+    act(() => {
+      result.current.updateCropRect(
+        { x: 10, y: 20, width: 80, height: 50 },
+        { width: 200, height: 100 }
+      );
+    });
+    expect(result.current.cropRect).toEqual({ x: 10, y: 20, width: 80, height: 50 });
+
+    act(() => {
+      result.current.onChangeMode("select");
+    });
+    expect(result.current.mode).toBe("select");
+    expect(result.current.cropRect).toEqual({ x: 10, y: 20, width: 80, height: 50 });
+  });
+
+  it("フル画像へ戻すと cropRect は null になる", () => {
+    const { result } = renderHook(() => useEditorState());
+    act(() => {
+      result.current.updateCropRect(
+        { x: 10, y: 20, width: 80, height: 50 },
+        { width: 200, height: 100 }
+      );
+    });
+    act(() => {
+      result.current.updateCropRect(
+        { x: 0, y: 0, width: 200, height: 100 },
+        { width: 200, height: 100 }
+      );
+    });
+    expect(result.current.cropRect).toBeNull();
+  });
+
+  it("restoreCrop は crop を解除する", () => {
+    const { result } = renderHook(() => useEditorState());
+    act(() => {
+      result.current.updateCropRect(
+        { x: 10, y: 20, width: 80, height: 50 },
+        { width: 200, height: 100 }
+      );
+    });
+    act(() => {
+      result.current.restoreCrop();
+    });
+    expect(result.current.cropRect).toBeNull();
+  });
+
+  it("getSnapshot に cropRect が含まれる", () => {
+    const { result } = renderHook(() => useEditorState());
+    act(() => {
+      result.current.updateCropRect(
+        { x: 5, y: 6, width: 40, height: 30 },
+        { width: 100, height: 80 }
+      );
+    });
+    expect(result.current.getSnapshot().cropRect).toEqual({ x: 5, y: 6, width: 40, height: 30 });
   });
 });

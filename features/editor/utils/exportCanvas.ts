@@ -1,7 +1,8 @@
 import { MAX_CANVAS_DIMENSION } from "@/lib/canvas";
+import { resolveExportSourceRect } from "../lib/cropRect";
 import { pickStampImage } from "../lib/pickStampImage";
 import { getStampRegionRotationDeg } from "../lib/stampRegionTransform";
-import type { PaintStroke, StampRegion } from "../types";
+import type { CropRect, PaintStroke, StampRegion } from "../types";
 
 /** モザイクブロックの最小サイズ（px） */
 const MIN_MOSAIC_BLOCK_SIZE = 3;
@@ -114,9 +115,8 @@ function applyMosaicRotated(
  * @param y - 矩形の Y 座標
  * @param width - 矩形の幅
  * @param height - 矩形の高さ
- * @param scaleX - X 方向スケール
- * @param scaleY - Y 方向スケール
  * @param rotationDeg - 回転角（度）。左上原点
+ * @param imageDraw - 元画像をキャンバスへ置く位置とサイズ（crop オフセット込み）
  */
 function applyBlur(
   ctx: CanvasRenderingContext2D,
@@ -125,9 +125,8 @@ function applyBlur(
   y: number,
   width: number,
   height: number,
-  scaleX: number,
-  scaleY: number,
-  rotationDeg = 0
+  rotationDeg: number,
+  imageDraw: { x: number; y: number; width: number; height: number }
 ): void {
   const rad = (rotationDeg * Math.PI) / 180;
   ctx.save();
@@ -143,13 +142,7 @@ function applyBlur(
     Math.round(Math.min(width, height) / BLUR_RADIUS_DIVISOR)
   );
   ctx.filter = `blur(${blurRadius}px)`;
-  ctx.drawImage(
-    imageSource,
-    0,
-    0,
-    Math.round(imageSource.width * scaleX),
-    Math.round(imageSource.height * scaleY)
-  );
+  ctx.drawImage(imageSource, imageDraw.x, imageDraw.y, imageDraw.width, imageDraw.height);
   ctx.filter = "none";
   ctx.restore();
 }
@@ -182,22 +175,30 @@ function withStampRegionTransform(
  * @param stampRegions - マスキング領域の配列
  * @param paintStrokes - ペイントストロークの配列
  * @param stampImages - ファイル名をキーにした画像マップ（stamp-face 用）
+ * @param cropRect - 適用済み仮想 crop。未指定・null は画像全体
  * @returns PNG の Blob URL
  */
 export async function exportEditorCanvas(
   imageElement: HTMLImageElement,
   stampRegions: StampRegion[],
   paintStrokes: PaintStroke[],
-  stampImages: Map<string, HTMLImageElement>
+  stampImages: Map<string, HTMLImageElement>,
+  cropRect?: CropRect | null
 ): Promise<string> {
-  const scale = Math.min(
-    1,
-    MAX_CANVAS_DIMENSION / Math.max(imageElement.width, imageElement.height)
-  );
-  const canvasWidth = Math.round(imageElement.width * scale);
-  const canvasHeight = Math.round(imageElement.height * scale);
-  const scaleX = canvasWidth / imageElement.width;
-  const scaleY = canvasHeight / imageElement.height;
+  const source = resolveExportSourceRect(imageElement.width, imageElement.height, cropRect);
+  const scale = Math.min(1, MAX_CANVAS_DIMENSION / Math.max(source.width, source.height));
+  const canvasWidth = Math.max(1, Math.round(source.width * scale));
+  const canvasHeight = Math.max(1, Math.round(source.height * scale));
+  const scaleX = canvasWidth / source.width;
+  const scaleY = canvasHeight / source.height;
+  const originX = -source.x * scaleX;
+  const originY = -source.y * scaleY;
+  const imageDraw = {
+    x: originX,
+    y: originY,
+    width: imageElement.width * scaleX,
+    height: imageElement.height * scaleY,
+  };
 
   const canvas = document.createElement("canvas");
   canvas.width = canvasWidth;
@@ -206,15 +207,33 @@ export async function exportEditorCanvas(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Failed to get 2D context");
 
-  ctx.drawImage(imageElement, 0, 0, canvasWidth, canvasHeight);
+  ctx.drawImage(
+    imageElement,
+    source.x,
+    source.y,
+    source.width,
+    source.height,
+    0,
+    0,
+    canvasWidth,
+    canvasHeight
+  );
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, canvasWidth, canvasHeight);
+  ctx.clip();
 
   /** 有効なマスキング領域を種別に応じて描画 */
   for (const region of stampRegions) {
     if (!region.isEnabled) continue;
-    const sx = region.x * scaleX;
-    const sy = region.y * scaleY;
+    const sx = (region.x - source.x) * scaleX;
+    const sy = (region.y - source.y) * scaleY;
     const sw = region.width * scaleX;
     const sh = region.height * scaleY;
+    if (sx + sw <= 0 || sy + sh <= 0 || sx >= canvasWidth || sy >= canvasHeight) {
+      continue;
+    }
     const rotationDeg = getStampRegionRotationDeg(region);
 
     switch (region.stampType) {
@@ -227,14 +246,20 @@ export async function exportEditorCanvas(
 
       case "mosaic":
         if (rotationDeg === 0) {
-          applyMosaic(ctx, Math.round(sx), Math.round(sy), Math.round(sw), Math.round(sh));
+          const mx = Math.max(0, Math.round(sx));
+          const my = Math.max(0, Math.round(sy));
+          const mw = Math.min(canvasWidth - mx, Math.round(sx + sw) - mx);
+          const mh = Math.min(canvasHeight - my, Math.round(sy + sh) - my);
+          if (mw > 0 && mh > 0) {
+            applyMosaic(ctx, mx, my, mw, mh);
+          }
         } else {
           applyMosaicRotated(ctx, sx, sy, sw, sh, rotationDeg);
         }
         break;
 
       case "blur":
-        applyBlur(ctx, imageElement, sx, sy, sw, sh, scaleX, scaleY, rotationDeg);
+        applyBlur(ctx, imageElement, sx, sy, sw, sh, rotationDeg, imageDraw);
         break;
 
       case "stamp-face": {
@@ -271,12 +296,17 @@ export async function exportEditorCanvas(
     if (!stroke.isEnabled || stroke.points.length < 2) continue;
     ctx.lineWidth = stroke.brushSize * scaleX;
     ctx.beginPath();
-    ctx.moveTo(stroke.points[0].x * scaleX, stroke.points[0].y * scaleY);
+    ctx.moveTo((stroke.points[0].x - source.x) * scaleX, (stroke.points[0].y - source.y) * scaleY);
     for (let i = 1; i < stroke.points.length; i++) {
-      ctx.lineTo(stroke.points[i].x * scaleX, stroke.points[i].y * scaleY);
+      ctx.lineTo(
+        (stroke.points[i].x - source.x) * scaleX,
+        (stroke.points[i].y - source.y) * scaleY
+      );
     }
     ctx.stroke();
   }
+
+  ctx.restore();
 
   return new Promise<string>((resolve, reject) => {
     canvas.toBlob((blob) => {

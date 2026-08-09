@@ -162,6 +162,14 @@ describe("useEditorViewportGestures", () => {
     expect(hook.result.current.isSpacePanMode).toBe(false);
   });
 
+  it("トリミングモードでは Space パンを開始しない", () => {
+    const { hook } = mountGestures({ mode: "crop" });
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space", bubbles: true }));
+
+    expect(hook.result.current.isSpacePanMode).toBe(false);
+  });
+
   it("空白ドラッグで panByStageDelta が呼ばれる", async () => {
     const { hook, panByStageDelta } = mountGestures();
     const stage = { getStage: () => stage, getType: () => "Stage" };

@@ -2,16 +2,24 @@
 
 import { useState, useCallback } from "react";
 import { STAMP_FILE_NAMES } from "../constants";
+import { normalizeAppliedCropRect } from "../lib/cropRect";
 import { createEditorSnapshotFromDetections } from "../lib/editorSnapshot";
 import { generateUUID } from "../lib/generateUUID";
 import { resolveStampFileName } from "../lib/pickStampImage";
 import type {
+  CropRect,
   EditorMode,
   EditorStateSnapshot,
   PaintStroke,
   StampRegion,
   StampType,
 } from "../types";
+
+/** crop 正規化時に渡す画像サイズ */
+export interface EditorImageSize {
+  width: number;
+  height: number;
+}
 
 /** useEditorState フックの戻り値型 */
 export interface UseEditorStateReturn {
@@ -22,7 +30,11 @@ export interface UseEditorStateReturn {
   selectedStampType: StampType;
   selectedStampFileName: string;
   brushSize: number;
+  /** 仮想 crop。フル画像は null */
+  cropRect: CropRect | null;
   onChangeMode: (mode: EditorMode) => void;
+  updateCropRect: (rect: CropRect, imageSize: EditorImageSize) => void;
+  restoreCrop: () => void;
   setSelectedStampType: (type: StampType) => void;
   setSelectedStampFileName: (name: string) => void;
   setBrushSize: (size: number) => void;
@@ -58,6 +70,7 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
   const [selectedStampType, _setSelectedStampType] = useState<StampType>("stamp-face");
   const [selectedStampFileName, _setSelectedStampFileName] = useState<string>(initialStampFileName);
   const [brushSize, setBrushSize] = useState<number>(20);
+  const [cropRect, setCropRect] = useState<CropRect | null>(null);
 
   /**
    * 選択アイテムを設定する
@@ -144,13 +157,14 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
    * @param ocrRegions - OCR検出結果の配列
    */
   const restoreSnapshot = useCallback((snapshot: EditorStateSnapshot) => {
-    setMode(snapshot.mode);
+    setMode(snapshot.mode === "crop" ? "select" : snapshot.mode);
     setStampRegions(snapshot.stampRegions);
     setPaintStrokes(snapshot.paintStrokes);
     setSelectedId(snapshot.selectedId);
     _setSelectedStampType(snapshot.selectedStampType);
     _setSelectedStampFileName(snapshot.selectedStampFileName);
     setBrushSize(snapshot.brushSize);
+    setCropRect(snapshot.cropRect ?? null);
   }, []);
 
   const getSnapshot = useCallback(
@@ -162,6 +176,7 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
       selectedStampType,
       selectedStampFileName,
       brushSize,
+      cropRect,
     }),
     [
       mode,
@@ -171,6 +186,7 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
       selectedStampType,
       selectedStampFileName,
       brushSize,
+      cropRect,
     ]
   );
 
@@ -273,6 +289,23 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
     [selectItem]
   );
 
+  /**
+   * crop をその場で反映する。フル画像なら null にする
+   *
+   * @param rect - 新しい crop 矩形
+   * @param imageSize - 元画像サイズ
+   */
+  const updateCropRect = useCallback((rect: CropRect, imageSize: EditorImageSize) => {
+    setCropRect(normalizeAppliedCropRect(rect, imageSize.width, imageSize.height));
+  }, []);
+
+  /**
+   * 仮想 crop を解除する
+   */
+  const restoreCrop = useCallback(() => {
+    setCropRect(null);
+  }, []);
+
   return {
     mode,
     stampRegions,
@@ -281,7 +314,10 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
     selectedStampType,
     selectedStampFileName,
     brushSize,
+    cropRect,
     onChangeMode,
+    updateCropRect,
+    restoreCrop,
     setSelectedStampType,
     setSelectedStampFileName,
     setBrushSize,

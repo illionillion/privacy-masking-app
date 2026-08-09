@@ -15,6 +15,9 @@ export function shouldShowEditorTransformer(
   if (selectedId === null) {
     return false;
   }
+  if (mode === "crop" || mode === "paint") {
+    return false;
+  }
   if (mode === "select") {
     return true;
   }
@@ -22,4 +25,24 @@ export function shouldShowEditorTransformer(
     return stampRegions.some((region) => region.id === selectedId);
   }
   return false;
+}
+
+/**
+ * モーダル内 Stage の touch-action を返す。
+ * ピン留め時は選択モードだけ縦スクロール（pan-y）を許し、描画・crop はキャンバス操作を取る。
+ *
+ * @param pinViewportControls - モーダルでビューポート操作を固定するか
+ * @param mode - エディタモード
+ */
+export function getEditorStageTouchAction(
+  pinViewportControls: boolean,
+  mode: EditorMode
+): "none" | "pan-y" {
+  if (!pinViewportControls) {
+    return "none";
+  }
+  if (mode === "select") {
+    return "pan-y";
+  }
+  return "none";
 }

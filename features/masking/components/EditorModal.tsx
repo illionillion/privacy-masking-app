@@ -105,6 +105,8 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
               onDeleteSelected={editor.removeSelectedItem}
               stampCatalog={STAMP_CATALOG}
               selectedStampFileName={editor.selectedStampFileName}
+              onRestoreCrop={editor.restoreCrop}
+              canRestoreCrop={editor.cropRect !== null}
             />
           </div>
 
@@ -131,6 +133,13 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
                 stampImages={stampImages}
                 selectedStampFileName={editor.selectedStampFileName}
                 onDeleteSelected={editor.removeSelectedItem}
+                cropRect={editor.cropRect}
+                onUpdateCropRect={(rect) =>
+                  editor.updateCropRect(rect, {
+                    width: imageNaturalWidth,
+                    height: imageNaturalHeight,
+                  })
+                }
               />
             ) : (
               <EditorCanvasPlaceholder className="min-h-0 flex-1" />

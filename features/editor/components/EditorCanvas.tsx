@@ -14,8 +14,13 @@ import {
   Stage,
   Transformer,
 } from "react-konva";
-import type { EditorMode, PaintStroke, StampRegion, StampType } from "../types";
-import { shouldShowEditorTransformer } from "../lib/editorCanvasInteraction";
+import type { CropRect, EditorMode, PaintStroke, StampRegion, StampType } from "../types";
+import { clampCropRect, createFullImageCropRect } from "../lib/cropRect";
+import {
+  getEditorStageTouchAction,
+  shouldShowEditorTransformer,
+} from "../lib/editorCanvasInteraction";
+import { EditorCropOverlay } from "./EditorCropOverlay";
 import { isEditableKeyboardTarget } from "../lib/isEditableKeyboardTarget";
 import { stampRegionUpdatesFromTransformEnd } from "../lib/stampRegionTransform";
 import { stagePointerToContentSpace } from "../lib/viewZoom";
@@ -45,6 +50,10 @@ interface EditorCanvasProps {
   selectedStampFileName: string;
   /** 選択中アイテムを削除するコールバック */
   onDeleteSelected: () => void;
+  /** 仮想 crop。フル画像は null */
+  cropRect?: CropRect | null;
+  /** crop をその場で反映する */
+  onUpdateCropRect?: (rect: CropRect) => void;
   /** true のとき表示ズームバーをキャンバス外に固定し、Stage のみスクロールする（モーダル編集向け） */
   pinViewportControls?: boolean;
   /** ルート要素に追加するクラス（モーダル内で flex-1 など） */
@@ -78,11 +87,15 @@ const RECT_PREVIEW_BY_STAMP_TYPE: Record<StampType, { fill: string; stroke: stri
 /** Transformer のリサイズ最小サイズ（px）。この値未満へのリサイズを禁止する */
 const MIN_TRANSFORM_SIZE = 10;
 
+/** crop 枠 Konva ノード ID */
+const EDITOR_CROP_RECT_ID = "editor-crop-rect";
+
 /** モードごとの CSS カーソル種別 */
 const MODE_CURSORS: Record<EditorMode, string> = {
   select: "default",
   rect: "crosshair",
   paint: "cell",
+  crop: "default",
 };
 
 /**
@@ -126,7 +139,7 @@ function toImageSpace(
 /**
  * エディタキャンバスコンポーネント（React Konva ベース）
  *
- * 選択・矩形追加・ペイントの 3 モードをサポートし、
+ * 選択・矩形追加・ペイント・トリミングをサポートし、
  * 顔検出・OCR 結果からマスキング領域をインタラクティブに編集できる。
  */
 export function EditorCanvas({
@@ -147,12 +160,15 @@ export function EditorCanvas({
   stampImages,
   selectedStampFileName,
   onDeleteSelected,
+  cropRect = null,
+  onUpdateCropRect,
   pinViewportControls = false,
   className,
 }: EditorCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageContainerRef = useRef<HTMLDivElement>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
+  const cropTransformerRef = useRef<Konva.Transformer>(null);
   const [stageWidth, setStageWidth] = useState(600);
   const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
   const [drawingRect, setDrawingRect] = useState<DrawingRect | null>(null);
@@ -286,6 +302,25 @@ export function EditorCanvas({
   ]);
 
   /**
+   * トリミングモードの Transformer を crop 枠へ再アタッチする
+   */
+  useEffect(() => {
+    const transformer = cropTransformerRef.current;
+    if (!transformer) return;
+
+    if (mode !== "crop") {
+      transformer.nodes([]);
+      transformer.getLayer()?.batchDraw();
+      return;
+    }
+
+    const stage = transformer.getStage();
+    const node = stage?.findOne(`#${EDITOR_CROP_RECT_ID}`) ?? null;
+    transformer.nodes(node ? [node] : []);
+    transformer.getLayer()?.batchDraw();
+  }, [mode, cropRect, viewZoom, viewCenter.x, viewCenter.y, stageWidth, stageHeight]);
+
+  /**
    * ステージのマウスダウン/タッチスタートハンドラ
    */
   function handlePointerDown(e: KonvaEventObject<MouseEvent> | KonvaEventObject<TouchEvent>) {
@@ -301,6 +336,10 @@ export function EditorCanvas({
       if (e.target === stage || e.target.getType() === "Stage") {
         onSelectItem(null);
       }
+      return;
+    }
+
+    if (mode === "crop") {
       return;
     }
 
@@ -507,6 +546,12 @@ export function EditorCanvas({
   const isStampRegionInteractive = mode === "select" || mode === "rect";
   const isPaintStrokeInteractive = mode === "select";
   const showTransformer = shouldShowEditorTransformer(mode, selectedId, stampRegions);
+  const editingCrop =
+    cropRect ??
+    (imageNaturalWidth > 0 && imageNaturalHeight > 0
+      ? createFullImageCropRect(imageNaturalWidth, imageNaturalHeight)
+      : null);
+  const overlayCrop = mode === "crop" ? editingCrop : cropRect;
 
   /**
    * ステージ上のポインタを、ズーム補正後のコンテンツ座標（領域描画と同じ系）に変換する
@@ -525,6 +570,16 @@ export function EditorCanvas({
       {/* 背景画像 */}
       {bgImage && (
         <KonvaImage image={bgImage} width={stageWidth} height={stageHeight} listening={false} />
+      )}
+
+      {overlayCrop && (
+        <EditorCropOverlay
+          crop={overlayCrop}
+          stageWidth={stageWidth}
+          stageHeight={stageHeight}
+          scaleX={scaleX}
+          scaleY={scaleY}
+        />
       )}
 
       {/* マスキング領域 */}
@@ -617,6 +672,90 @@ export function EditorCanvas({
           }}
         />
       )}
+
+      {mode !== "crop" && cropRect && (
+        <Rect
+          x={cropRect.x * scaleX}
+          y={cropRect.y * scaleY}
+          width={cropRect.width * scaleX}
+          height={cropRect.height * scaleY}
+          stroke="#fbbf24"
+          strokeWidth={2}
+          dash={[8, 4]}
+          listening={false}
+        />
+      )}
+
+      {mode === "crop" && editingCrop && onUpdateCropRect && (
+        <>
+          <Rect
+            id={EDITOR_CROP_RECT_ID}
+            x={editingCrop.x * scaleX}
+            y={editingCrop.y * scaleY}
+            width={editingCrop.width * scaleX}
+            height={editingCrop.height * scaleY}
+            stroke="#fbbf24"
+            strokeWidth={2}
+            dash={[8, 4]}
+            fill="rgba(0,0,0,0)"
+            draggable
+            dragBoundFunc={(pos) => {
+              const w = editingCrop.width * scaleX;
+              const h = editingCrop.height * scaleY;
+              return {
+                x: Math.min(Math.max(0, pos.x), Math.max(0, stageWidth - w)),
+                y: Math.min(Math.max(0, pos.y), Math.max(0, stageHeight - h)),
+              };
+            }}
+            onDragEnd={(e) => {
+              const node = e.target;
+              onUpdateCropRect(
+                clampCropRect(
+                  {
+                    x: node.x() / scaleX,
+                    y: node.y() / scaleY,
+                    width: node.width() / scaleX,
+                    height: node.height() / scaleY,
+                  },
+                  imageNaturalWidth,
+                  imageNaturalHeight
+                )
+              );
+            }}
+            onTransformEnd={(e) => {
+              const node = e.target;
+              const next = clampCropRect(
+                {
+                  x: node.x() / scaleX,
+                  y: node.y() / scaleY,
+                  width: (node.width() * node.scaleX()) / scaleX,
+                  height: (node.height() * node.scaleY()) / scaleY,
+                },
+                imageNaturalWidth,
+                imageNaturalHeight
+              );
+              node.scaleX(1);
+              node.scaleY(1);
+              node.x(next.x * scaleX);
+              node.y(next.y * scaleY);
+              node.width(next.width * scaleX);
+              node.height(next.height * scaleY);
+              onUpdateCropRect(next);
+            }}
+          />
+          <Transformer
+            ref={cropTransformerRef}
+            rotateEnabled={false}
+            keepRatio={false}
+            boundBoxFunc={(oldBox, newBox) => {
+              if (newBox.width < MIN_TRANSFORM_SIZE || newBox.height < MIN_TRANSFORM_SIZE) {
+                return oldBox;
+              }
+              return newBox;
+            }}
+          />
+        </>
+      )}
     </>
   );
 
@@ -636,13 +775,8 @@ export function EditorCanvas({
         : "grab"
       : MODE_CURSORS[mode];
 
-  /** モーダル内: 選択モードは縦スクロールを優先、描画モードはタッチ操作をキャンバスに取る */
-  const stageTouchAction =
-    pinViewportControls && (mode === "paint" || mode === "rect")
-      ? "none"
-      : pinViewportControls
-        ? "pan-y"
-        : "none";
+  /** モーダル内: 選択モードは縦スクロールを優先、描画・crop はタッチ操作をキャンバスに取る */
+  const stageTouchAction = getEditorStageTouchAction(pinViewportControls, mode);
 
   const stageArea = (
     <div

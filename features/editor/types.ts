@@ -2,7 +2,19 @@
 export type StampType = "mosaic" | "blur" | "stamp-face" | "fill-black";
 
 /** エディタの操作モード */
-export type EditorMode = "select" | "rect" | "paint";
+export type EditorMode = "select" | "rect" | "paint" | "crop";
+
+/** 仮想トリミング矩形（元画像ピクセル空間） */
+export interface CropRect {
+  /** X座標（元画像ピクセル空間） */
+  x: number;
+  /** Y座標（元画像ピクセル空間） */
+  y: number;
+  /** 幅（元画像ピクセル空間） */
+  width: number;
+  /** 高さ（元画像ピクセル空間） */
+  height: number;
+}
 
 /** マスキング領域の発生源 */
 export type StampRegionSource = "face-detection" | "ocr" | "manual";
@@ -45,6 +57,8 @@ export interface EditorStateSnapshot {
   selectedStampType: StampType;
   selectedStampFileName: string;
   brushSize: number;
+  /** 仮想 crop。null は元画像全体 */
+  cropRect: CropRect | null;
 }
 
 /** ペイントストローク */

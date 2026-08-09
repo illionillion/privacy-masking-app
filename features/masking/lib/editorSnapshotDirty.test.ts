@@ -21,4 +21,17 @@ describe("hasEditorContentChanges", () => {
     };
     expect(hasEditorContentChanges(current, baseline)).toBe(true);
   });
+
+  it("cropRect だけ変われば true", () => {
+    const current = {
+      ...baseline,
+      cropRect: { x: 10, y: 20, width: 80, height: 60 },
+    };
+    expect(hasEditorContentChanges(current, baseline)).toBe(true);
+  });
+
+  it("cropRect がどちらも null なら false", () => {
+    const current = { ...baseline, cropRect: null, mode: "crop" as const };
+    expect(hasEditorContentChanges(current, baseline)).toBe(false);
+  });
 });
