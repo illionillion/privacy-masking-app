@@ -1,0 +1,7 @@
+1:"$Sreact.fragment"
+2:I[4196,["5","static/chunks/5-45a81fb9158df9e5.js","511","static/chunks/511-32d70babdb3d5f32.js","229","static/chunks/app/updates/%5Bslug%5D/page-1434be974c492a0c.js"],"MarkdownContent"]
+3:I[2005,["5","static/chunks/5-45a81fb9158df9e5.js","511","static/chunks/511-32d70babdb3d5f32.js","229","static/chunks/app/updates/%5Bslug%5D/page-1434be974c492a0c.js"],""]
+4:I[8849,[],"OutletBoundary"]
+5:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"編集画面でトリミングできるように"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["公開日",": ","2026年8月9日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":[["$","$L2",null,{"content":"編集モーダルに **トリミング** を追加しました。ツールバーのトリミングモードで点線枠をリサイズ・移動すると、その場で範囲が反映されます。\n\n編集中は画像の位置は変わらず、枠外が暗くなります。検出済みのマスクやスタンプは枠の内外とも表示・編集したままです。あとから範囲を広げれば、枠外に残していたマスクも再び使えます。画像全体に戻したいときは「復元」を押してください。\n\nギャラリーのプレビューとダウンロードは、トリミング後の完成版になります。処理は従来どおりブラウザ内だけで行われ、画像データはサーバーへ送信されません。"}],["$","p",null,{"className":"pt-2","children":["$","$L3",null,{"href":"/updates","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"更新情報一覧へ戻る"}]}]]}]]}],null,["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"iut25gb-_R5FH_o5M5eu7"}
+6:null
