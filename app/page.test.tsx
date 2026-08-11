@@ -11,7 +11,12 @@ describe("Home (LandingPage)", () => {
 
   it("キャッチコピーが表示される", () => {
     render(<Home />);
-    expect(screen.getByText(/ブラウザだけで画像の/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: /写真・スクショの顔と文字を、\s*ブラウザでまとめて隠す/,
+      })
+    ).toBeInTheDocument();
   });
 
   it("CTAボタンが /app へのリンクになっている", () => {

@@ -1,30 +1,30 @@
-import { Image as ImageIcon, Monitor, UserX } from "lucide-react";
+import { IdCard, Image as ImageIcon, MessagesSquare } from "lucide-react";
 
 /** ユースケースセクション */
 export function UseCasesSection() {
   const cases = [
     {
       icon: ImageIcon,
-      title: "SNS投稿前の画像編集",
+      title: "行事写真の公開前",
       description:
-        "インスタグラムやXへの投稿前に、写真に写り込んだ顔や個人情報をAIマスキングでサッと消去。スマホのブラウザからも顔隠しできます。",
-      tag: "個人利用",
+        "運動会や発表会など、子どもや参加者の顔が写る写真を公開する前に一括マスキング。同意のない写り込みもブラウザだけで隠せます。",
+      tag: "行事・SNS",
       tagColor: "bg-sky-100 text-sky-700",
     },
     {
-      icon: Monitor,
-      title: "社内資料・スクショの共有",
+      icon: MessagesSquare,
+      title: "チャット共有前のスクショ",
       description:
-        "スクショの個人情報（メール・電話番号など）を隠してから社外共有。ブラウザだけで画像マスキングでき、情報漏洩リスクを低減します。",
+        "Slack や社内チャットに貼る前に、添付写真の顔とメッセージ内の電話・メールをまとめて隠します。インストール不要です。",
       tag: "ビジネス",
       tagColor: "bg-violet-100 text-violet-700",
     },
     {
-      icon: UserX,
-      title: "イベント・オフ会写真の加工",
+      icon: IdCard,
+      title: "名刺・画面の文字隠し",
       description:
-        "同意を得ていない参加者の顔をマスキングしてから公開。プライバシーに配慮したイベントレポートが作れます。",
-      tag: "コミュニティ",
+        "名刺や資料スクショに写った連絡先を検出して黒塗り。顔だけ・文字だけに分かれない加工を、1つのツールで行えます。",
+      tag: "文字・OCR",
       tagColor: "bg-emerald-100 text-emerald-700",
     },
   ] as const;
@@ -36,7 +36,7 @@ export function UseCasesSection() {
           <h2 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
             こんな場面で使われています
           </h2>
-          <p className="mt-3 text-zinc-500">幅広いシーンでプライバシー保護をサポートします</p>
+          <p className="mt-3 text-zinc-500">顔だけ・文字だけ、に分かれない公開前チェック向け</p>
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
