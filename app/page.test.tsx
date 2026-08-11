@@ -14,7 +14,7 @@ describe("Home (LandingPage)", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: /写真・スクショの顔と文字を[\s\S]*ブラウザでまとめて隠す/,
+        name: /写真・スクショの顔と文字を、\s*ブラウザでまとめて隠す/,
       })
     ).toBeInTheDocument();
   });
