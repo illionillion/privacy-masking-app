@@ -33,15 +33,15 @@ export function HeroSection() {
               className="drop-shadow-2xl"
             />
           </span>
-          ブラウザだけで画像の
+          写真・スクショの顔と文字を、
           <br className="hidden sm:block" />
-          個人情報を安全に隠せる
+          ブラウザでまとめて隠す
         </h1>
 
         <p className="mt-6 text-lg leading-relaxed text-indigo-100 sm:text-xl">
-          写真・スクショの顔・文字を検出してマスキング。検出できない部分は手動で調整できます。無料の顔隠しWebアプリです。
+          顔検出と文字検出（電話・メールなど）に対応。漏れは手動で調整できます。
           <br className="hidden sm:block" />
-          画像の個人情報はサーバーに送らず、ブラウザ内だけで処理されます。
+          画像はサーバーに送らず、ブラウザ内だけで処理。無料・ログイン不要です。
         </p>
 
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
