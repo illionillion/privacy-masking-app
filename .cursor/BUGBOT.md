@@ -39,8 +39,8 @@
 
 - スタンプ・ペイント・crop などの論理座標は**元画像ピクセル空間**。Stage 座標・`viewZoom`・`scaleX/Y` との混同による位置ズレ・書き出しズレ
 - `canvas.getContext("2d")` の null 未チェック
-- `MAX_CANVAS_DIMENSION`（4096）の適用タイミング誤り（例: crop 前にフル画像を縮小してから切る、意図と違う解像度になる）
-- 編集表示と `exportEditorCanvas` 等の書き出しで、クリップ・座標オフセット・効果適用の片方だけ直してプレビューと DL が食い違う
+- `MAX_CANVAS_DIMENSION`（`@/lib/canvas` / `@/lib/image/constants` など）の適用タイミング誤り（例: crop 前にフル画像を縮小してから切る、意図と違う解像度になる）
+- 編集表示と `exportEditorCanvas` 等の書き出しで、クリップ・座標オフセット・効果適用の片方だけ直してプレビューとダウンロードが食い違う
 - Konva Transformer 後に `scaleX/Y` を 1 に戻さない、負スケール（反転）で幅・高さが壊れる、回転の有無の前提ミス
 - エディタ上のプレビュー効果と書き出し経路で、モザイク等の実装が分岐したまま片方だけ更新される
 
