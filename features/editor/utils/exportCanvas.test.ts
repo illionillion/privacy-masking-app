@@ -20,6 +20,7 @@ function makeCtxMock() {
   const saveRestoreCalls: string[] = [];
   const translateCalls: [number, number][] = [];
   const rotateCalls: number[] = [];
+  const fillTextCalls: [string, number, number][] = [];
 
   const ctx = {
     canvas: { width: 200, height: 200 } as HTMLCanvasElement,
@@ -35,12 +36,16 @@ function makeCtxMock() {
     rotate: vi.fn((angle: number) => rotateCalls.push(angle)),
     save: vi.fn(() => saveRestoreCalls.push("save")),
     restore: vi.fn(() => saveRestoreCalls.push("restore")),
+    fillText: vi.fn((text: string, x: number, y: number) => fillTextCalls.push([text, x, y])),
     getImageData: vi.fn((x: number, y: number, w: number, h: number) => {
       getImageDataCalls.push([x, y, w, h]);
       return { data: new Uint8ClampedArray(w * h * 4) };
     }),
     fillStyle: "",
     strokeStyle: "",
+    font: "",
+    textAlign: "",
+    textBaseline: "",
     lineCap: "",
     lineJoin: "",
     lineWidth: 0,
@@ -56,6 +61,7 @@ function makeCtxMock() {
     saveRestoreCalls,
     translateCalls,
     rotateCalls,
+    fillTextCalls,
   };
 }
 
@@ -108,6 +114,89 @@ describe("exportEditorCanvas", () => {
     expect(
       ctxMock.fillRectCalls.some(([x, y, w, h]) => x === 0 && y === 0 && w === 50 && h === 50)
     ).toBe(true);
+  });
+
+  it("fill-text 領域を背景塗り＋文言で描画する", async () => {
+    const img = makeImageElement(200, 200);
+    const stampRegions: StampRegion[] = [
+      {
+        id: "s-text",
+        x: 10,
+        y: 10,
+        width: 80,
+        height: 40,
+        stampType: "fill-text",
+        overlayText: "非公開",
+        textColor: "#ffffff",
+        backgroundColor: "#111111",
+        isEnabled: true,
+        source: "manual",
+      },
+    ];
+    await exportEditorCanvas(img, stampRegions, [], new Map());
+    expect(ctxMock.translateCalls.some(([x, y]) => x === 10 && y === 10)).toBe(true);
+    expect(ctxMock.fillRectCalls.some(([, , w, h]) => w === 80 && h === 40)).toBe(true);
+    expect(ctxMock.fillTextCalls.some(([text]) => text === "非公開")).toBe(true);
+    expect(ctxMock.ctx.fillStyle).toBe("#ffffff");
+  });
+
+  it("fill-text 領域は折り返さず 1 行で描画する", async () => {
+    const img = makeImageElement(200, 200);
+    const stampRegions: StampRegion[] = [
+      {
+        id: "s-text-narrow",
+        x: 0,
+        y: 0,
+        width: 30,
+        height: 120,
+        stampType: "fill-text",
+        overlayText: "個人情報",
+        isEnabled: true,
+        source: "manual",
+      },
+    ];
+    await exportEditorCanvas(img, stampRegions, [], new Map());
+    expect(ctxMock.fillTextCalls).toHaveLength(1);
+    expect(ctxMock.fillTextCalls[0]?.[0]).toBe("個人情報");
+  });
+
+  it("fill-text 領域で背景透過なら背景を塗らず文言だけ描画する", async () => {
+    const img = makeImageElement(200, 200);
+    const stampRegions: StampRegion[] = [
+      {
+        id: "s-text-transparent",
+        x: 0,
+        y: 0,
+        width: 80,
+        height: 40,
+        stampType: "fill-text",
+        overlayText: "非公開",
+        isBackgroundTransparent: true,
+        isEnabled: true,
+        source: "manual",
+      },
+    ];
+    await exportEditorCanvas(img, stampRegions, [], new Map());
+    expect(ctxMock.fillRectCalls.some(([, , w, h]) => w === 80 && h === 40)).toBe(false);
+    expect(ctxMock.fillTextCalls.some(([text]) => text === "非公開")).toBe(true);
+  });
+
+  it("fill-text 領域で overlayText 未設定はデフォルト文言を描画する", async () => {
+    const img = makeImageElement(200, 200);
+    const stampRegions: StampRegion[] = [
+      {
+        id: "s-text-default",
+        x: 0,
+        y: 0,
+        width: 80,
+        height: 40,
+        stampType: "fill-text",
+        isEnabled: true,
+        source: "manual",
+      },
+    ];
+    await exportEditorCanvas(img, stampRegions, [], new Map());
+    expect(ctxMock.fillTextCalls.some(([text]) => text === "個人情報")).toBe(true);
   });
 
   it("mosaic スタンプ領域でモザイク処理（getImageData）を呼び出す", async () => {

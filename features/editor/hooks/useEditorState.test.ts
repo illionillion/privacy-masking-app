@@ -245,6 +245,65 @@ describe("useEditorState", () => {
     });
   });
 
+  it("選択中領域を fill-text に変更するとデフォルト文言・色を付与する", () => {
+    vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("text-switch-uuid") });
+    const { result } = renderHook(() => useEditorState());
+    act(() => {
+      result.current.addStampRegion({
+        x: 0,
+        y: 0,
+        width: 50,
+        height: 50,
+        stampType: "fill-black",
+        isEnabled: true,
+        source: "manual",
+      });
+    });
+    act(() => {
+      result.current.selectItem("text-switch-uuid");
+    });
+    act(() => {
+      result.current.setSelectedStampType("fill-text");
+    });
+    expect(result.current.stampRegions[0]).toMatchObject({
+      stampType: "fill-text",
+      overlayText: "個人情報",
+      textColor: "#ffffff",
+      backgroundColor: "#000000",
+    });
+  });
+
+  it("fill-text 領域の overlayText・色を updateStampRegion で更新できる", () => {
+    vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("text-update-uuid") });
+    const { result } = renderHook(() => useEditorState());
+    act(() => {
+      result.current.addStampRegion({
+        x: 0,
+        y: 0,
+        width: 50,
+        height: 50,
+        stampType: "fill-text",
+        overlayText: "個人情報",
+        textColor: "#ffffff",
+        backgroundColor: "#000000",
+        isEnabled: true,
+        source: "manual",
+      });
+    });
+    act(() => {
+      result.current.updateStampRegion("text-update-uuid", {
+        overlayText: "非公開",
+        textColor: "#ff0000",
+        backgroundColor: "#0000ff",
+      });
+    });
+    expect(result.current.stampRegions[0]).toMatchObject({
+      overlayText: "非公開",
+      textColor: "#ff0000",
+      backgroundColor: "#0000ff",
+    });
+  });
+
   it("updatePaintStroke でペイントストロークの points と brushSize を更新できる", () => {
     vi.stubGlobal("crypto", { randomUUID: vi.fn().mockReturnValue("stroke-update-uuid") });
     const { result } = renderHook(() => useEditorState());
