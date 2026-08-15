@@ -12,7 +12,7 @@ import {
 import { STAMP_FILE_NAMES } from "@/features/editor/constants";
 import { useEditorState } from "@/features/editor/hooks/useEditorState";
 import type { UseEditorStateReturn } from "@/features/editor/hooks/useEditorState";
-import { isEditableKeyboardTarget } from "@/features/editor/lib/isEditableKeyboardTarget";
+import { isTextInputKeyboardTarget } from "@/features/editor/lib/isEditableKeyboardTarget";
 import type { EditorStateSnapshot } from "@/features/editor/types";
 import { exportEditorCanvas } from "@/features/editor/utils/exportCanvas";
 import { useConfirmStore } from "@/lib/confirmStore";
@@ -216,8 +216,8 @@ export function useEditorModal({
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (closeInFlightRef.current) return;
-      /* 文言入力など編集中は選択解除・モーダル閉じを行わない（IME キャンセルと衝突しない） */
-      if (isEditableKeyboardTarget(e.target)) return;
+      /* 文言入力など文字入力中のみ抑止する。ボタンフォーカス時は Escape を効かせる */
+      if (isTextInputKeyboardTarget(e.target)) return;
       if (selectedId !== null) {
         selectItem(null);
         e.preventDefault();

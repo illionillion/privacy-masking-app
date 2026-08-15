@@ -26,7 +26,10 @@ import {
   shouldShowEditorTransformer,
 } from "../lib/editorCanvasInteraction";
 import { EditorCropOverlay } from "./EditorCropOverlay";
-import { isEditableKeyboardTarget } from "../lib/isEditableKeyboardTarget";
+import {
+  isEditableKeyboardTarget,
+  isTextInputKeyboardTarget,
+} from "../lib/isEditableKeyboardTarget";
 import { stampRegionUpdatesFromTransformEnd } from "../lib/stampRegionTransform";
 import { stagePointerToContentSpace } from "../lib/viewZoom";
 import { useEditorViewport } from "../hooks/useEditorViewport";
@@ -214,13 +217,13 @@ export function EditorCanvas({
   /**
    * キーボードショートカット
    *
-   * - Escape: 選択解除（テキスト入力等の編集中は無効）
+   * - Escape: 選択解除（文字入力中のみ無効。ボタンフォーカス時は有効）
    * - Delete / Backspace: 選択中アイテムを削除
    * - 0: 等倍・中央にリセット
    */
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape" && !isEditableKeyboardTarget(e.target)) {
+      if (e.key === "Escape" && !isTextInputKeyboardTarget(e.target)) {
         onSelectItem(null);
       } else if (e.key === "0" && !isEditableKeyboardTarget(e.target)) {
         resetViewport();
