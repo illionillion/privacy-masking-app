@@ -1,0 +1,7 @@
+1:"$Sreact.fragment"
+2:I[4196,["5","static/chunks/5-45a81fb9158df9e5.js","511","static/chunks/511-32d70babdb3d5f32.js","229","static/chunks/app/updates/%5Bslug%5D/page-1434be974c492a0c.js"],"MarkdownContent"]
+3:I[2005,["5","static/chunks/5-45a81fb9158df9e5.js","511","static/chunks/511-32d70babdb3d5f32.js","229","static/chunks/app/updates/%5Bslug%5D/page-1434be974c492a0c.js"],""]
+4:I[8849,[],"OutletBoundary"]
+5:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"文言つきで隠せるテキストマスクを追加"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["公開日",": ","2026年8月15日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":[["$","$L2",null,{"content":"編集モーダルのマスク種別に **テキスト** を追加しました。黒塗りやモザイクと同じように矩形で置くと、領域を背景色で塗り、その上に文言を表示して隠します。\n\n領域を選ぶとツールバーに **文言・文字色・背景色** が出て、その場で変更できます（デフォルトは黒背景に白文字で「個人情報」）。**透過** をオンにすると背景を塗らず、文言だけを画像に重ねられます。\n\nプレビューとダウンロードも同じ見た目で書き出されます。処理は従来どおりブラウザ内だけで行われ、画像データはサーバーへ送信されません。"}],["$","p",null,{"className":"pt-2","children":["$","$L3",null,{"href":"/updates","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"更新情報一覧へ戻る"}]}]]}]]}],null,["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"Zh02D67kJWtkKyT6Et9V_"}
+6:null
