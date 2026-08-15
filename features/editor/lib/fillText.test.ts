@@ -55,9 +55,17 @@ describe("computeFillTextFontSize", () => {
     expect(computeFillTextFontSize(1000, 120, "あ")).toBeCloseTo((120 * 0.8) / 1.2, 5);
   });
 
-  it("横が詰まっているときは幅・文字数制約で決まる", () => {
+  it("横が詰まっているときは幅・文字数制約で決まる（全角1em基準）", () => {
     const size = computeFillTextFontSize(100, 1000, "あいうえお");
-    expect(size).toBeCloseTo((100 * 0.9) / (5 * 0.62), 5);
+    expect(size).toBeCloseTo((100 * 0.9) / (5 * 1.0), 5);
+  });
+
+  it("全角日本語が背景幅に収まるフォントサイズになる", () => {
+    const width = 200;
+    const text = "個人情報";
+    const size = computeFillTextFontSize(width, 1000, text);
+    /* 実幅の上限（全角=1em×文字数）が背景幅を超えない */
+    expect(size * text.length).toBeLessThanOrEqual(width);
   });
 
   it("領域を広げるとフォントサイズも大きくなる", () => {

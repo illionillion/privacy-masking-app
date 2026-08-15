@@ -9,6 +9,15 @@ export const DEFAULT_TEXT_COLOR = "#ffffff";
 /** fill-text 種別のデフォルト背景色 */
 export const DEFAULT_BACKGROUND_COLOR = "#000000";
 
+/**
+ * fill-text の描画フォント
+ *
+ * Konva（プレビュー）と Canvas 2D（書き出し）で同じ指定を使い、
+ * 日本語グリフのフォールバック差による字体・字幅のズレを防ぐ。
+ * Konva の既定は Arial のため、必ず両側でこの値を明示する。
+ */
+export const FILL_TEXT_FONT_FAMILY = "sans-serif";
+
 /** 自動算出するフォントサイズの下限（px） */
 export const MIN_FILL_TEXT_FONT_SIZE = 8;
 
@@ -21,8 +30,15 @@ const HEIGHT_USABLE_RATIO = 0.8;
 /** 領域幅に対する余白を除いた使用可能割合 */
 const WIDTH_USABLE_RATIO = 0.9;
 
-/** 1 文字あたりの想定横幅（em 単位、日本語・英数字混在の概算） */
-const AVG_CHAR_WIDTH_EM = 0.62;
+/**
+ * 1 文字あたりの想定横幅（em 単位）
+ *
+ * 幅の収まりはこの概算のみで担保する（描画時に maxWidth を渡さない）ため、
+ * 最も横幅の大きい全角日本語（約 1em）を基準に、はみ出しを防ぐ側へ寄せる。
+ * 英数字主体だと実幅より大きめに見積もられ字が小さくなるが、
+ * 背景矩形からのはみ出しを避けることを優先する。
+ */
+const AVG_CHAR_WIDTH_EM = 1.0;
 
 /**
  * fill-text 領域に表示する文言を解決する

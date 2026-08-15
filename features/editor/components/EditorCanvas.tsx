@@ -214,13 +214,13 @@ export function EditorCanvas({
   /**
    * キーボードショートカット
    *
-   * - Escape: 選択解除
+   * - Escape: 選択解除（テキスト入力等の編集中は無効）
    * - Delete / Backspace: 選択中アイテムを削除
    * - 0: 等倍・中央にリセット
    */
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && !isEditableKeyboardTarget(e.target)) {
         onSelectItem(null);
       } else if (e.key === "0" && !isEditableKeyboardTarget(e.target)) {
         resetViewport();

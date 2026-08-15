@@ -5,6 +5,7 @@ import { Fragment } from "react";
 import { Group, Image as KonvaImage, Rect, Text } from "react-konva";
 import {
   computeFillTextFontSize,
+  FILL_TEXT_FONT_FAMILY,
   hasTransparentBackground,
   resolveBackgroundColor,
   resolveOverlayText,
@@ -143,6 +144,7 @@ export function EditorStampRegionNode({
               text={overlayText}
               fill={resolveTextColor(region)}
               fontSize={computeFillTextFontSize(w, h, overlayText)}
+              fontFamily={FILL_TEXT_FONT_FAMILY}
               align="center"
               verticalAlign="middle"
               wrap="none"

@@ -2,6 +2,7 @@ import { MAX_CANVAS_DIMENSION } from "@/lib/canvas";
 import { resolveExportSourceRect } from "../lib/cropRect";
 import {
   computeFillTextFontSize,
+  FILL_TEXT_FONT_FAMILY,
   hasTransparentBackground,
   resolveBackgroundColor,
   resolveOverlayText,
@@ -259,7 +260,7 @@ export async function exportEditorCanvas(
           }
           const overlayText = resolveOverlayText(region);
           ctx.fillStyle = resolveTextColor(region);
-          ctx.font = `${computeFillTextFontSize(sw, sh, overlayText)}px sans-serif`;
+          ctx.font = `${computeFillTextFontSize(sw, sh, overlayText)}px ${FILL_TEXT_FONT_FAMILY}`;
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           /* maxWidth は横方向スケールが入り Konva（wrap="none"）とズレるため渡さない。
