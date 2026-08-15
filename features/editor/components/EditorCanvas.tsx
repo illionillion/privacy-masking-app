@@ -17,6 +17,11 @@ import {
 import type { CropRect, EditorMode, PaintStroke, StampRegion, StampType } from "../types";
 import { clampCropRect, createFullImageCropRect } from "../lib/cropRect";
 import {
+  DEFAULT_BACKGROUND_COLOR,
+  DEFAULT_OVERLAY_TEXT,
+  DEFAULT_TEXT_COLOR,
+} from "../lib/fillText";
+import {
   getEditorStageTouchAction,
   shouldShowEditorTransformer,
 } from "../lib/editorCanvasInteraction";
@@ -82,6 +87,7 @@ const RECT_PREVIEW_BY_STAMP_TYPE: Record<StampType, { fill: string; stroke: stri
   "stamp-face": { fill: "rgba(251,146,60,0.3)", stroke: "#f97316" },
   mosaic: { fill: "rgba(107,114,128,0.3)", stroke: "#6b7280" },
   blur: { fill: "rgba(147,197,253,0.3)", stroke: "#93c5fd" },
+  "fill-text": { fill: "rgba(0,0,0,0.3)", stroke: "#000000" },
 };
 
 /** Transformer のリサイズ最小サイズ（px）。この値未満へのリサイズを禁止する */
@@ -413,6 +419,13 @@ export function EditorCanvas({
           stampFileName: selectedStampType === "stamp-face" ? selectedStampFileName : undefined,
           isEnabled: true,
           source: "manual",
+          ...(selectedStampType === "fill-text"
+            ? {
+                overlayText: DEFAULT_OVERLAY_TEXT,
+                textColor: DEFAULT_TEXT_COLOR,
+                backgroundColor: DEFAULT_BACKGROUND_COLOR,
+              }
+            : {}),
         });
       }
       setDrawingRect(null);

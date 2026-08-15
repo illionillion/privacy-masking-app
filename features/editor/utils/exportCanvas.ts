@@ -1,5 +1,12 @@
 import { MAX_CANVAS_DIMENSION } from "@/lib/canvas";
 import { resolveExportSourceRect } from "../lib/cropRect";
+import {
+  computeFillTextFontSize,
+  hasTransparentBackground,
+  resolveBackgroundColor,
+  resolveOverlayText,
+  resolveTextColor,
+} from "../lib/fillText";
 import { pickStampImage } from "../lib/pickStampImage";
 import { getStampRegionRotationDeg } from "../lib/stampRegionTransform";
 import type { CropRect, PaintStroke, StampRegion } from "../types";
@@ -241,6 +248,21 @@ export async function exportEditorCanvas(
         withStampRegionTransform(ctx, sx, sy, rotationDeg, () => {
           ctx.fillStyle = "#000000";
           ctx.fillRect(0, 0, sw, sh);
+        });
+        break;
+
+      case "fill-text":
+        withStampRegionTransform(ctx, sx, sy, rotationDeg, () => {
+          if (!hasTransparentBackground(region)) {
+            ctx.fillStyle = resolveBackgroundColor(region);
+            ctx.fillRect(0, 0, sw, sh);
+          }
+          const overlayText = resolveOverlayText(region);
+          ctx.fillStyle = resolveTextColor(region);
+          ctx.font = `${computeFillTextFontSize(sw, sh, overlayText)}px sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(overlayText, sw / 2, sh / 2, sw);
         });
         break;
 

@@ -30,6 +30,24 @@ interface EditorToolbarProps {
   onRestoreCrop?: () => void;
   /** 復元できる適用済み crop があるか */
   canRestoreCrop?: boolean;
+  /** fill-text 領域が選択中か（テキスト編集 UI の表示制御） */
+  isTextSelected?: boolean;
+  /** 選択中 fill-text 領域の文言 */
+  overlayText?: string;
+  /** 選択中 fill-text 領域の文字色 */
+  textColor?: string;
+  /** 選択中 fill-text 領域の背景色 */
+  backgroundColor?: string;
+  /** 選択中 fill-text 領域の背景を透過するか */
+  isBackgroundTransparent?: boolean;
+  /** 文言変更コールバック */
+  onOverlayTextChange?: (text: string) => void;
+  /** 文字色変更コールバック */
+  onTextColorChange?: (color: string) => void;
+  /** 背景色変更コールバック */
+  onBackgroundColorChange?: (color: string) => void;
+  /** 背景透過切り替えコールバック */
+  onBackgroundTransparentChange?: (transparent: boolean) => void;
 }
 
 /** モードボタンの定義 */
@@ -188,6 +206,89 @@ function BrushControls({ brushSize, onBrushSizeChange }: BrushControlsProps) {
   );
 }
 
+interface TextControlsProps {
+  overlayText: string;
+  textColor: string;
+  backgroundColor: string;
+  isBackgroundTransparent: boolean;
+  onOverlayTextChange: (text: string) => void;
+  onTextColorChange: (color: string) => void;
+  onBackgroundColorChange: (color: string) => void;
+  onBackgroundTransparentChange: (transparent: boolean) => void;
+  /** SP など狭い行で 2 段に折り返すか */
+  stacked?: boolean;
+}
+
+/** fill-text 領域の文言・文字色・背景色（透過含む）を編集する */
+function TextControls({
+  overlayText,
+  textColor,
+  backgroundColor,
+  isBackgroundTransparent,
+  stacked = false,
+  onOverlayTextChange,
+  onTextColorChange,
+  onBackgroundColorChange,
+  onBackgroundTransparentChange,
+}: TextControlsProps) {
+  return (
+    <div
+      className={clsx([
+        "flex flex-1 flex-wrap items-center gap-x-2 gap-y-1.5",
+        /* 通常行では下限幅を持たせ、収まらないときツールバー側で次段へ送る */
+        stacked ? "min-w-0" : "min-w-[16rem]",
+      ])}
+    >
+      <input
+        type="text"
+        value={overlayText}
+        placeholder="文言"
+        aria-label="テキスト文言"
+        onChange={(e) => onOverlayTextChange(e.target.value)}
+        className={clsx([
+          "min-w-0 rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+          /* 狭い行では文言入力が 1 行を占有し、色・透過が次段へ折り返す */
+          stacked ? "w-full basis-full" : "flex-1",
+        ])}
+      />
+      <label className="flex shrink-0 items-center gap-1 text-xs text-zinc-600">
+        <span>文字</span>
+        <input
+          type="color"
+          value={textColor}
+          aria-label="文字色"
+          onChange={(e) => onTextColorChange(e.target.value)}
+          className="h-7 w-7 cursor-pointer rounded border border-zinc-300 bg-white p-0.5"
+        />
+      </label>
+      <label className="flex shrink-0 items-center gap-1 text-xs text-zinc-600">
+        <span>背景</span>
+        <input
+          type="color"
+          value={backgroundColor}
+          aria-label="背景色"
+          disabled={isBackgroundTransparent}
+          onChange={(e) => onBackgroundColorChange(e.target.value)}
+          className={clsx([
+            "h-7 w-7 rounded border border-zinc-300 bg-white p-0.5",
+            isBackgroundTransparent ? "cursor-not-allowed opacity-40" : "cursor-pointer",
+          ])}
+        />
+      </label>
+      <label className="flex shrink-0 cursor-pointer items-center gap-1 text-xs text-zinc-600">
+        <input
+          type="checkbox"
+          checked={isBackgroundTransparent}
+          aria-label="背景を透過する"
+          onChange={(e) => onBackgroundTransparentChange(e.target.checked)}
+          className="h-3.5 w-3.5 cursor-pointer accent-blue-600"
+        />
+        <span>透過</span>
+      </label>
+    </div>
+  );
+}
+
 /**
  * エディタ操作ツールバーコンポーネント
  *
@@ -211,11 +312,27 @@ export function EditorToolbar({
   onDeleteSelected,
   onRestoreCrop,
   canRestoreCrop = false,
+  isTextSelected = false,
+  overlayText = "",
+  textColor = "#000000",
+  backgroundColor = "#000000",
+  isBackgroundTransparent = false,
+  onOverlayTextChange,
+  onTextColorChange,
+  onBackgroundColorChange,
+  onBackgroundTransparentChange,
 }: EditorToolbarProps) {
   const isNarrowViewport = useNarrowViewport();
   const showStampControls = mode !== "crop" && (mode === "rect" || isStampSelected);
   const showDeleteSelected = mode !== "crop" && selectedId !== null;
   const showCropRestore = mode === "crop" && onRestoreCrop !== undefined;
+  const showTextControls =
+    mode !== "crop" &&
+    isTextSelected &&
+    onOverlayTextChange !== undefined &&
+    onTextColorChange !== undefined &&
+    onBackgroundColorChange !== undefined &&
+    onBackgroundTransparentChange !== undefined;
 
   if (isNarrowViewport) {
     const reserveStampRow = mode === "select" || mode === "rect";
@@ -253,6 +370,24 @@ export function EditorToolbar({
             <BrushControls brushSize={brushSize} onBrushSizeChange={onBrushSizeChange} />
           )}
 
+          {showTextControls &&
+            onOverlayTextChange &&
+            onTextColorChange &&
+            onBackgroundColorChange &&
+            onBackgroundTransparentChange && (
+              <TextControls
+                stacked
+                overlayText={overlayText}
+                textColor={textColor}
+                backgroundColor={backgroundColor}
+                isBackgroundTransparent={isBackgroundTransparent}
+                onOverlayTextChange={onOverlayTextChange}
+                onTextColorChange={onTextColorChange}
+                onBackgroundColorChange={onBackgroundColorChange}
+                onBackgroundTransparentChange={onBackgroundTransparentChange}
+              />
+            )}
+
           {showCropRestore && onRestoreCrop && (
             <CropRestoreButton onRestore={onRestoreCrop} disabled={!canRestoreCrop} />
           )}
@@ -285,6 +420,26 @@ export function EditorToolbar({
             <BrushControls brushSize={brushSize} onBrushSizeChange={onBrushSizeChange} />
           </>
         )}
+
+        {showTextControls &&
+          onOverlayTextChange &&
+          onTextColorChange &&
+          onBackgroundColorChange &&
+          onBackgroundTransparentChange && (
+            <>
+              <Divider />
+              <TextControls
+                overlayText={overlayText}
+                textColor={textColor}
+                backgroundColor={backgroundColor}
+                isBackgroundTransparent={isBackgroundTransparent}
+                onOverlayTextChange={onOverlayTextChange}
+                onTextColorChange={onTextColorChange}
+                onBackgroundColorChange={onBackgroundColorChange}
+                onBackgroundTransparentChange={onBackgroundTransparentChange}
+              />
+            </>
+          )}
 
         {showCropRestore && onRestoreCrop && (
           <>
