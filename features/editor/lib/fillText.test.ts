@@ -1,0 +1,84 @@
+import { describe, it, expect } from "vitest";
+import {
+  DEFAULT_BACKGROUND_COLOR,
+  DEFAULT_TEXT_COLOR,
+  MIN_FILL_TEXT_FONT_SIZE,
+  computeFillTextFontSize,
+  hasTransparentBackground,
+  resolveBackgroundColor,
+  resolveOverlayText,
+  resolveTextColor,
+} from "./fillText";
+
+describe("resolveOverlayText", () => {
+  it("未設定は空文字を返す（デフォルトは作成時に付与）", () => {
+    expect(resolveOverlayText({})).toBe("");
+  });
+
+  it("クリア（空文字）はそのまま空文字を返す", () => {
+    expect(resolveOverlayText({ overlayText: "" })).toBe("");
+  });
+
+  it("設定済みは生値をそのまま返す", () => {
+    expect(resolveOverlayText({ overlayText: "非公開" })).toBe("非公開");
+  });
+});
+
+describe("resolveTextColor / resolveBackgroundColor", () => {
+  it("未設定はデフォルト色を返す", () => {
+    expect(resolveTextColor({})).toBe(DEFAULT_TEXT_COLOR);
+    expect(resolveBackgroundColor({})).toBe(DEFAULT_BACKGROUND_COLOR);
+  });
+
+  it("設定済みはその色を返す", () => {
+    expect(resolveTextColor({ textColor: "#ff0000" })).toBe("#ff0000");
+    expect(resolveBackgroundColor({ backgroundColor: "#00ff00" })).toBe("#00ff00");
+  });
+});
+
+describe("hasTransparentBackground", () => {
+  it("未設定は塗りつぶす（false）", () => {
+    expect(hasTransparentBackground({})).toBe(false);
+  });
+
+  it("false 指定は塗りつぶす", () => {
+    expect(hasTransparentBackground({ isBackgroundTransparent: false })).toBe(false);
+  });
+
+  it("true 指定は透過する", () => {
+    expect(hasTransparentBackground({ isBackgroundTransparent: true })).toBe(true);
+  });
+});
+
+describe("computeFillTextFontSize", () => {
+  it("横に余裕があるときは高さ制約で決まる", () => {
+    expect(computeFillTextFontSize(1000, 120, "あ")).toBeCloseTo((120 * 0.8) / 1.2, 5);
+  });
+
+  it("横が詰まっているときは幅・文字数制約で決まる（全角1em基準）", () => {
+    const size = computeFillTextFontSize(100, 1000, "あいうえお");
+    expect(size).toBeCloseTo((100 * 0.9) / (5 * 1.0), 5);
+  });
+
+  it("全角日本語が背景幅に収まるフォントサイズになる", () => {
+    const width = 200;
+    const text = "個人情報";
+    const size = computeFillTextFontSize(width, 1000, text);
+    /* 実幅の上限（全角=1em×文字数）が背景幅を超えない */
+    expect(size * text.length).toBeLessThanOrEqual(width);
+  });
+
+  it("領域を広げるとフォントサイズも大きくなる", () => {
+    const small = computeFillTextFontSize(100, 40, "個人情報");
+    const large = computeFillTextFontSize(200, 80, "個人情報");
+    expect(large).toBeGreaterThan(small);
+  });
+
+  it("極端に小さい領域では下限でクランプされる", () => {
+    expect(computeFillTextFontSize(1, 1, "あいうえおかきくけこ")).toBe(MIN_FILL_TEXT_FONT_SIZE);
+  });
+
+  it("空文字でも 1 文字扱いで算出できる", () => {
+    expect(computeFillTextFontSize(1000, 100, "")).toBeGreaterThanOrEqual(MIN_FILL_TEXT_FONT_SIZE);
+  });
+});

@@ -1,5 +1,13 @@
 import { MAX_CANVAS_DIMENSION } from "@/lib/canvas";
 import { resolveExportSourceRect } from "../lib/cropRect";
+import {
+  computeFillTextFontSize,
+  FILL_TEXT_FONT_FAMILY,
+  hasTransparentBackground,
+  resolveBackgroundColor,
+  resolveOverlayText,
+  resolveTextColor,
+} from "../lib/fillText";
 import { pickStampImage } from "../lib/pickStampImage";
 import { getStampRegionRotationDeg } from "../lib/stampRegionTransform";
 import type { CropRect, PaintStroke, StampRegion } from "../types";
@@ -241,6 +249,23 @@ export async function exportEditorCanvas(
         withStampRegionTransform(ctx, sx, sy, rotationDeg, () => {
           ctx.fillStyle = "#000000";
           ctx.fillRect(0, 0, sw, sh);
+        });
+        break;
+
+      case "fill-text":
+        withStampRegionTransform(ctx, sx, sy, rotationDeg, () => {
+          if (!hasTransparentBackground(region)) {
+            ctx.fillStyle = resolveBackgroundColor(region);
+            ctx.fillRect(0, 0, sw, sh);
+          }
+          const overlayText = resolveOverlayText(region);
+          ctx.fillStyle = resolveTextColor(region);
+          ctx.font = `${computeFillTextFontSize(sw, sh, overlayText)}px ${FILL_TEXT_FONT_FAMILY}`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          /* maxWidth は横方向スケールが入り Konva（wrap="none"）とズレるため渡さない。
+             幅への収まりは computeFillTextFontSize のみで担保する */
+          ctx.fillText(overlayText, sw / 2, sh / 2);
         });
         break;
 

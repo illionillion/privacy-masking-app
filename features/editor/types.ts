@@ -1,5 +1,5 @@
 /** マスキング種別 */
-export type StampType = "mosaic" | "blur" | "stamp-face" | "fill-black";
+export type StampType = "mosaic" | "blur" | "stamp-face" | "fill-black" | "fill-text";
 
 /** エディタの操作モード */
 export type EditorMode = "select" | "rect" | "paint" | "crop";
@@ -46,6 +46,14 @@ export interface StampRegion {
   source: StampRegionSource;
   /** 検出テキスト（OCR 由来の場合） */
   text?: string;
+  /** fill-text 種別で領域に表示する文言 */
+  overlayText?: string;
+  /** fill-text 種別の文字色（CSS カラー） */
+  textColor?: string;
+  /** fill-text 種別の背景色（CSS カラー） */
+  backgroundColor?: string;
+  /** fill-text 種別で背景を塗らず透過するか（未設定は塗る） */
+  isBackgroundTransparent?: boolean;
 }
 
 /** エディタ状態のスナップショット（モーダル閉鎖後の復元用） */

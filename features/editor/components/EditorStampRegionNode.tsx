@@ -2,7 +2,15 @@
 
 import Konva from "konva";
 import { Fragment } from "react";
-import { Group, Image as KonvaImage, Rect } from "react-konva";
+import { Group, Image as KonvaImage, Rect, Text } from "react-konva";
+import {
+  computeFillTextFontSize,
+  FILL_TEXT_FONT_FAMILY,
+  hasTransparentBackground,
+  resolveBackgroundColor,
+  resolveOverlayText,
+  resolveTextColor,
+} from "../lib/fillText";
 import { pickStampImage } from "../lib/pickStampImage";
 import { getStampRegionRotationDeg } from "../lib/stampRegionTransform";
 import type { StampRegion, StampType } from "../types";
@@ -14,6 +22,7 @@ const STAMP_TYPE_COLORS: Record<StampType, string> = {
   mosaic: "#6b7280",
   blur: "#93c5fd",
   "stamp-face": "#fb923c",
+  "fill-text": "#000000",
 };
 
 export interface EditorStampRegionNodeProps {
@@ -60,6 +69,7 @@ export function EditorStampRegionNode({
   const isEffectStamp =
     (region.stampType === "blur" || region.stampType === "mosaic") && bgImage !== null;
   const strokeColor = selected ? "#1d4ed8" : "#6b7280";
+  const overlayText = region.stampType === "fill-text" ? resolveOverlayText(region) : "";
 
   return (
     <Fragment>
@@ -113,6 +123,35 @@ export function EditorStampRegionNode({
             strokeWidth={1}
             listening={true}
           />
+        ) : region.stampType === "fill-text" ? (
+          /* fill-text: 背景塗り（透過時はヒット領域のみ） + 中央寄せ文言 */
+          <>
+            <Rect
+              width={w}
+              height={h}
+              fill={
+                hasTransparentBackground(region)
+                  ? "rgba(0,0,0,0.001)"
+                  : resolveBackgroundColor(region)
+              }
+              opacity={region.isEnabled ? 1 : 0.4}
+              stroke={strokeColor}
+              strokeWidth={1}
+            />
+            <Text
+              width={w}
+              height={h}
+              text={overlayText}
+              fill={resolveTextColor(region)}
+              fontSize={computeFillTextFontSize(w, h, overlayText)}
+              fontFamily={FILL_TEXT_FONT_FAMILY}
+              align="center"
+              verticalAlign="middle"
+              wrap="none"
+              listening={false}
+              opacity={region.isEnabled ? 1 : 0.4}
+            />
+          </>
         ) : (
           /* fill-black またはフォールバック: 不透明な塗りつぶし矩形 */
           <Rect

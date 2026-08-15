@@ -4,6 +4,11 @@ import { useState, useCallback } from "react";
 import { STAMP_FILE_NAMES } from "../constants";
 import { normalizeAppliedCropRect } from "../lib/cropRect";
 import { createEditorSnapshotFromDetections } from "../lib/editorSnapshot";
+import {
+  DEFAULT_BACKGROUND_COLOR,
+  DEFAULT_OVERLAY_TEXT,
+  DEFAULT_TEXT_COLOR,
+} from "../lib/fillText";
 import { generateUUID } from "../lib/generateUUID";
 import { resolveStampFileName } from "../lib/pickStampImage";
 import type {
@@ -118,6 +123,18 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
                   type === "stamp-face"
                     ? (region.stampFileName ?? selectedStampFileName)
                     : undefined,
+                overlayText:
+                  type === "fill-text"
+                    ? (region.overlayText ?? DEFAULT_OVERLAY_TEXT)
+                    : region.overlayText,
+                textColor:
+                  type === "fill-text"
+                    ? (region.textColor ?? DEFAULT_TEXT_COLOR)
+                    : region.textColor,
+                backgroundColor:
+                  type === "fill-text"
+                    ? (region.backgroundColor ?? DEFAULT_BACKGROUND_COLOR)
+                    : region.backgroundColor,
               }
             : region
         )

@@ -3,6 +3,11 @@
 import dynamic from "next/dynamic";
 import { EditorToolbar } from "@/features/editor/components/EditorToolbar";
 import { STAMP_CATALOG } from "@/features/editor/constants";
+import {
+  hasTransparentBackground,
+  resolveBackgroundColor,
+  resolveTextColor,
+} from "@/features/editor/lib/fillText";
 import { useEditorModal } from "../hooks/useEditorModal";
 import type { MaskingImageItem } from "../types";
 import { EditorCanvasPlaceholder } from "./EditorCanvasPlaceholder";
@@ -42,6 +47,8 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
   } = useEditorModal({ image, stampImages, onClose, onRendered });
 
   const selectedStampRegion = editor.stampRegions.find((region) => region.id === editor.selectedId);
+  const selectedTextRegion =
+    selectedStampRegion?.stampType === "fill-text" ? selectedStampRegion : undefined;
 
   return (
     <div
@@ -107,6 +114,37 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
               selectedStampFileName={editor.selectedStampFileName}
               onRestoreCrop={editor.restoreCrop}
               canRestoreCrop={editor.cropRect !== null}
+              isTextSelected={selectedTextRegion !== undefined}
+              overlayText={selectedTextRegion?.overlayText ?? ""}
+              textColor={selectedTextRegion ? resolveTextColor(selectedTextRegion) : undefined}
+              backgroundColor={
+                selectedTextRegion ? resolveBackgroundColor(selectedTextRegion) : undefined
+              }
+              onOverlayTextChange={(text) => {
+                if (selectedTextRegion) {
+                  editor.updateStampRegion(selectedTextRegion.id, { overlayText: text });
+                }
+              }}
+              onTextColorChange={(color) => {
+                if (selectedTextRegion) {
+                  editor.updateStampRegion(selectedTextRegion.id, { textColor: color });
+                }
+              }}
+              onBackgroundColorChange={(color) => {
+                if (selectedTextRegion) {
+                  editor.updateStampRegion(selectedTextRegion.id, { backgroundColor: color });
+                }
+              }}
+              isBackgroundTransparent={
+                selectedTextRegion ? hasTransparentBackground(selectedTextRegion) : false
+              }
+              onBackgroundTransparentChange={(transparent) => {
+                if (selectedTextRegion) {
+                  editor.updateStampRegion(selectedTextRegion.id, {
+                    isBackgroundTransparent: transparent,
+                  });
+                }
+              }}
             />
           </div>
 

@@ -15,6 +15,7 @@ const STAMP_OPTIONS: { type: StampType; label: string }[] = [
   { type: "fill-black", label: "⬛ 黒塗り" },
   { type: "mosaic", label: "🟦 モザイク" },
   { type: "blur", label: "🌫️ ぼかし" },
+  { type: "fill-text", label: "🅰️ テキスト" },
 ];
 
 /**

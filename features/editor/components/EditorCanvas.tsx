@@ -17,11 +17,19 @@ import {
 import type { CropRect, EditorMode, PaintStroke, StampRegion, StampType } from "../types";
 import { clampCropRect, createFullImageCropRect } from "../lib/cropRect";
 import {
+  DEFAULT_BACKGROUND_COLOR,
+  DEFAULT_OVERLAY_TEXT,
+  DEFAULT_TEXT_COLOR,
+} from "../lib/fillText";
+import {
   getEditorStageTouchAction,
   shouldShowEditorTransformer,
 } from "../lib/editorCanvasInteraction";
 import { EditorCropOverlay } from "./EditorCropOverlay";
-import { isEditableKeyboardTarget } from "../lib/isEditableKeyboardTarget";
+import {
+  isEditableKeyboardTarget,
+  isTextInputKeyboardTarget,
+} from "../lib/isEditableKeyboardTarget";
 import { stampRegionUpdatesFromTransformEnd } from "../lib/stampRegionTransform";
 import { stagePointerToContentSpace } from "../lib/viewZoom";
 import { useEditorViewport } from "../hooks/useEditorViewport";
@@ -82,6 +90,7 @@ const RECT_PREVIEW_BY_STAMP_TYPE: Record<StampType, { fill: string; stroke: stri
   "stamp-face": { fill: "rgba(251,146,60,0.3)", stroke: "#f97316" },
   mosaic: { fill: "rgba(107,114,128,0.3)", stroke: "#6b7280" },
   blur: { fill: "rgba(147,197,253,0.3)", stroke: "#93c5fd" },
+  "fill-text": { fill: "rgba(0,0,0,0.3)", stroke: "#000000" },
 };
 
 /** Transformer のリサイズ最小サイズ（px）。この値未満へのリサイズを禁止する */
@@ -208,13 +217,13 @@ export function EditorCanvas({
   /**
    * キーボードショートカット
    *
-   * - Escape: 選択解除
+   * - Escape: 選択解除（文字入力中のみ無効。ボタンフォーカス時は有効）
    * - Delete / Backspace: 選択中アイテムを削除
    * - 0: 等倍・中央にリセット
    */
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && !isTextInputKeyboardTarget(e.target)) {
         onSelectItem(null);
       } else if (e.key === "0" && !isEditableKeyboardTarget(e.target)) {
         resetViewport();
@@ -413,6 +422,13 @@ export function EditorCanvas({
           stampFileName: selectedStampType === "stamp-face" ? selectedStampFileName : undefined,
           isEnabled: true,
           source: "manual",
+          ...(selectedStampType === "fill-text"
+            ? {
+                overlayText: DEFAULT_OVERLAY_TEXT,
+                textColor: DEFAULT_TEXT_COLOR,
+                backgroundColor: DEFAULT_BACKGROUND_COLOR,
+              }
+            : {}),
         });
       }
       setDrawingRect(null);
