@@ -25,14 +25,18 @@ const WIDTH_USABLE_RATIO = 0.9;
 const AVG_CHAR_WIDTH_EM = 0.62;
 
 /**
- * fill-text 領域に表示する文言を解決する（未設定・空文字はデフォルトに戻す）
+ * fill-text 領域に表示する文言を解決する
+ *
+ * 入力・state・描画で同じ生値を使うため、ここではデフォルト置換をしない
+ * （未設定は空文字を返す）。デフォルト文言は領域の作成・種別変更時にのみ付与する。
+ * これにより「キャンバスの表示」と「ツールバーの入力欄」が常に一致し、
+ * 文言をクリアしたときもそのまま空として扱える。
  *
  * @param region - 対象のマスキング領域
- * @returns 表示する文言
+ * @returns 表示する文言（未設定は空文字）
  */
 export function resolveOverlayText(region: Pick<StampRegion, "overlayText">): string {
-  const text = region.overlayText?.trim();
-  return text && text.length > 0 ? region.overlayText! : DEFAULT_OVERLAY_TEXT;
+  return region.overlayText ?? "";
 }
 
 /**

@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   DEFAULT_BACKGROUND_COLOR,
-  DEFAULT_OVERLAY_TEXT,
   DEFAULT_TEXT_COLOR,
   MIN_FILL_TEXT_FONT_SIZE,
   computeFillTextFontSize,
@@ -12,15 +11,15 @@ import {
 } from "./fillText";
 
 describe("resolveOverlayText", () => {
-  it("未設定はデフォルト文言を返す", () => {
-    expect(resolveOverlayText({})).toBe(DEFAULT_OVERLAY_TEXT);
+  it("未設定は空文字を返す（デフォルトは作成時に付与）", () => {
+    expect(resolveOverlayText({})).toBe("");
   });
 
-  it("空白のみはデフォルト文言を返す", () => {
-    expect(resolveOverlayText({ overlayText: "   " })).toBe(DEFAULT_OVERLAY_TEXT);
+  it("クリア（空文字）はそのまま空文字を返す", () => {
+    expect(resolveOverlayText({ overlayText: "" })).toBe("");
   });
 
-  it("設定済みはその文言を返す", () => {
+  it("設定済みは生値をそのまま返す", () => {
     expect(resolveOverlayText({ overlayText: "非公開" })).toBe("非公開");
   });
 });

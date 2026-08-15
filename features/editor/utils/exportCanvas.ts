@@ -262,7 +262,9 @@ export async function exportEditorCanvas(
           ctx.font = `${computeFillTextFontSize(sw, sh, overlayText)}px sans-serif`;
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillText(overlayText, sw / 2, sh / 2, sw);
+          /* maxWidth は横方向スケールが入り Konva（wrap="none"）とズレるため渡さない。
+             幅への収まりは computeFillTextFontSize のみで担保する */
+          ctx.fillText(overlayText, sw / 2, sh / 2);
         });
         break;
 

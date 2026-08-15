@@ -181,7 +181,7 @@ describe("exportEditorCanvas", () => {
     expect(ctxMock.fillTextCalls.some(([text]) => text === "非公開")).toBe(true);
   });
 
-  it("fill-text 領域で overlayText 未設定はデフォルト文言を描画する", async () => {
+  it("fill-text 領域は overlayText の生値をそのまま描画する（未設定は空文字）", async () => {
     const img = makeImageElement(200, 200);
     const stampRegions: StampRegion[] = [
       {
@@ -196,7 +196,8 @@ describe("exportEditorCanvas", () => {
       },
     ];
     await exportEditorCanvas(img, stampRegions, [], new Map());
-    expect(ctxMock.fillTextCalls.some(([text]) => text === "個人情報")).toBe(true);
+    expect(ctxMock.fillTextCalls).toHaveLength(1);
+    expect(ctxMock.fillTextCalls[0]?.[0]).toBe("");
   });
 
   it("mosaic スタンプ領域でモザイク処理（getImageData）を呼び出す", async () => {
