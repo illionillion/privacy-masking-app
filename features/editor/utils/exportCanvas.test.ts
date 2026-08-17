@@ -347,6 +347,48 @@ describe("exportEditorCanvas", () => {
     expect(ctxMock.strokeCalls.length).toBeGreaterThan(0);
   });
 
+  it("モザイクのペイントストロークをパス形状で描画する", async () => {
+    const img = makeImageElement(200, 200);
+    const paintStrokes: PaintStroke[] = [
+      {
+        id: "mosaic-paint",
+        points: [
+          { x: 20, y: 30 },
+          { x: 80, y: 30 },
+        ],
+        brushSize: 24,
+        paintType: "mosaic",
+        isEnabled: true,
+      },
+    ];
+
+    await exportEditorCanvas(img, [], paintStrokes, new Map());
+
+    expect(ctxMock.getImageDataCalls.length).toBeGreaterThan(0);
+    expect(ctxMock.strokeCalls.length).toBeGreaterThan(0);
+  });
+
+  it("ぼかしのペイントストロークをオフスクリーン経由で描画する", async () => {
+    const img = makeImageElement(200, 200);
+    const paintStrokes: PaintStroke[] = [
+      {
+        id: "blur-paint",
+        points: [
+          { x: 20, y: 30 },
+          { x: 80, y: 30 },
+        ],
+        brushSize: 24,
+        paintType: "blur",
+        isEnabled: true,
+      },
+    ];
+
+    await exportEditorCanvas(img, [], paintStrokes, new Map());
+
+    expect(ctxMock.ctx.drawImage).toHaveBeenCalledTimes(4);
+    expect(ctxMock.strokeCalls.length).toBeGreaterThan(0);
+  });
+
   it("cropRect があるときソース矩形で切り出してキャンバスサイズを合わせる", async () => {
     const img = makeImageElement(200, 200);
     const canvasMock = {
