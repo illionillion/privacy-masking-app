@@ -42,7 +42,7 @@ import { stagePointerToContentSpace } from "../lib/viewZoom";
 import { useEditorViewport } from "../hooks/useEditorViewport";
 import { useEditorViewportGestures } from "../hooks/useEditorViewportGestures";
 import { EditorStampRegionNode } from "./EditorStampRegionNode";
-import { EditorPaintStrokeNode } from "./EditorPaintStrokeNode";
+import { EditorPaintStrokeNode, createPaintStrokeEffectCanvas } from "./EditorPaintStrokeNode";
 import { EditorViewportControls } from "./EditorViewportControls";
 
 interface EditorCanvasProps {
@@ -483,6 +483,8 @@ export function EditorCanvas({
    *
    * Konva.Line は points が node のローカル座標で保持されるため、
    * ドラッグ後の x/y を points に加算してからノードの x/y をリセットする。
+   * モザイク／ぼかしの Group では、見た目の KonvaImage を新しい点列で再生成し、
+   * state 再描画までの一瞬の位置戻りを防ぐ。
    *
    * @param id - ストロークのID
    * @param node - 黒塗り Line またはエフェクト Group
@@ -507,6 +509,28 @@ export function EditorCanvas({
     node.y(0);
     line.points(newImagePoints.flatMap((p) => [p.x * scaleX, p.y * scaleY]));
 
+    if (!(node instanceof Konva.Line) && bgImage) {
+      const stroke = paintStrokes.find((item) => item.id === id);
+      if (stroke) {
+        const effect = createPaintStrokeEffectCanvas(
+          { ...stroke, points: newImagePoints },
+          bgImage,
+          scaleX,
+          scaleY,
+          stageWidth,
+          stageHeight
+        );
+        const effectImage = node.findOne<Konva.Image>("Image");
+        if (effect && effectImage) {
+          effectImage.image(effect.canvas);
+          effectImage.x(effect.x);
+          effectImage.y(effect.y);
+          effectImage.width(effect.canvas.width);
+          effectImage.height(effect.canvas.height);
+        }
+      }
+    }
+
     onUpdatePaintStroke(id, { points: newImagePoints });
   }
 
@@ -515,6 +539,8 @@ export function EditorCanvas({
    * brushSize に焼き込んで state を更新する。
    *
    * brushSize は scaleX/scaleY の絶対値の平均で再計算する（非一様スケール時の近似）。
+   * モザイク／ぼかしの Group では、変換リセット前にエフェクト画像を新しい点列で
+   * 再生成し、state 再描画までの一瞬の位置戻りを防ぐ。
    *
    * @param id - ストロークのID
    * @param stroke - 元のストローク
@@ -544,6 +570,27 @@ export function EditorCanvas({
       });
     }
 
+    const newBrushSize = stroke.brushSize * ((scaleAbsX + scaleAbsY) / 2);
+
+    if (!(node instanceof Konva.Line) && bgImage) {
+      const effect = createPaintStrokeEffectCanvas(
+        { ...stroke, points: newImagePoints, brushSize: newBrushSize },
+        bgImage,
+        scaleX,
+        scaleY,
+        stageWidth,
+        stageHeight
+      );
+      const effectImage = node.findOne<Konva.Image>("Image");
+      if (effect && effectImage) {
+        effectImage.image(effect.canvas);
+        effectImage.x(effect.x);
+        effectImage.y(effect.y);
+        effectImage.width(effect.canvas.width);
+        effectImage.height(effect.canvas.height);
+      }
+    }
+
     node.x(0);
     node.y(0);
     node.scaleX(1);
@@ -551,7 +598,6 @@ export function EditorCanvas({
     node.rotation(0);
     line.points(newImagePoints.flatMap((p) => [p.x * scaleX, p.y * scaleY]));
 
-    const newBrushSize = stroke.brushSize * ((scaleAbsX + scaleAbsY) / 2);
     onUpdatePaintStroke(id, { points: newImagePoints, brushSize: newBrushSize });
   }
 

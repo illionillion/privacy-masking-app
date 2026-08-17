@@ -31,8 +31,12 @@ interface PaintEffectCanvas {
   y: number;
 }
 
-/** ストローク形状で切り抜いたモザイク・ぼかし画像を生成する */
-function createEffectCanvas(
+/**
+ * ストローク形状で切り抜いたモザイク・ぼかし画像を生成する
+ *
+ * ドラッグ・変形後に Konva ノードへ即座に反映するため、描画コンポーネント外からも利用する。
+ */
+export function createPaintStrokeEffectCanvas(
   stroke: PaintStroke,
   bgImage: HTMLImageElement,
   scaleX: number,
@@ -122,7 +126,7 @@ export function EditorPaintStrokeNode({
   const effectCanvas = useMemo(
     () =>
       paintType !== "fill-black" && bgImage
-        ? createEffectCanvas(stroke, bgImage, scaleX, scaleY, stageWidth, stageHeight)
+        ? createPaintStrokeEffectCanvas(stroke, bgImage, scaleX, scaleY, stageWidth, stageHeight)
         : null,
     [paintType, stroke, bgImage, scaleX, scaleY, stageWidth, stageHeight]
   );
@@ -151,6 +155,7 @@ export function EditorPaintStrokeNode({
   return (
     <Group
       id={stroke.id}
+      listening={isInteractive}
       draggable={isInteractive}
       opacity={stroke.isEnabled ? 1 : 0.3}
       onClick={() => isInteractive && onSelect()}
@@ -175,6 +180,7 @@ export function EditorPaintStrokeNode({
         lineCap="round"
         lineJoin="round"
         hitStrokeWidth={Math.max(stroke.brushSize * scaleX, 12)}
+        listening={isInteractive}
       />
     </Group>
   );
