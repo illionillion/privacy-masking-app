@@ -28,6 +28,7 @@ describe("createEditorSnapshotFromDetections", () => {
     );
     expect(snapshot.stampRegions[1]?.stampType).toBe("fill-black");
     expect(snapshot.paintStrokes).toHaveLength(0);
+    expect(snapshot.selectedPaintType).toBe("fill-black");
     expect(snapshot.selectedId).toBeNull();
     expect(snapshot.cropRect).toBeNull();
   });

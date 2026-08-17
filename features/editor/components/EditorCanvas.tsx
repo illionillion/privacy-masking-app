@@ -14,7 +14,14 @@ import {
   Stage,
   Transformer,
 } from "react-konva";
-import type { CropRect, EditorMode, PaintStroke, StampRegion, StampType } from "../types";
+import type {
+  CropRect,
+  EditorMode,
+  PaintStroke,
+  PaintType,
+  StampRegion,
+  StampType,
+} from "../types";
 import { clampCropRect, createFullImageCropRect } from "../lib/cropRect";
 import {
   DEFAULT_BACKGROUND_COLOR,
@@ -35,6 +42,7 @@ import { stagePointerToContentSpace } from "../lib/viewZoom";
 import { useEditorViewport } from "../hooks/useEditorViewport";
 import { useEditorViewportGestures } from "../hooks/useEditorViewportGestures";
 import { EditorStampRegionNode } from "./EditorStampRegionNode";
+import { EditorPaintStrokeNode, createPaintStrokeEffectCanvas } from "./EditorPaintStrokeNode";
 import { EditorViewportControls } from "./EditorViewportControls";
 
 interface EditorCanvasProps {
@@ -46,6 +54,7 @@ interface EditorCanvasProps {
   selectedId: string | null;
   mode: EditorMode;
   selectedStampType: StampType;
+  selectedPaintType: PaintType;
   brushSize: number;
   onSelectItem: (id: string | null) => void;
   onAddStampRegion: (region: Omit<StampRegion, "id">) => void;
@@ -91,6 +100,13 @@ const RECT_PREVIEW_BY_STAMP_TYPE: Record<StampType, { fill: string; stroke: stri
   mosaic: { fill: "rgba(107,114,128,0.3)", stroke: "#6b7280" },
   blur: { fill: "rgba(147,197,253,0.3)", stroke: "#93c5fd" },
   "fill-text": { fill: "rgba(0,0,0,0.3)", stroke: "#000000" },
+};
+
+/** ペイント種別ごとの、描画中プレビュー／カーソルの表示色 */
+const PAINT_PREVIEW_STROKE_BY_TYPE: Record<PaintType, string> = {
+  "fill-black": "#000000",
+  mosaic: "#6b7280",
+  blur: "#93c5fd",
 };
 
 /** Transformer のリサイズ最小サイズ（px）。この値未満へのリサイズを禁止する */
@@ -160,6 +176,7 @@ export function EditorCanvas({
   selectedId,
   mode,
   selectedStampType,
+  selectedPaintType,
   brushSize,
   onSelectItem,
   onAddStampRegion,
@@ -438,6 +455,7 @@ export function EditorCanvas({
         onAddPaintStroke({
           points: drawingStroke.points,
           brushSize,
+          paintType: selectedPaintType,
           isEnabled: true,
         });
       }
@@ -465,16 +483,20 @@ export function EditorCanvas({
    *
    * Konva.Line は points が node のローカル座標で保持されるため、
    * ドラッグ後の x/y を points に加算してからノードの x/y をリセットする。
+   * モザイク／ぼかしの Group では、見た目の KonvaImage を新しい点列で再生成し、
+   * state 再描画までの一瞬の位置戻りを防ぐ。
    *
    * @param id - ストロークのID
-   * @param node - Konva.Line ノード
+   * @param node - 黒塗り Line またはエフェクト Group
    */
-  function handlePaintStrokeDragEnd(id: string, node: Konva.Line) {
+  function handlePaintStrokeDragEnd(id: string, node: Konva.Line | Konva.Group) {
     const dx = node.x();
     const dy = node.y();
     if (dx === 0 && dy === 0) return;
 
-    const localPoints = node.points();
+    const line = node instanceof Konva.Line ? node : node.findOne<Konva.Line>(".paint-hit-line");
+    if (!line) return;
+    const localPoints = line.points();
     const newImagePoints: { x: number; y: number }[] = [];
     for (let i = 0; i < localPoints.length; i += 2) {
       newImagePoints.push({
@@ -485,7 +507,29 @@ export function EditorCanvas({
 
     node.x(0);
     node.y(0);
-    node.points(newImagePoints.flatMap((p) => [p.x * scaleX, p.y * scaleY]));
+    line.points(newImagePoints.flatMap((p) => [p.x * scaleX, p.y * scaleY]));
+
+    if (!(node instanceof Konva.Line) && bgImage) {
+      const stroke = paintStrokes.find((item) => item.id === id);
+      if (stroke) {
+        const effect = createPaintStrokeEffectCanvas(
+          { ...stroke, points: newImagePoints },
+          bgImage,
+          scaleX,
+          scaleY,
+          stageWidth,
+          stageHeight
+        );
+        const effectImage = node.findOne<Konva.Image>("Image");
+        if (effect && effectImage) {
+          effectImage.image(effect.canvas);
+          effectImage.x(effect.x);
+          effectImage.y(effect.y);
+          effectImage.width(effect.canvas.width);
+          effectImage.height(effect.canvas.height);
+        }
+      }
+    }
 
     onUpdatePaintStroke(id, { points: newImagePoints });
   }
@@ -495,14 +539,22 @@ export function EditorCanvas({
    * brushSize に焼き込んで state を更新する。
    *
    * brushSize は scaleX/scaleY の絶対値の平均で再計算する（非一様スケール時の近似）。
+   * モザイク／ぼかしの Group では、変換リセット前にエフェクト画像を新しい点列で
+   * 再生成し、state 再描画までの一瞬の位置戻りを防ぐ。
    *
    * @param id - ストロークのID
    * @param stroke - 元のストローク
-   * @param node - Konva.Line ノード
+   * @param node - 黒塗り Line またはエフェクト Group
    */
-  function handlePaintStrokeTransformEnd(id: string, stroke: PaintStroke, node: Konva.Line) {
+  function handlePaintStrokeTransformEnd(
+    id: string,
+    stroke: PaintStroke,
+    node: Konva.Line | Konva.Group
+  ) {
     const transform = node.getTransform();
-    const localPoints = node.points();
+    const line = node instanceof Konva.Line ? node : node.findOne<Konva.Line>(".paint-hit-line");
+    if (!line) return;
+    const localPoints = line.points();
     const scaleAbsX = Math.abs(node.scaleX());
     const scaleAbsY = Math.abs(node.scaleY());
 
@@ -518,14 +570,34 @@ export function EditorCanvas({
       });
     }
 
+    const newBrushSize = stroke.brushSize * ((scaleAbsX + scaleAbsY) / 2);
+
+    if (!(node instanceof Konva.Line) && bgImage) {
+      const effect = createPaintStrokeEffectCanvas(
+        { ...stroke, points: newImagePoints, brushSize: newBrushSize },
+        bgImage,
+        scaleX,
+        scaleY,
+        stageWidth,
+        stageHeight
+      );
+      const effectImage = node.findOne<Konva.Image>("Image");
+      if (effect && effectImage) {
+        effectImage.image(effect.canvas);
+        effectImage.x(effect.x);
+        effectImage.y(effect.y);
+        effectImage.width(effect.canvas.width);
+        effectImage.height(effect.canvas.height);
+      }
+    }
+
     node.x(0);
     node.y(0);
     node.scaleX(1);
     node.scaleY(1);
     node.rotation(0);
-    node.points(newImagePoints.flatMap((p) => [p.x * scaleX, p.y * scaleY]));
+    line.points(newImagePoints.flatMap((p) => [p.x * scaleX, p.y * scaleY]));
 
-    const newBrushSize = stroke.brushSize * ((scaleAbsX + scaleAbsY) / 2);
     onUpdatePaintStroke(id, { points: newImagePoints, brushSize: newBrushSize });
   }
 
@@ -619,24 +691,19 @@ export function EditorCanvas({
 
       {/* ペイントストローク */}
       {paintStrokes.map((stroke) => (
-        <Line
+        <EditorPaintStrokeNode
           key={stroke.id}
-          id={stroke.id}
-          points={stroke.points.flatMap((p) => [p.x * scaleX, p.y * scaleY])}
-          stroke="#000000"
-          strokeWidth={stroke.brushSize * scaleX}
-          lineCap="round"
-          lineJoin="round"
-          opacity={stroke.isEnabled ? 1 : 0.3}
-          hitStrokeWidth={Math.max(stroke.brushSize * scaleX, 12)}
-          listening={isPaintStrokeInteractive}
-          draggable={isPaintStrokeInteractive}
-          onClick={() => isPaintStrokeInteractive && onSelectItem(stroke.id)}
-          onTap={() => isPaintStrokeInteractive && onSelectItem(stroke.id)}
-          onDragEnd={(e) => handlePaintStrokeDragEnd(stroke.id, e.target as Konva.Line)}
-          onTransformEnd={(e) =>
-            handlePaintStrokeTransformEnd(stroke.id, stroke, e.target as Konva.Line)
-          }
+          stroke={stroke}
+          scaleX={scaleX}
+          scaleY={scaleY}
+          bgImage={bgImage}
+          stageWidth={stageWidth}
+          stageHeight={stageHeight}
+          isInteractive={isPaintStrokeInteractive}
+          selected={selectedId === stroke.id}
+          onSelect={() => onSelectItem(stroke.id)}
+          onDragEnd={(node) => handlePaintStrokeDragEnd(stroke.id, node)}
+          onTransformEnd={(node) => handlePaintStrokeTransformEnd(stroke.id, stroke, node)}
         />
       ))}
 
@@ -654,15 +721,16 @@ export function EditorCanvas({
         />
       )}
 
-      {/* 描画中のペイントプレビュー */}
+      {/* 描画中のペイントプレビュー（重いエフェクト生成は確定後に行い、描画中は簡易表示） */}
       {drawingStroke && mode === "paint" && drawingStroke.points.length >= 2 && (
         <Line
           points={drawingStroke.points.flatMap((p) => [p.x * scaleX, p.y * scaleY])}
-          stroke="#000000"
+          stroke={PAINT_PREVIEW_STROKE_BY_TYPE[selectedPaintType]}
           strokeWidth={brushSize * scaleX}
           lineCap="round"
           lineJoin="round"
           opacity={0.6}
+          listening={false}
         />
       )}
 
@@ -672,7 +740,8 @@ export function EditorCanvas({
           x={(drawingStroke.points[drawingStroke.points.length - 1]?.x ?? 0) * scaleX}
           y={(drawingStroke.points[drawingStroke.points.length - 1]?.y ?? 0) * scaleY}
           radius={(brushSize * scaleX) / 2}
-          fill="rgba(0,0,0,0.2)"
+          fill={PAINT_PREVIEW_STROKE_BY_TYPE[selectedPaintType]}
+          opacity={0.25}
           listening={false}
         />
       )}

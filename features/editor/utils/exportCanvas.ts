@@ -8,6 +8,12 @@ import {
   resolveOverlayText,
   resolveTextColor,
 } from "../lib/fillText";
+import {
+  computePaintBlurRadius,
+  computePaintMosaicBlockSize,
+  computePaintStrokeBounds,
+  resolvePaintType,
+} from "../lib/paintStroke";
 import { pickStampImage } from "../lib/pickStampImage";
 import { getStampRegionRotationDeg } from "../lib/stampRegionTransform";
 import type { CropRect, PaintStroke, StampRegion } from "../types";
@@ -173,6 +179,93 @@ function withStampRegionTransform(
   ctx.restore();
 }
 
+/** ペイントストロークのパスを現在の座標系で構築する */
+function buildPaintStrokePath(
+  ctx: CanvasRenderingContext2D,
+  points: { x: number; y: number }[],
+  offsetX: number,
+  offsetY: number,
+  scaleX: number,
+  scaleY: number,
+  sourceX: number,
+  sourceY: number
+): void {
+  ctx.beginPath();
+  ctx.moveTo(
+    (points[0]!.x - sourceX) * scaleX - offsetX,
+    (points[0]!.y - sourceY) * scaleY - offsetY
+  );
+  for (let index = 1; index < points.length; index++) {
+    const point = points[index]!;
+    ctx.lineTo((point.x - sourceX) * scaleX - offsetX, (point.y - sourceY) * scaleY - offsetY);
+  }
+}
+
+/** 現在のキャンバスを元に、ストローク形状のモザイク・ぼかしを適用する */
+function applyPaintStrokeEffect(
+  ctx: CanvasRenderingContext2D,
+  stroke: PaintStroke,
+  scaleX: number,
+  scaleY: number,
+  brushScale: number,
+  sourceX: number,
+  sourceY: number
+): void {
+  const scaledPoints = stroke.points.map((point) => ({
+    x: (point.x - sourceX) * scaleX,
+    y: (point.y - sourceY) * scaleY,
+  }));
+  const brushWidth = stroke.brushSize * brushScale;
+  const bounds = computePaintStrokeBounds(
+    scaledPoints,
+    brushWidth,
+    ctx.canvas.width,
+    ctx.canvas.height
+  );
+  const { x, y, width, height } = bounds;
+
+  const source = document.createElement("canvas");
+  source.width = width;
+  source.height = height;
+  const sourceCtx = source.getContext("2d");
+  if (!sourceCtx) return;
+  sourceCtx.drawImage(ctx.canvas, x, y, width, height, 0, 0, width, height);
+
+  const effect = document.createElement("canvas");
+  effect.width = width;
+  effect.height = height;
+  const effectCtx = effect.getContext("2d");
+  if (!effectCtx) return;
+
+  if (resolvePaintType(stroke) === "mosaic") {
+    /* ブロックサイズはブラシ幅基準にし、プレビューと見た目を揃える（外接矩形基準にしない） */
+    const blockSize = computePaintMosaicBlockSize(brushWidth);
+    const sampleCanvas = document.createElement("canvas");
+    sampleCanvas.width = Math.max(1, Math.ceil(width / blockSize));
+    sampleCanvas.height = Math.max(1, Math.ceil(height / blockSize));
+    const sampleCtx = sampleCanvas.getContext("2d");
+    if (!sampleCtx) return;
+    sampleCtx.imageSmoothingEnabled = true;
+    sampleCtx.drawImage(source, 0, 0, sampleCanvas.width, sampleCanvas.height);
+    effectCtx.imageSmoothingEnabled = false;
+    effectCtx.drawImage(sampleCanvas, 0, 0, width, height);
+  } else {
+    effectCtx.filter = `blur(${computePaintBlurRadius(brushWidth)}px)`;
+    effectCtx.drawImage(source, 0, 0);
+    effectCtx.filter = "none";
+  }
+
+  effectCtx.globalCompositeOperation = "destination-in";
+  effectCtx.strokeStyle = "#000000";
+  effectCtx.lineWidth = brushWidth;
+  effectCtx.lineCap = "round";
+  effectCtx.lineJoin = "round";
+  buildPaintStrokePath(effectCtx, stroke.points, x, y, scaleX, scaleY, sourceX, sourceY);
+  effectCtx.stroke();
+  effectCtx.globalCompositeOperation = "source-over";
+  ctx.drawImage(effect, x, y);
+}
+
 /**
  * エディタの現在状態を PNG Blob URL としてエクスポートする
  *
@@ -313,13 +406,19 @@ export async function exportEditorCanvas(
     }
   }
 
-  /** 有効なペイントストロークを黒の丸いラインで描画 */
+  /** 有効なペイントストロークを種別に応じて描画 */
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  ctx.strokeStyle = "#000000";
+  /* 丸めで scaleX≠scaleY になり得るため、線幅・効果強度は平均スケールでプレビューと揃える */
+  const brushScale = (scaleX + scaleY) / 2;
   for (const stroke of paintStrokes) {
     if (!stroke.isEnabled || stroke.points.length < 2) continue;
-    ctx.lineWidth = stroke.brushSize * scaleX;
+    if (resolvePaintType(stroke) !== "fill-black") {
+      applyPaintStrokeEffect(ctx, stroke, scaleX, scaleY, brushScale, source.x, source.y);
+      continue;
+    }
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = stroke.brushSize * brushScale;
     ctx.beginPath();
     ctx.moveTo((stroke.points[0].x - source.x) * scaleX, (stroke.points[0].y - source.y) * scaleY);
     for (let i = 1; i < stroke.points.length; i++) {

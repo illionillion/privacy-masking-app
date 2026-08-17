@@ -1,6 +1,9 @@
 /** マスキング種別 */
 export type StampType = "mosaic" | "blur" | "stamp-face" | "fill-black" | "fill-text";
 
+/** ペイントで使用できるマスキング種別 */
+export type PaintType = "fill-black" | "mosaic" | "blur";
+
 /** エディタの操作モード */
 export type EditorMode = "select" | "rect" | "paint" | "crop";
 
@@ -63,6 +66,8 @@ export interface EditorStateSnapshot {
   paintStrokes: PaintStroke[];
   selectedId: string | null;
   selectedStampType: StampType;
+  /** ペイントで新規ストロークへ適用する種別（旧スナップショットでは未設定） */
+  selectedPaintType?: PaintType;
   selectedStampFileName: string;
   brushSize: number;
   /** 仮想 crop。null は元画像全体 */
@@ -77,6 +82,8 @@ export interface PaintStroke {
   points: { x: number; y: number }[];
   /** ブラシサイズ */
   brushSize: number;
+  /** マスキング種別（旧データの未設定時は黒塗り） */
+  paintType?: PaintType;
   /** 有効/無効フラグ */
   isEnabled: boolean;
 }

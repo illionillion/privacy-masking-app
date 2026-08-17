@@ -34,4 +34,32 @@ describe("hasEditorContentChanges", () => {
     const current = { ...baseline, cropRect: null, mode: "crop" as const };
     expect(hasEditorContentChanges(current, baseline)).toBe(false);
   });
+
+  it("ペイントストロークの種別が変われば true", () => {
+    const withStroke = {
+      ...baseline,
+      paintStrokes: [
+        {
+          id: "p1",
+          points: [
+            { x: 0, y: 0 },
+            { x: 10, y: 10 },
+          ],
+          brushSize: 20,
+          paintType: "fill-black" as const,
+          isEnabled: true,
+        },
+      ],
+    };
+    const current = {
+      ...withStroke,
+      paintStrokes: [{ ...withStroke.paintStrokes[0]!, paintType: "mosaic" as const }],
+    };
+    expect(hasEditorContentChanges(current, withStroke)).toBe(true);
+  });
+
+  it("選択中のペイント種別だけ変わっても false", () => {
+    const current = { ...baseline, selectedPaintType: "mosaic" as const };
+    expect(hasEditorContentChanges(current, baseline)).toBe(false);
+  });
 });

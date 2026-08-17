@@ -21,7 +21,35 @@ describe("useEditorState", () => {
     expect(result.current.paintStrokes).toHaveLength(0);
     expect(result.current.selectedId).toBeNull();
     expect(result.current.selectedStampType).toBe("stamp-face");
+    expect(result.current.selectedPaintType).toBe("fill-black");
     expect(result.current.brushSize).toBe(20);
+  });
+
+  it("ペイント種別を切り替えられる", () => {
+    const { result } = renderHook(() => useEditorState());
+    act(() => {
+      result.current.setSelectedPaintType("mosaic");
+    });
+    expect(result.current.selectedPaintType).toBe("mosaic");
+    expect(result.current.getSnapshot().selectedPaintType).toBe("mosaic");
+  });
+
+  it("旧スナップショットのペイント種別は黒塗りとして復元する", () => {
+    const { result } = renderHook(() => useEditorState());
+    act(() => {
+      result.current.setSelectedPaintType("blur");
+      result.current.restoreSnapshot({
+        mode: "select",
+        stampRegions: [],
+        paintStrokes: [],
+        selectedId: null,
+        selectedStampType: "stamp-face",
+        selectedStampFileName: "",
+        brushSize: 20,
+        cropRect: null,
+      });
+    });
+    expect(result.current.selectedPaintType).toBe("fill-black");
   });
 
   it("initFromDetections で顔検出と OCR を StampRegion として初期化できる", () => {
@@ -168,11 +196,15 @@ describe("useEditorState", () => {
           { x: 10, y: 10 },
         ],
         brushSize: 20,
+        paintType: "mosaic",
         isEnabled: true,
       });
     });
     expect(result.current.paintStrokes).toHaveLength(1);
-    expect(result.current.paintStrokes[0].id).toBe("stroke-uuid");
+    expect(result.current.paintStrokes[0]).toMatchObject({
+      id: "stroke-uuid",
+      paintType: "mosaic",
+    });
   });
 
   it("updateStampRegion でマスキング領域を更新できる", () => {
