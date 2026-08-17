@@ -3,10 +3,13 @@
 import Konva from "konva";
 import { useMemo } from "react";
 import { Group, Image as KonvaImage, Line } from "react-konva";
+import {
+  computePaintBlurRadius,
+  computePaintMosaicBlockSize,
+  computePaintStrokeBounds,
+  resolvePaintType,
+} from "../lib/paintStroke";
 import type { PaintStroke } from "../types";
-
-/** モザイクの最小ブロックサイズ（表示ピクセル） */
-const MIN_MOSAIC_BLOCK_SIZE = 3;
 
 interface EditorPaintStrokeNodeProps {
   stroke: PaintStroke;
@@ -43,31 +46,23 @@ function createEffectCanvas(
     x: point.x * scaleX,
     y: point.y * scaleY,
   }));
-  const padding = Math.max(2, (stroke.brushSize * scaleX) / 2 + 8);
-  const x = Math.max(0, Math.floor(Math.min(...scaledPoints.map((point) => point.x)) - padding));
-  const y = Math.max(0, Math.floor(Math.min(...scaledPoints.map((point) => point.y)) - padding));
-  const right = Math.min(
-    stageWidth,
-    Math.ceil(Math.max(...scaledPoints.map((point) => point.x)) + padding)
-  );
-  const bottom = Math.min(
-    stageHeight,
-    Math.ceil(Math.max(...scaledPoints.map((point) => point.y)) + padding)
-  );
+  const brushWidth = stroke.brushSize * scaleX;
+  const bounds = computePaintStrokeBounds(scaledPoints, brushWidth, stageWidth, stageHeight);
   const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, right - x);
-  canvas.height = Math.max(1, bottom - y);
+  canvas.width = bounds.width;
+  canvas.height = bounds.height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
-  const paintType = stroke.paintType ?? "fill-black";
+  const paintType = resolvePaintType(stroke);
   if (paintType === "blur") {
-    ctx.filter = `blur(${Math.max(4, Math.round((stroke.brushSize * scaleX) / 8))}px)`;
-    ctx.drawImage(bgImage, -x, -y, stageWidth, stageHeight);
+    ctx.filter = `blur(${computePaintBlurRadius(brushWidth)}px)`;
+    ctx.drawImage(bgImage, -bounds.x, -bounds.y, stageWidth, stageHeight);
     ctx.filter = "none";
   } else {
+    /* ブロックサイズはブラシ幅基準にし、書き出しと見た目を揃える（外接矩形基準にしない） */
+    const blockSize = computePaintMosaicBlockSize(brushWidth);
     const sampleCanvas = document.createElement("canvas");
-    const blockSize = Math.max(MIN_MOSAIC_BLOCK_SIZE, Math.round((stroke.brushSize * scaleX) / 8));
     sampleCanvas.width = Math.max(1, Math.ceil(canvas.width / blockSize));
     sampleCanvas.height = Math.max(1, Math.ceil(canvas.height / blockSize));
     const sampleCtx = sampleCanvas.getContext("2d");
@@ -79,8 +74,8 @@ function createEffectCanvas(
     sampleCtx.imageSmoothingEnabled = true;
     sampleCtx.drawImage(
       bgImage,
-      (x / safeStageWidth) * imageWidth,
-      (y / safeStageHeight) * imageHeight,
+      (bounds.x / safeStageWidth) * imageWidth,
+      (bounds.y / safeStageHeight) * imageHeight,
       (canvas.width / safeStageWidth) * imageWidth,
       (canvas.height / safeStageHeight) * imageHeight,
       0,
@@ -94,18 +89,18 @@ function createEffectCanvas(
 
   ctx.globalCompositeOperation = "destination-in";
   ctx.strokeStyle = "#000000";
-  ctx.lineWidth = stroke.brushSize * scaleX;
+  ctx.lineWidth = brushWidth;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.beginPath();
-  ctx.moveTo(scaledPoints[0]!.x - x, scaledPoints[0]!.y - y);
+  ctx.moveTo(scaledPoints[0]!.x - bounds.x, scaledPoints[0]!.y - bounds.y);
   for (let index = 1; index < stroke.points.length; index++) {
     const point = scaledPoints[index]!;
-    ctx.lineTo(point.x - x, point.y - y);
+    ctx.lineTo(point.x - bounds.x, point.y - bounds.y);
   }
   ctx.stroke();
   ctx.globalCompositeOperation = "source-over";
-  return { canvas, x, y };
+  return { canvas, x: bounds.x, y: bounds.y };
 }
 
 /** ペイントストロークを黒塗りまたは画像エフェクトとして描画する */
@@ -123,7 +118,7 @@ export function EditorPaintStrokeNode({
   onTransformEnd,
 }: EditorPaintStrokeNodeProps) {
   const points = stroke.points.flatMap((point) => [point.x * scaleX, point.y * scaleY]);
-  const paintType = stroke.paintType ?? "fill-black";
+  const paintType = resolvePaintType(stroke);
   const effectCanvas = useMemo(
     () =>
       paintType !== "fill-black" && bgImage

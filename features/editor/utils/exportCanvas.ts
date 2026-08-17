@@ -8,6 +8,12 @@ import {
   resolveOverlayText,
   resolveTextColor,
 } from "../lib/fillText";
+import {
+  computePaintBlurRadius,
+  computePaintMosaicBlockSize,
+  computePaintStrokeBounds,
+  resolvePaintType,
+} from "../lib/paintStroke";
 import { pickStampImage } from "../lib/pickStampImage";
 import { getStampRegionRotationDeg } from "../lib/stampRegionTransform";
 import type { CropRect, PaintStroke, StampRegion } from "../types";
@@ -208,20 +214,14 @@ function applyPaintStrokeEffect(
     x: (point.x - sourceX) * scaleX,
     y: (point.y - sourceY) * scaleY,
   }));
-  const lineWidth = stroke.brushSize * scaleX;
-  const padding = Math.max(2, lineWidth / 2 + 8);
-  const x = Math.max(0, Math.floor(Math.min(...scaledPoints.map((point) => point.x)) - padding));
-  const y = Math.max(0, Math.floor(Math.min(...scaledPoints.map((point) => point.y)) - padding));
-  const right = Math.min(
+  const brushWidth = stroke.brushSize * scaleX;
+  const bounds = computePaintStrokeBounds(
+    scaledPoints,
+    brushWidth,
     ctx.canvas.width,
-    Math.ceil(Math.max(...scaledPoints.map((point) => point.x)) + padding)
+    ctx.canvas.height
   );
-  const bottom = Math.min(
-    ctx.canvas.height,
-    Math.ceil(Math.max(...scaledPoints.map((point) => point.y)) + padding)
-  );
-  const width = Math.max(1, right - x);
-  const height = Math.max(1, bottom - y);
+  const { x, y, width, height } = bounds;
 
   const source = document.createElement("canvas");
   source.width = width;
@@ -236,21 +236,27 @@ function applyPaintStrokeEffect(
   const effectCtx = effect.getContext("2d");
   if (!effectCtx) return;
 
-  if ((stroke.paintType ?? "fill-black") === "mosaic") {
-    effectCtx.drawImage(source, 0, 0);
-    applyMosaic(effectCtx, 0, 0, width, height);
+  if (resolvePaintType(stroke) === "mosaic") {
+    /* ブロックサイズはブラシ幅基準にし、プレビューと見た目を揃える（外接矩形基準にしない） */
+    const blockSize = computePaintMosaicBlockSize(brushWidth);
+    const sampleCanvas = document.createElement("canvas");
+    sampleCanvas.width = Math.max(1, Math.ceil(width / blockSize));
+    sampleCanvas.height = Math.max(1, Math.ceil(height / blockSize));
+    const sampleCtx = sampleCanvas.getContext("2d");
+    if (!sampleCtx) return;
+    sampleCtx.imageSmoothingEnabled = true;
+    sampleCtx.drawImage(source, 0, 0, sampleCanvas.width, sampleCanvas.height);
+    effectCtx.imageSmoothingEnabled = false;
+    effectCtx.drawImage(sampleCanvas, 0, 0, width, height);
   } else {
-    effectCtx.filter = `blur(${Math.max(
-      MIN_BLUR_RADIUS,
-      Math.round(lineWidth / BLUR_RADIUS_DIVISOR)
-    )}px)`;
+    effectCtx.filter = `blur(${computePaintBlurRadius(brushWidth)}px)`;
     effectCtx.drawImage(source, 0, 0);
     effectCtx.filter = "none";
   }
 
   effectCtx.globalCompositeOperation = "destination-in";
   effectCtx.strokeStyle = "#000000";
-  effectCtx.lineWidth = lineWidth;
+  effectCtx.lineWidth = brushWidth;
   effectCtx.lineCap = "round";
   effectCtx.lineJoin = "round";
   buildPaintStrokePath(effectCtx, stroke.points, x, y, scaleX, scaleY, sourceX, sourceY);

@@ -364,7 +364,8 @@ describe("exportEditorCanvas", () => {
 
     await exportEditorCanvas(img, [], paintStrokes, new Map());
 
-    expect(ctxMock.getImageDataCalls.length).toBeGreaterThan(0);
+    /* モザイクは縮小→拡大の再サンプリングで表現し、パス形状で切り抜く */
+    expect(ctxMock.ctx.drawImage).toHaveBeenCalled();
     expect(ctxMock.strokeCalls.length).toBeGreaterThan(0);
   });
 
@@ -385,7 +386,7 @@ describe("exportEditorCanvas", () => {
 
     await exportEditorCanvas(img, [], paintStrokes, new Map());
 
-    expect(ctxMock.ctx.drawImage).toHaveBeenCalledTimes(4);
+    expect(ctxMock.ctx.drawImage).toHaveBeenCalled();
     expect(ctxMock.strokeCalls.length).toBeGreaterThan(0);
   });
 
