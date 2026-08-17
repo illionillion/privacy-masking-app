@@ -16,6 +16,7 @@ import type {
   EditorMode,
   EditorStateSnapshot,
   PaintStroke,
+  PaintType,
   StampRegion,
   StampType,
 } from "../types";
@@ -33,6 +34,7 @@ export interface UseEditorStateReturn {
   paintStrokes: PaintStroke[];
   selectedId: string | null;
   selectedStampType: StampType;
+  selectedPaintType: PaintType;
   selectedStampFileName: string;
   brushSize: number;
   /** 仮想 crop。フル画像は null */
@@ -41,6 +43,7 @@ export interface UseEditorStateReturn {
   updateCropRect: (rect: CropRect, imageSize: EditorImageSize) => void;
   restoreCrop: () => void;
   setSelectedStampType: (type: StampType) => void;
+  setSelectedPaintType: (type: PaintType) => void;
   setSelectedStampFileName: (name: string) => void;
   setBrushSize: (size: number) => void;
   selectItem: (id: string | null) => void;
@@ -73,6 +76,7 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
   const [paintStrokes, setPaintStrokes] = useState<PaintStroke[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedStampType, _setSelectedStampType] = useState<StampType>("stamp-face");
+  const [selectedPaintType, setSelectedPaintType] = useState<PaintType>("fill-black");
   const [selectedStampFileName, _setSelectedStampFileName] = useState<string>(initialStampFileName);
   const [brushSize, setBrushSize] = useState<number>(20);
   const [cropRect, setCropRect] = useState<CropRect | null>(null);
@@ -179,6 +183,7 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
     setPaintStrokes(snapshot.paintStrokes);
     setSelectedId(snapshot.selectedId);
     _setSelectedStampType(snapshot.selectedStampType);
+    setSelectedPaintType(snapshot.selectedPaintType ?? "fill-black");
     _setSelectedStampFileName(snapshot.selectedStampFileName);
     setBrushSize(snapshot.brushSize);
     setCropRect(snapshot.cropRect ?? null);
@@ -191,6 +196,7 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
       paintStrokes,
       selectedId,
       selectedStampType,
+      selectedPaintType,
       selectedStampFileName,
       brushSize,
       cropRect,
@@ -201,6 +207,7 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
       paintStrokes,
       selectedId,
       selectedStampType,
+      selectedPaintType,
       selectedStampFileName,
       brushSize,
       cropRect,
@@ -329,6 +336,7 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
     paintStrokes,
     selectedId,
     selectedStampType,
+    selectedPaintType,
     selectedStampFileName,
     brushSize,
     cropRect,
@@ -336,6 +344,7 @@ export function useEditorState(initialStampFileName = ""): UseEditorStateReturn 
     updateCropRect,
     restoreCrop,
     setSelectedStampType,
+    setSelectedPaintType,
     setSelectedStampFileName,
     setBrushSize,
     selectItem,

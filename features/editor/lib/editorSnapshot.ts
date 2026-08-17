@@ -47,6 +47,7 @@ export function createEditorSnapshotFromDetections(
     paintStrokes: [],
     selectedId: null,
     selectedStampType: "stamp-face",
+    selectedPaintType: "fill-black",
     selectedStampFileName: initialStampFileName,
     brushSize: 20,
     cropRect: null,

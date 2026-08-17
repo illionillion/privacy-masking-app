@@ -102,11 +102,13 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
             <EditorToolbar
               mode={editor.mode}
               selectedStampType={editor.selectedStampType}
+              selectedPaintType={editor.selectedPaintType}
               brushSize={editor.brushSize}
               selectedId={editor.selectedId}
               isStampSelected={selectedStampRegion !== undefined}
               onChangeMode={editor.onChangeMode}
               onStampTypeChange={editor.setSelectedStampType}
+              onPaintTypeChange={editor.setSelectedPaintType}
               onStampFileNameChange={editor.setSelectedStampFileName}
               onBrushSizeChange={editor.setBrushSize}
               onDeleteSelected={editor.removeSelectedItem}
@@ -162,6 +164,7 @@ export function EditorModal({ image, stampImages, onClose, onRendered }: EditorM
                 selectedId={editor.selectedId}
                 mode={editor.mode}
                 selectedStampType={editor.selectedStampType}
+                selectedPaintType={editor.selectedPaintType}
                 brushSize={editor.brushSize}
                 onSelectItem={editor.selectItem}
                 onAddStampRegion={editor.addStampRegion}

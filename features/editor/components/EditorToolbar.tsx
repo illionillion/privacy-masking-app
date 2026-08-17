@@ -6,7 +6,8 @@ import type React from "react";
 import type { LucideProps } from "lucide-react";
 import { useNarrowViewport } from "@/lib/useNarrowViewport";
 import type { StampCatalogEntry } from "../constants";
-import type { EditorMode, StampType } from "../types";
+import type { EditorMode, PaintType, StampType } from "../types";
+import { PaintTypeSelector } from "./PaintTypeSelector";
 import { StampFacePicker } from "./StampFacePicker";
 import { StampTypeSelector } from "./StampTypeSelector";
 
@@ -18,6 +19,7 @@ interface EditorToolbarProps {
   /** 現在選択中のスタンプ画像のファイル名 */
   selectedStampFileName: string;
   brushSize: number;
+  selectedPaintType: PaintType;
   selectedId: string | null;
   isStampSelected: boolean;
   onChangeMode: (mode: EditorMode) => void;
@@ -25,6 +27,7 @@ interface EditorToolbarProps {
   /** stamp-face 画像選択時のコールバック */
   onStampFileNameChange: (name: string) => void;
   onBrushSizeChange: (size: number) => void;
+  onPaintTypeChange: (type: PaintType) => void;
   onDeleteSelected: () => void;
   /** トリミング復元（画像全体に戻す） */
   onRestoreCrop?: () => void;
@@ -161,7 +164,9 @@ function StampControls({
 
 interface BrushControlsProps {
   brushSize: number;
+  selectedPaintType: PaintType;
   onBrushSizeChange: (size: number) => void;
+  onPaintTypeChange: (type: PaintType) => void;
 }
 
 interface CropRestoreButtonProps {
@@ -186,10 +191,16 @@ function CropRestoreButton({ onRestore, disabled }: CropRestoreButtonProps) {
   );
 }
 
-/** ペイントブラシサイズ */
-function BrushControls({ brushSize, onBrushSizeChange }: BrushControlsProps) {
+/** ペイント種別とブラシサイズ */
+function BrushControls({
+  brushSize,
+  selectedPaintType,
+  onBrushSizeChange,
+  onPaintTypeChange,
+}: BrushControlsProps) {
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-2">
+    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+      <PaintTypeSelector value={selectedPaintType} onChange={onPaintTypeChange} />
       <label className="shrink-0 text-sm text-zinc-600" htmlFor="brush-size-slider">
         ブラシ: {brushSize}
       </label>
@@ -303,12 +314,14 @@ export function EditorToolbar({
   stampCatalog,
   selectedStampFileName,
   brushSize,
+  selectedPaintType,
   selectedId,
   isStampSelected,
   onChangeMode,
   onStampTypeChange,
   onStampFileNameChange,
   onBrushSizeChange,
+  onPaintTypeChange,
   onDeleteSelected,
   onRestoreCrop,
   canRestoreCrop = false,
@@ -367,7 +380,12 @@ export function EditorToolbar({
           )}
 
           {mode === "paint" && (
-            <BrushControls brushSize={brushSize} onBrushSizeChange={onBrushSizeChange} />
+            <BrushControls
+              brushSize={brushSize}
+              selectedPaintType={selectedPaintType}
+              onBrushSizeChange={onBrushSizeChange}
+              onPaintTypeChange={onPaintTypeChange}
+            />
           )}
 
           {showTextControls &&
@@ -417,7 +435,12 @@ export function EditorToolbar({
         {mode === "paint" && (
           <>
             <Divider />
-            <BrushControls brushSize={brushSize} onBrushSizeChange={onBrushSizeChange} />
+            <BrushControls
+              brushSize={brushSize}
+              selectedPaintType={selectedPaintType}
+              onBrushSizeChange={onBrushSizeChange}
+              onPaintTypeChange={onPaintTypeChange}
+            />
           </>
         )}
 

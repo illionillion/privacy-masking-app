@@ -7,6 +7,7 @@ export type {
   CropRect,
   EditorMode,
   PaintStroke,
+  PaintType,
   StampRegion,
   StampRegionSource,
   StampType,
