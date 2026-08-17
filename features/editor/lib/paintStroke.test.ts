@@ -70,4 +70,16 @@ describe("computePaintStrokeBounds", () => {
     );
     expect(bounds).toEqual({ x: 0, y: 0, width: 100, height: 100 });
   });
+
+  it("点数が非常に多いストロークでも例外にならず外接矩形を求められる", () => {
+    /* スプレッド引数の上限（環境により ~100k〜）を超える点数でも算出できること */
+    const points = Array.from({ length: 200_000 }, (_, index) => ({
+      x: index % 500,
+      y: Math.floor(index / 500),
+    }));
+    expect(() => computePaintStrokeBounds(points, 10, 100_000, 100_000)).not.toThrow();
+    const bounds = computePaintStrokeBounds(points, 10, 100_000, 100_000);
+    expect(bounds.width).toBeGreaterThan(0);
+    expect(bounds.height).toBeGreaterThan(0);
+  });
 });

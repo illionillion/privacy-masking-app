@@ -4,7 +4,16 @@ import clsx from "clsx";
 import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Circle, Group, Image as KonvaImage, Layer, Rect, Stage, Transformer } from "react-konva";
+import {
+  Circle,
+  Group,
+  Image as KonvaImage,
+  Layer,
+  Line,
+  Rect,
+  Stage,
+  Transformer,
+} from "react-konva";
 import type {
   CropRect,
   EditorMode,
@@ -91,6 +100,13 @@ const RECT_PREVIEW_BY_STAMP_TYPE: Record<StampType, { fill: string; stroke: stri
   mosaic: { fill: "rgba(107,114,128,0.3)", stroke: "#6b7280" },
   blur: { fill: "rgba(147,197,253,0.3)", stroke: "#93c5fd" },
   "fill-text": { fill: "rgba(0,0,0,0.3)", stroke: "#000000" },
+};
+
+/** ペイント種別ごとの、描画中プレビュー／カーソルの表示色 */
+const PAINT_PREVIEW_STROKE_BY_TYPE: Record<PaintType, string> = {
+  "fill-black": "#000000",
+  mosaic: "#6b7280",
+  blur: "#93c5fd",
 };
 
 /** Transformer のリサイズ最小サイズ（px）。この値未満へのリサイズを禁止する */
@@ -659,26 +675,16 @@ export function EditorCanvas({
         />
       )}
 
-      {/* 描画中のペイントプレビュー */}
+      {/* 描画中のペイントプレビュー（重いエフェクト生成は確定後に行い、描画中は簡易表示） */}
       {drawingStroke && mode === "paint" && drawingStroke.points.length >= 2 && (
-        <EditorPaintStrokeNode
-          stroke={{
-            id: "drawing-paint-preview",
-            points: drawingStroke.points,
-            brushSize,
-            paintType: selectedPaintType,
-            isEnabled: true,
-          }}
-          scaleX={scaleX}
-          scaleY={scaleY}
-          bgImage={bgImage}
-          stageWidth={stageWidth}
-          stageHeight={stageHeight}
-          isInteractive={false}
-          selected={false}
-          onSelect={() => undefined}
-          onDragEnd={() => undefined}
-          onTransformEnd={() => undefined}
+        <Line
+          points={drawingStroke.points.flatMap((p) => [p.x * scaleX, p.y * scaleY])}
+          stroke={PAINT_PREVIEW_STROKE_BY_TYPE[selectedPaintType]}
+          strokeWidth={brushSize * scaleX}
+          lineCap="round"
+          lineJoin="round"
+          opacity={0.6}
+          listening={false}
         />
       )}
 
@@ -688,13 +694,8 @@ export function EditorCanvas({
           x={(drawingStroke.points[drawingStroke.points.length - 1]?.x ?? 0) * scaleX}
           y={(drawingStroke.points[drawingStroke.points.length - 1]?.y ?? 0) * scaleY}
           radius={(brushSize * scaleX) / 2}
-          fill={
-            selectedPaintType === "fill-black"
-              ? "rgba(0,0,0,0.2)"
-              : selectedPaintType === "mosaic"
-                ? "rgba(107,114,128,0.25)"
-                : "rgba(147,197,253,0.3)"
-          }
+          fill={PAINT_PREVIEW_STROKE_BY_TYPE[selectedPaintType]}
+          opacity={0.25}
           listening={false}
         />
       )}

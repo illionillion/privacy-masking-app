@@ -76,12 +76,22 @@ export function computePaintStrokeBounds(
   maxHeight: number
 ): PaintStrokeBounds {
   const padding = Math.max(MIN_BOUNDS_PADDING, brushWidth / 2 + BOUNDS_PADDING_MARGIN);
-  const xs = points.map((point) => point.x);
-  const ys = points.map((point) => point.y);
-  const x = Math.max(0, Math.floor(Math.min(...xs) - padding));
-  const y = Math.max(0, Math.floor(Math.min(...ys) - padding));
-  const right = Math.min(maxWidth, Math.ceil(Math.max(...xs) + padding));
-  const bottom = Math.min(maxHeight, Math.ceil(Math.max(...ys) + padding));
+  /* 点数が多いストロークでもスプレッド引数の上限に達しないよう単一ループで min/max を求める */
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const point of points) {
+    if (point.x < minX) minX = point.x;
+    if (point.x > maxX) maxX = point.x;
+    if (point.y < minY) minY = point.y;
+    if (point.y > maxY) maxY = point.y;
+  }
+
+  const x = Math.max(0, Math.floor(minX - padding));
+  const y = Math.max(0, Math.floor(minY - padding));
+  const right = Math.min(maxWidth, Math.ceil(maxX + padding));
+  const bottom = Math.min(maxHeight, Math.ceil(maxY + padding));
 
   return {
     x,

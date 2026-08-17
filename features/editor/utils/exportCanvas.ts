@@ -207,6 +207,7 @@ function applyPaintStrokeEffect(
   stroke: PaintStroke,
   scaleX: number,
   scaleY: number,
+  brushScale: number,
   sourceX: number,
   sourceY: number
 ): void {
@@ -214,7 +215,7 @@ function applyPaintStrokeEffect(
     x: (point.x - sourceX) * scaleX,
     y: (point.y - sourceY) * scaleY,
   }));
-  const brushWidth = stroke.brushSize * scaleX;
+  const brushWidth = stroke.brushSize * brushScale;
   const bounds = computePaintStrokeBounds(
     scaledPoints,
     brushWidth,
@@ -408,14 +409,16 @@ export async function exportEditorCanvas(
   /** 有効なペイントストロークを種別に応じて描画 */
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
+  /* 丸めで scaleX≠scaleY になり得るため、線幅・効果強度は平均スケールでプレビューと揃える */
+  const brushScale = (scaleX + scaleY) / 2;
   for (const stroke of paintStrokes) {
     if (!stroke.isEnabled || stroke.points.length < 2) continue;
-    if ((stroke.paintType ?? "fill-black") !== "fill-black") {
-      applyPaintStrokeEffect(ctx, stroke, scaleX, scaleY, source.x, source.y);
+    if (resolvePaintType(stroke) !== "fill-black") {
+      applyPaintStrokeEffect(ctx, stroke, scaleX, scaleY, brushScale, source.x, source.y);
       continue;
     }
     ctx.strokeStyle = "#000000";
-    ctx.lineWidth = stroke.brushSize * scaleX;
+    ctx.lineWidth = stroke.brushSize * brushScale;
     ctx.beginPath();
     ctx.moveTo((stroke.points[0].x - source.x) * scaleX, (stroke.points[0].y - source.y) * scaleY);
     for (let i = 1; i < stroke.points.length; i++) {
