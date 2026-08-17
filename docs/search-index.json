@@ -199,6 +199,14 @@
     "url": "/updates/2026-08-15-editor-text-mask"
   },
   {
+    "id": "update:2026-08-17-paint-mask-type",
+    "type": "update",
+    "title": "ペンでモザイク・ぼかしを塗れるようにしました",
+    "summary": "ペイントモードにマスク種別を追加。黒塗りに加えてモザイク・ぼかしを選べるので、並んだ顔を太いペンでなぞってまとめて隠せます。",
+    "tags": [],
+    "url": "/updates/2026-08-17-paint-mask-type"
+  },
+  {
     "id": "faq:画像はサーバーに送信されますか",
     "type": "faq",
     "title": "画像はサーバーに送信されますか？",
