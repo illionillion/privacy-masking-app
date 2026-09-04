@@ -1,5 +1,5 @@
 1:"$Sreact.fragment"
-2:I[4196,["5","static/chunks/5-45a81fb9158df9e5.js","511","static/chunks/511-32d70babdb3d5f32.js","877","static/chunks/app/privacy/page-dafe35851df91cc2.js"],"MarkdownContent"]
+2:I[4196,["5","static/chunks/5-45a81fb9158df9e5.js","511","static/chunks/511-38bd9ff3bfaedad9.js","877","static/chunks/app/privacy/page-9eaff3c32da6d1a2.js"],"MarkdownContent"]
 4:I[8849,[],"OutletBoundary"]
 5:"$Sreact.suspense"
 3:Tedc,本ポリシーは、伏せ太郎（Fusely）（以下「本サービス」）の利用にあたり、利用者の情報がどのように扱われるかを説明するものです。本サービスはオープンソースとして公開されており、ソースコードは [GitHub リポジトリ](https://github.com/illionillion/privacy-masking-app) で確認できます。
@@ -36,5 +36,5 @@ Google AdSense を利用する場合、広告配信事業者・広告ネット�
 
 法令の改正やサービス内容の変更に応じて、本ポリシーを更新することがあります。更新後の内容は本ページに掲載した時点から効力を有するものとします。
 
-[トップページへ戻る](/)0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"プライバシーポリシー"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["最終更新日",": ","2026年5月12日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":["$","$L2",null,{"content":"$3"}]}]]}],null,["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"YzdSfiUx8P8AMnfuT8R1f"}
+[トップページへ戻る](/)0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"プライバシーポリシー"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["最終更新日",": ","2026年5月12日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":["$","$L2",null,{"content":"$3"}]}]]}],null,["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"ypDFjR01Dx0v4BBZbWAva"}
 6:null
