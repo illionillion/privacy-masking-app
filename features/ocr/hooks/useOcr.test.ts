@@ -613,6 +613,16 @@ describe("detectPersonalInfoInLine", () => {
     expect(result[0].text).toBe("2001:db8::1");
   });
 
+  it("IPv6アドレス（圧縮形式・前後複数グループ）を正しく検出する", () => {
+    const text = "2001:db8::1:2:3";
+    const result = detectPersonalInfoInLine(text, [
+      { text, bbox: { x0: 0, y0: 0, x1: 140, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("ip");
+    expect(result[0].text).toBe(text);
+  });
+
   it("IPv6未指定アドレス（::）を正しく検出する", () => {
     const result = detectPersonalInfoInLine("::", [
       { text: "::", bbox: { x0: 0, y0: 0, x1: 20, y1: 20 } },
@@ -620,6 +630,24 @@ describe("detectPersonalInfoInLine", () => {
     expect(result).toHaveLength(1);
     expect(result[0].patternType).toBe("ip");
     expect(result[0].text).toBe("::");
+  });
+
+  it("ラベル付き IPv6（IPv6:2001:db8::1）を検出する", () => {
+    const result = detectPersonalInfoInLine("IPv6:2001:db8::1", [
+      { text: "IPv6:2001:db8::1", bbox: { x0: 0, y0: 0, x1: 140, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("ip");
+    expect(result[0].text).toBe("2001:db8::1");
+  });
+
+  it("ラベル付き IPv4（IPv4:192.168.0.1）を検出する", () => {
+    const result = detectPersonalInfoInLine("IPv4:192.168.0.1", [
+      { text: "IPv4:192.168.0.1", bbox: { x0: 0, y0: 0, x1: 140, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("ip");
+    expect(result[0].text).toBe("192.168.0.1");
   });
 
   it("ラベル付き IPv6（IP:2001:db8::1）を検出する", () => {
@@ -635,6 +663,21 @@ describe("detectPersonalInfoInLine", () => {
     const text = "1:2:3:4:5:6:7:8:9";
     const result = detectPersonalInfoInLine(text, [
       { text, bbox: { x0: 0, y0: 0, x1: 150, y1: 20 } },
+    ]);
+    expect(result.some((r) => r.patternType === "ip")).toBe(false);
+  });
+
+  it("先頭コロン付きの不正 IPv6 風トークンは検出しない", () => {
+    const text = ":1:2:3:4:5:6:7:8";
+    const result = detectPersonalInfoInLine(text, [
+      { text, bbox: { x0: 0, y0: 0, x1: 140, y1: 20 } },
+    ]);
+    expect(result.some((r) => r.patternType === "ip")).toBe(false);
+  });
+
+  it("x::: のような不正トークンは検出しない", () => {
+    const result = detectPersonalInfoInLine("x:::", [
+      { text: "x:::", bbox: { x0: 0, y0: 0, x1: 40, y1: 20 } },
     ]);
     expect(result.some((r) => r.patternType === "ip")).toBe(false);
   });

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { detectCustomMaskTermsInWordGroup } from "../lib/customMaskTermMatch";
+import { findIpMatches } from "../lib/ipAddress";
 import type { OcrPatternType, OcrRegion, RecognizeTextOptions, UseOcrReturn } from "../types";
 
 /**
@@ -9,8 +10,11 @@ import type { OcrPatternType, OcrRegion, RecognizeTextOptions, UseOcrReturn } fr
  *
  * 優先度順（高→低）で適用する:
  * email > phone > postal > url > ip > apikey
+ *
+ * IP は正規表現では扱いきれない圧縮 IPv6 があるため、
+ * url の後・apikey の前に findIpMatches で別途検出する。
  */
-const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
+const EARLY_PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
   {
     type: "email",
     source: String.raw`[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}`,
@@ -38,21 +42,9 @@ const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
     type: "url",
     source: String.raw`https?:\/\/[^\s　]+`,
   },
-  {
-    type: "ip",
-    /**
-     * IPv4 / IPv6 を検出する:
-     * 1. IPv4（各オクテット 0–255）: 192.168.0.1 / 10.0.0.1:8080
-     * 2. IPv6（フル形式）: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
-     * 3. IPv6（圧縮形式）: 2001:db8::1 / ::1 / fe80:: / ::
-     *
-     * 代替は完全な形式を先に置く（`2001:db8::1` が `2001:db8::` だけに、
-     * `::1` が `::` だけにマッチするのを防ぐ）。末尾の `::` は未指定アドレス用。
-     * URL に含まれる IP は url パターンが先にマッチするためここでは扱わない。
-     * ポート付き IPv4 はホストとポートをまとめてマスクする。
-     */
-    source: String.raw`(?:(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?::\d{1,5})?|(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|(?:[0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|:(?::[0-9a-fA-F]{1,4}){1,7}|(?:[0-9a-fA-F]{1,4}:){1,7}:|::`,
-  },
+];
+
+const LATE_PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
   {
     type: "apikey",
     /**
@@ -62,7 +54,7 @@ const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
      */
     source: String.raw`[A-Za-z0-9+/=_\-]{20,}`,
   },
-] as const;
+];
 
 /** Tesseract.js の Word 型（動的インポート用に部分的に定義） */
 interface TesseractBbox {
@@ -139,39 +131,52 @@ function isDomesticPhoneFalsePositive(
 }
 
 /**
- * IPアドレスのマッチが、より長い IP 風トークンの部分文字列かどうか判定する
+ * 正規表現パターン群を行テキストに適用して領域を追加する
  *
- * 例:
- * - "256.1.1.1" から "56.1.1.1" への部分マッチ
- * - "1:2:3:4:5:6:7:8:9" から先頭8グループだけへの部分マッチ
- * - "x2001:db8::1" のように英数字に隣接した部分マッチ
- *
- * ラベル区切りのコロン（例: "IP:2001:db8::1"）は許容する。
- *
+ * @param patterns - 適用するパターン
  * @param lineText - OCR結果の行テキスト
- * @param matchStart - マッチ開始位置
- * @param matchEnd - マッチ終了位置（排他的）
- * @returns 誤検出と判断する場合は true
+ * @param wordPositions - 単語位置情報
+ * @param regions - 検出結果の蓄積先
+ * @param matchedRanges - マッチ済み範囲の蓄積先
  */
-function isIpFalsePositive(lineText: string, matchStart: number, matchEnd: number): boolean {
-  if (matchStart > 0) {
-    const prev = lineText[matchStart - 1]!;
-    /** 直前が英数字またはドットなら、トークン途中からのマッチ */
-    if (/[0-9a-zA-Z.]/.test(prev)) {
-      return true;
-    }
-    /**
-     * 直前がコロンで、その前も IP 構成文字ならアドレス途中
-     * （"1:2:...:8:9" の部分一致）。"IP:2001:..." の区切りは前が英字のみなので許容。
-     */
-    if (prev === ":" && matchStart > 1 && /[0-9a-fA-F:]/.test(lineText[matchStart - 2]!)) {
-      return true;
+function applyRegexPatterns(
+  patterns: ReadonlyArray<{ type: OcrPatternType; source: string }>,
+  lineText: string,
+  wordPositions: WordPosition[],
+  regions: OcrRegion[],
+  matchedRanges: MatchedRange[]
+): void {
+  for (const pattern of patterns) {
+    const regex = new RegExp(pattern.source, "g");
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(lineText)) !== null) {
+      const matchStart = match.index;
+      const matchEnd = matchStart + match[0].length;
+
+      if (isRangeOverlapping(matchedRanges, matchStart, matchEnd)) continue;
+
+      if (
+        pattern.type === "phone" &&
+        isDomesticPhoneFalsePositive(lineText, matchStart, match[0])
+      ) {
+        regex.lastIndex = matchStart + 1;
+        continue;
+      }
+
+      const region = buildRegionFromMatch(
+        match[0],
+        pattern.type,
+        matchStart,
+        matchEnd,
+        wordPositions
+      );
+      if (region) {
+        regions.push(region);
+        matchedRanges.push({ start: matchStart, end: matchEnd });
+      }
     }
   }
-
-  const nextChar = lineText[matchEnd];
-  /** 直後が英数字・コロン・ドットなら、トークンが途中で切れている */
-  return nextChar !== undefined && /[0-9a-zA-Z:.]/.test(nextChar);
 }
 
 /**
@@ -200,45 +205,26 @@ export function detectPersonalInfoInLine(
   /** すでにマッチした文字位置を追跡して重複を防ぐ */
   const matchedRanges: MatchedRange[] = [];
 
-  for (const pattern of PATTERNS) {
-    const regex = new RegExp(pattern.source, "g");
-    let match: RegExpExecArray | null;
+  applyRegexPatterns(EARLY_PATTERNS, lineText, wordPositions, regions, matchedRanges);
 
-    while ((match = regex.exec(lineText)) !== null) {
-      const matchStart = match.index;
-      const matchEnd = matchStart + match[0].length;
-
-      /** 既にマッチ済みの範囲と重複する場合はスキップ */
-      if (isRangeOverlapping(matchedRanges, matchStart, matchEnd)) continue;
-
-      /** 国内電話番号の郵便番号誤検出をスキップ（lookbehind 非使用・桁数チェック） */
-      if (
-        pattern.type === "phone" &&
-        isDomesticPhoneFalsePositive(lineText, matchStart, match[0])
-      ) {
-        regex.lastIndex = matchStart + 1;
-        continue;
-      }
-
-      /** IP の部分文字列マッチをスキップ（例: 256.1.1.1 → 56.1.1.1） */
-      if (pattern.type === "ip" && isIpFalsePositive(lineText, matchStart, matchEnd)) {
-        regex.lastIndex = matchStart + 1;
-        continue;
-      }
-
-      const region = buildRegionFromMatch(
-        match[0],
-        pattern.type,
-        matchStart,
-        matchEnd,
-        wordPositions
-      );
-      if (region) {
-        regions.push(region);
-        matchedRanges.push({ start: matchStart, end: matchEnd });
-      }
+  for (const ipMatch of findIpMatches(lineText)) {
+    if (isRangeOverlapping(matchedRanges, ipMatch.start, ipMatch.end)) {
+      continue;
+    }
+    const region = buildRegionFromMatch(
+      ipMatch.text,
+      "ip",
+      ipMatch.start,
+      ipMatch.end,
+      wordPositions
+    );
+    if (region) {
+      regions.push(region);
+      matchedRanges.push({ start: ipMatch.start, end: ipMatch.end });
     }
   }
+
+  applyRegexPatterns(LATE_PATTERNS, lineText, wordPositions, regions, matchedRanges);
 
   const customRegions = detectCustomMaskTermsInWordGroup(
     words ?? [],
