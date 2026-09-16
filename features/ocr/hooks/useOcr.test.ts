@@ -613,6 +613,39 @@ describe("detectPersonalInfoInLine", () => {
     expect(result[0].text).toBe("2001:db8::1");
   });
 
+  it("IPv6未指定アドレス（::）を正しく検出する", () => {
+    const result = detectPersonalInfoInLine("::", [
+      { text: "::", bbox: { x0: 0, y0: 0, x1: 20, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("ip");
+    expect(result[0].text).toBe("::");
+  });
+
+  it("ラベル付き IPv6（IP:2001:db8::1）を検出する", () => {
+    const result = detectPersonalInfoInLine("IP:2001:db8::1", [
+      { text: "IP:2001:db8::1", bbox: { x0: 0, y0: 0, x1: 120, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("ip");
+    expect(result[0].text).toBe("2001:db8::1");
+  });
+
+  it("9グループの IPv6 風文字列は部分一致で検出しない", () => {
+    const text = "1:2:3:4:5:6:7:8:9";
+    const result = detectPersonalInfoInLine(text, [
+      { text, bbox: { x0: 0, y0: 0, x1: 150, y1: 20 } },
+    ]);
+    expect(result.some((r) => r.patternType === "ip")).toBe(false);
+  });
+
+  it("英数字に隣接する IPv6 部分文字列は検出しない", () => {
+    const result = detectPersonalInfoInLine("x2001:db8::1", [
+      { text: "x2001:db8::1", bbox: { x0: 0, y0: 0, x1: 110, y1: 20 } },
+    ]);
+    expect(result.some((r) => r.patternType === "ip")).toBe(false);
+  });
+
   it("オクテットが不正な数値は ip として検出しない", () => {
     const result = detectPersonalInfoInLine("256.1.1.1", [
       { text: "256.1.1.1", bbox: { x0: 0, y0: 0, x1: 80, y1: 20 } },
