@@ -341,6 +341,36 @@ describe("useOcr", () => {
     });
   });
 
+  it("IPアドレスを検出して OcrRegion を返す", async () => {
+    mockRecognize.mockResolvedValueOnce(
+      buildMockPage([
+        {
+          text: "192.168.0.1",
+          words: [
+            {
+              text: "192.168.0.1",
+              bbox: { x0: 0, y0: 0, x1: 100, y1: 20 },
+            },
+          ],
+        },
+      ])
+    );
+
+    const { result } = renderHook(() => useOcr());
+    const mockImage = document.createElement("img");
+
+    let regions: Awaited<ReturnType<typeof result.current.recognizeText>> = [];
+    await act(async () => {
+      regions = await result.current.recognizeText(mockImage);
+    });
+
+    expect(regions).toHaveLength(1);
+    expect(regions[0]).toMatchObject({
+      patternType: "ip",
+      text: "192.168.0.1",
+    });
+  });
+
   it("20文字以上の英数字列を apikey として検出する", async () => {
     const apiKey = "abcdefghijklmnopqrstu"; // 21文字
     mockRecognize.mockResolvedValueOnce(
@@ -541,6 +571,66 @@ describe("detectPersonalInfoInLine", () => {
         text: "https://api.example.com/v1/users",
         bbox: { x0: 0, y0: 0, x1: 250, y1: 20 },
       },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("url");
+  });
+
+  it("IPv4アドレスを正しく検出する", () => {
+    const result = detectPersonalInfoInLine("192.168.0.1", [
+      { text: "192.168.0.1", bbox: { x0: 0, y0: 0, x1: 100, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("ip");
+    expect(result[0].text).toBe("192.168.0.1");
+  });
+
+  it("ポート付き IPv4アドレスを正しく検出する", () => {
+    const result = detectPersonalInfoInLine("10.0.0.1:8080", [
+      { text: "10.0.0.1:8080", bbox: { x0: 0, y0: 0, x1: 120, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("ip");
+    expect(result[0].text).toBe("10.0.0.1:8080");
+  });
+
+  it("IPv6アドレス（フル形式）を正しく検出する", () => {
+    const text = "2001:0db8:85a3:0000:0000:8a2e:0370:7334";
+    const result = detectPersonalInfoInLine(text, [
+      { text, bbox: { x0: 0, y0: 0, x1: 300, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("ip");
+    expect(result[0].text).toBe(text);
+  });
+
+  it("IPv6アドレス（圧縮形式）を正しく検出する", () => {
+    const result = detectPersonalInfoInLine("2001:db8::1", [
+      { text: "2001:db8::1", bbox: { x0: 0, y0: 0, x1: 100, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("ip");
+    expect(result[0].text).toBe("2001:db8::1");
+  });
+
+  it("オクテットが不正な数値は ip として検出しない", () => {
+    const result = detectPersonalInfoInLine("256.1.1.1", [
+      { text: "256.1.1.1", bbox: { x0: 0, y0: 0, x1: 80, y1: 20 } },
+    ]);
+    expect(result.some((r) => r.patternType === "ip")).toBe(false);
+  });
+
+  it("3オクテット以下の数値は ip として検出しない", () => {
+    const result = detectPersonalInfoInLine("192.168.0", [
+      { text: "192.168.0", bbox: { x0: 0, y0: 0, x1: 70, y1: 20 } },
+    ]);
+    expect(result.some((r) => r.patternType === "ip")).toBe(false);
+  });
+
+  it("URL内のIPは url として検出し ip とは重複しない", () => {
+    const text = "http://192.168.0.1/admin";
+    const result = detectPersonalInfoInLine(text, [
+      { text, bbox: { x0: 0, y0: 0, x1: 200, y1: 20 } },
     ]);
     expect(result).toHaveLength(1);
     expect(result[0].patternType).toBe("url");

@@ -8,7 +8,7 @@ import type { OcrPatternType, OcrRegion, RecognizeTextOptions, UseOcrReturn } fr
  * 個人情報検出パターンの定義
  *
  * 優先度順（高→低）で適用する:
- * email > phone > postal > url > apikey
+ * email > phone > postal > url > ip > apikey
  */
 const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
   {
@@ -37,6 +37,20 @@ const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
   {
     type: "url",
     source: String.raw`https?:\/\/[^\s　]+`,
+  },
+  {
+    type: "ip",
+    /**
+     * IPv4 / IPv6 を検出する:
+     * 1. IPv4（各オクテット 0–255）: 192.168.0.1 / 10.0.0.1:8080
+     * 2. IPv6（フル形式）: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+     * 3. IPv6（圧縮形式）: 2001:db8::1 / ::1 / fe80::
+     *
+     * 代替は完全な形式を先に置く（`2001:db8::1` が `2001:db8::` だけにマッチするのを防ぐ）。
+     * URL に含まれる IP は url パターンが先にマッチするためここでは扱わない。
+     * ポート付き IPv4 はホストとポートをまとめてマスクする。
+     */
+    source: String.raw`(?:(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?::\d{1,5})?|(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|(?:[0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|:(?::[0-9a-fA-F]{1,4}){1,7}|(?:[0-9a-fA-F]{1,4}:){1,7}:`,
   },
   {
     type: "apikey",
@@ -124,6 +138,26 @@ function isDomesticPhoneFalsePositive(
 }
 
 /**
+ * IPアドレスのマッチが長い数値列の部分文字列かどうか判定する
+ *
+ * 例: "256.1.1.1" から "56.1.1.1" への部分マッチを除外する。
+ *
+ * @param lineText - OCR結果の行テキスト
+ * @param matchStart - マッチ開始位置
+ * @param matchEnd - マッチ終了位置（排他的）
+ * @returns 誤検出と判断する場合は true
+ */
+function isIpFalsePositive(lineText: string, matchStart: number, matchEnd: number): boolean {
+  /** 直前が数字なら、より長い数値の途中からのマッチ */
+  if (matchStart > 0 && /\d/.test(lineText[matchStart - 1]!)) {
+    return true;
+  }
+  /** 直後が数字またはドットなら、オクテットが途中で切れている */
+  const nextChar = lineText[matchEnd];
+  return nextChar !== undefined && /[\d.]/.test(nextChar);
+}
+
+/**
  * 1行のテキストと単語座標から個人情報領域を検出する
  *
  * @param lineText - OCR結果の行テキスト
@@ -165,6 +199,13 @@ export function detectPersonalInfoInLine(
         pattern.type === "phone" &&
         isDomesticPhoneFalsePositive(lineText, matchStart, match[0])
       ) {
+        regex.lastIndex = matchStart + 1;
+        continue;
+      }
+
+      /** IP の部分文字列マッチをスキップ（例: 256.1.1.1 → 56.1.1.1） */
+      if (pattern.type === "ip" && isIpFalsePositive(lineText, matchStart, matchEnd)) {
+        regex.lastIndex = matchStart + 1;
         continue;
       }
 
@@ -366,7 +407,7 @@ async function initializeTesseractWorker(): Promise<import("tesseract.js").Worke
  * OCRフック
  *
  * Tesseract.js の Web Worker を使用して画像内テキストを認識し、
- * 個人情報パターン（メール・電話番号・URL・APIキー等）を検出する。
+ * 個人情報パターン（メール・電話番号・URL・IPアドレス・APIキー等）を検出する。
  *
  * @returns {UseOcrReturn} OCR処理の状態と実行関数
  */

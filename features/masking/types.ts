@@ -21,7 +21,14 @@ export interface DetectedFace {
  * OCR 検出領域の個人情報種別
  * OcrPatternType と同一の union 型をローカル定義し features/ocr への依存を避ける
  */
-export type DetectedTextPatternType = "email" | "phone" | "postal" | "url" | "apikey" | "custom";
+export type DetectedTextPatternType =
+  | "email"
+  | "phone"
+  | "postal"
+  | "url"
+  | "ip"
+  | "apikey"
+  | "custom";
 
 /**
  * OCR 検出領域の最小構造型

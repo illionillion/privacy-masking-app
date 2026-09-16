@@ -3,7 +3,7 @@
  */
 
 /** 個人情報パターン種別 */
-export type OcrPatternType = "email" | "phone" | "postal" | "url" | "apikey" | "custom";
+export type OcrPatternType = "email" | "phone" | "postal" | "url" | "ip" | "apikey" | "custom";
 
 /** recognizeText のオプション */
 export interface RecognizeTextOptions {
