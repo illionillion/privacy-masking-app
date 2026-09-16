@@ -88,15 +88,14 @@ export function isValidIpAddress(text: string): boolean {
 }
 
 /**
- * `IP:` / `IPv6:` のようなラベルか判定する
+ * 明示的な IP ラベル（`IP` / `IPv4` / `IPv6`）か判定する
  *
- * 英字2文字以上＋末尾の短い数字（IPv4 / IPv6）のみをラベルとする。
- * `x` や `x2001` のようなアドレス断片は除外する。
+ * 英字だけの IPv6 先頭グループ（例: `abcd`）をラベルと誤認しない。
  *
  * @param label - コロン直前の文字列
  */
 function isAddressLabel(label: string): boolean {
-  return /^[a-zA-Z]{2,}[0-9]{0,2}$/.test(label);
+  return /^(?:IP|IPv4|IPv6)$/i.test(label);
 }
 
 /** 行内で検出した IP アドレスの範囲 */
@@ -104,23 +103,6 @@ export interface IpMatchRange {
   start: number;
   end: number;
   text: string;
-}
-
-/**
- * 指定位置から始まる最長の有効 IP を返す
- *
- * @param lineText - 行テキスト
- * @param start - 開始位置
- * @param maxEnd - 終了位置の上限（排他的）
- */
-function longestValidIpFrom(lineText: string, start: number, maxEnd: number): IpMatchRange | null {
-  for (let end = maxEnd; end > start; end -= 1) {
-    const text = lineText.slice(start, end);
-    if (isValidIpAddress(text)) {
-      return { start, end, text };
-    }
-  }
-  return null;
 }
 
 /**
@@ -137,10 +119,11 @@ function isOverlapping(ranges: readonly IpMatchRange[], start: number, end: numb
 /**
  * 行テキストから有効な IP アドレス（IPv4 / IPv6）を検出する
  *
- * 1. `Label:address` 形式（IPv6:2001:... など）
+ * 1. 明示ラベル形式（`IP:` / `IPv4:` / `IPv6:`）
  * 2. `[0-9a-fA-F:.]+` の極大トークン全体が IP になる場合
  *
- * 極大トークンの部分文字列は採用しない（`x2001:db8::1` や `x:::` の誤検出を防ぐ）。
+ * ラベル値はキャプチャ全体が有効な IP である必要があり、終端直後が
+ * 英数字・`.`・`:` なら棄却する（部分一致の誤検出を防ぐ）。
  *
  * @param lineText - OCR 結果の行テキスト
  * @returns 検出した IP の範囲（出現順・非重複）
@@ -148,18 +131,32 @@ function isOverlapping(ranges: readonly IpMatchRange[], start: number, end: numb
 export function findIpMatches(lineText: string): IpMatchRange[] {
   const matches: IpMatchRange[] = [];
 
-  const labelPattern = /([a-zA-Z][a-zA-Z0-9]*):([0-9a-fA-F:.]+)/g;
+  const labelPattern = /\b(IP(?:v[46])?):([0-9a-fA-F:.]+)/gi;
   let labelMatch: RegExpExecArray | null;
   while ((labelMatch = labelPattern.exec(lineText)) !== null) {
     const label = labelMatch[1]!;
     if (!isAddressLabel(label)) {
       continue;
     }
+    const ipText = labelMatch[2]!;
     const ipStart = labelMatch.index + label.length + 1;
-    const ipMaxEnd = ipStart + labelMatch[2]!.length;
-    const found = longestValidIpFrom(lineText, ipStart, ipMaxEnd);
-    if (found !== null && !isOverlapping(matches, found.start, found.end)) {
-      matches.push(found);
+    const ipEnd = ipStart + ipText.length;
+    /**
+     * 区切りコロンの直後がさらにコロンなら `IP:::` のような不正形。
+     * （区切りと圧縮 `::` が連続している）
+     */
+    if (ipText.startsWith(":")) {
+      continue;
+    }
+    /** ラベル値全体が IP で、終端がトークン途中でないこと */
+    if (!isValidIpAddress(ipText)) {
+      continue;
+    }
+    if (ipEnd < lineText.length && /[0-9a-zA-Z:.]/.test(lineText[ipEnd]!)) {
+      continue;
+    }
+    if (!isOverlapping(matches, ipStart, ipEnd)) {
+      matches.push({ start: ipStart, end: ipEnd, text: ipText });
     }
   }
 

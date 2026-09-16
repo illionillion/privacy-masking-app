@@ -48,9 +48,22 @@ describe("findIpMatches", () => {
     ]);
   });
 
-  it("IPv6: / IPv4: ラベル付きアドレスを検出する", () => {
+  it("IPv6: / IPv4: / IP: ラベル付きアドレスを検出する", () => {
     expect(findIpMatches("IPv6:2001:db8::1")).toEqual([{ start: 5, end: 16, text: "2001:db8::1" }]);
     expect(findIpMatches("IPv4:192.168.0.1")).toEqual([{ start: 5, end: 16, text: "192.168.0.1" }]);
+    expect(findIpMatches("IP:2001:db8::1")).toEqual([{ start: 3, end: 14, text: "2001:db8::1" }]);
+  });
+
+  it("英字グループで始まる IPv6 全体をマスクする", () => {
+    expect(findIpMatches("abcd:2001:db8::1")).toEqual([
+      { start: 0, end: 16, text: "abcd:2001:db8::1" },
+    ]);
+  });
+
+  it("ラベル付きの不正トークンを部分一致で検出しない", () => {
+    expect(findIpMatches("IP:1:2:3:4:5:6:7:8:9")).toEqual([]);
+    expect(findIpMatches("IP:192.168.0.1x")).toEqual([]);
+    expect(findIpMatches("IP:::")).toEqual([]);
   });
 
   it("先頭の余分なコロン付きトークンを検出しない", () => {

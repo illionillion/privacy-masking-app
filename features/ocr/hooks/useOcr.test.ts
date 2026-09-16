@@ -659,6 +659,25 @@ describe("detectPersonalInfoInLine", () => {
     expect(result[0].text).toBe("2001:db8::1");
   });
 
+  it("英字グループで始まる IPv6 全体を検出する", () => {
+    const text = "abcd:2001:db8::1";
+    const result = detectPersonalInfoInLine(text, [
+      { text, bbox: { x0: 0, y0: 0, x1: 150, y1: 20 } },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].patternType).toBe("ip");
+    expect(result[0].text).toBe(text);
+  });
+
+  it("ラベル付きの不正トークンは部分一致で検出しない", () => {
+    for (const text of ["IP:1:2:3:4:5:6:7:8:9", "IP:192.168.0.1x", "IP:::"]) {
+      const result = detectPersonalInfoInLine(text, [
+        { text, bbox: { x0: 0, y0: 0, x1: 160, y1: 20 } },
+      ]);
+      expect(result.some((r) => r.patternType === "ip")).toBe(false);
+    }
+  });
+
   it("9グループの IPv6 風文字列は部分一致で検出しない", () => {
     const text = "1:2:3:4:5:6:7:8:9";
     const result = detectPersonalInfoInLine(text, [
