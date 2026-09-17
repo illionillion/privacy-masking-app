@@ -2,15 +2,19 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { detectCustomMaskTermsInWordGroup } from "../lib/customMaskTermMatch";
+import { findIpMatches } from "../lib/ipAddress";
 import type { OcrPatternType, OcrRegion, RecognizeTextOptions, UseOcrReturn } from "../types";
 
 /**
  * 個人情報検出パターンの定義
  *
  * 優先度順（高→低）で適用する:
- * email > phone > postal > url > apikey
+ * email > phone > postal > url > ip > apikey
+ *
+ * IP は正規表現では扱いきれない圧縮 IPv6 があるため、
+ * url の後・apikey の前に findIpMatches で別途検出する。
  */
-const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
+const EARLY_PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
   {
     type: "email",
     source: String.raw`[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}`,
@@ -38,6 +42,9 @@ const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
     type: "url",
     source: String.raw`https?:\/\/[^\s　]+`,
   },
+];
+
+const LATE_PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
   {
     type: "apikey",
     /**
@@ -47,7 +54,7 @@ const PATTERNS: ReadonlyArray<{ type: OcrPatternType; source: string }> = [
      */
     source: String.raw`[A-Za-z0-9+/=_\-]{20,}`,
   },
-] as const;
+];
 
 /** Tesseract.js の Word 型（動的インポート用に部分的に定義） */
 interface TesseractBbox {
@@ -124,6 +131,55 @@ function isDomesticPhoneFalsePositive(
 }
 
 /**
+ * 正規表現パターン群を行テキストに適用して領域を追加する
+ *
+ * @param patterns - 適用するパターン
+ * @param lineText - OCR結果の行テキスト
+ * @param wordPositions - 単語位置情報
+ * @param regions - 検出結果の蓄積先
+ * @param matchedRanges - マッチ済み範囲の蓄積先
+ */
+function applyRegexPatterns(
+  patterns: ReadonlyArray<{ type: OcrPatternType; source: string }>,
+  lineText: string,
+  wordPositions: WordPosition[],
+  regions: OcrRegion[],
+  matchedRanges: MatchedRange[]
+): void {
+  for (const pattern of patterns) {
+    const regex = new RegExp(pattern.source, "g");
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(lineText)) !== null) {
+      const matchStart = match.index;
+      const matchEnd = matchStart + match[0].length;
+
+      if (isRangeOverlapping(matchedRanges, matchStart, matchEnd)) continue;
+
+      if (
+        pattern.type === "phone" &&
+        isDomesticPhoneFalsePositive(lineText, matchStart, match[0])
+      ) {
+        regex.lastIndex = matchStart + 1;
+        continue;
+      }
+
+      const region = buildRegionFromMatch(
+        match[0],
+        pattern.type,
+        matchStart,
+        matchEnd,
+        wordPositions
+      );
+      if (region) {
+        regions.push(region);
+        matchedRanges.push({ start: matchStart, end: matchEnd });
+      }
+    }
+  }
+}
+
+/**
  * 1行のテキストと単語座標から個人情報領域を検出する
  *
  * @param lineText - OCR結果の行テキスト
@@ -149,38 +205,26 @@ export function detectPersonalInfoInLine(
   /** すでにマッチした文字位置を追跡して重複を防ぐ */
   const matchedRanges: MatchedRange[] = [];
 
-  for (const pattern of PATTERNS) {
-    const regex = new RegExp(pattern.source, "g");
-    let match: RegExpExecArray | null;
+  applyRegexPatterns(EARLY_PATTERNS, lineText, wordPositions, regions, matchedRanges);
 
-    while ((match = regex.exec(lineText)) !== null) {
-      const matchStart = match.index;
-      const matchEnd = matchStart + match[0].length;
-
-      /** 既にマッチ済みの範囲と重複する場合はスキップ */
-      if (isRangeOverlapping(matchedRanges, matchStart, matchEnd)) continue;
-
-      /** 国内電話番号の郵便番号誤検出をスキップ（lookbehind 非使用・桁数チェック） */
-      if (
-        pattern.type === "phone" &&
-        isDomesticPhoneFalsePositive(lineText, matchStart, match[0])
-      ) {
-        continue;
-      }
-
-      const region = buildRegionFromMatch(
-        match[0],
-        pattern.type,
-        matchStart,
-        matchEnd,
-        wordPositions
-      );
-      if (region) {
-        regions.push(region);
-        matchedRanges.push({ start: matchStart, end: matchEnd });
-      }
+  for (const ipMatch of findIpMatches(lineText)) {
+    if (isRangeOverlapping(matchedRanges, ipMatch.start, ipMatch.end)) {
+      continue;
+    }
+    const region = buildRegionFromMatch(
+      ipMatch.text,
+      "ip",
+      ipMatch.start,
+      ipMatch.end,
+      wordPositions
+    );
+    if (region) {
+      regions.push(region);
+      matchedRanges.push({ start: ipMatch.start, end: ipMatch.end });
     }
   }
+
+  applyRegexPatterns(LATE_PATTERNS, lineText, wordPositions, regions, matchedRanges);
 
   const customRegions = detectCustomMaskTermsInWordGroup(
     words ?? [],
@@ -366,7 +410,7 @@ async function initializeTesseractWorker(): Promise<import("tesseract.js").Worke
  * OCRフック
  *
  * Tesseract.js の Web Worker を使用して画像内テキストを認識し、
- * 個人情報パターン（メール・電話番号・URL・APIキー等）を検出する。
+ * 個人情報パターン（メール・電話番号・URL・IPアドレス・APIキー等）を検出する。
  *
  * @returns {UseOcrReturn} OCR処理の状態と実行関数
  */
