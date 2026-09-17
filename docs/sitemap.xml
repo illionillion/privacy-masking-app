@@ -160,4 +160,9 @@
 <changefreq>monthly</changefreq>
 <priority>0.6</priority>
 </url>
+<url>
+<loc>https://fusely-app.pages.dev/updates/2026-09-16-ocr-ip-detection</loc>
+<changefreq>monthly</changefreq>
+<priority>0.6</priority>
+</url>
 </urlset>

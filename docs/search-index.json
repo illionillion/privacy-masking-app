@@ -207,6 +207,14 @@
     "url": "/updates/2026-08-17-paint-mask-type"
   },
   {
+    "id": "update:2026-09-16-ocr-ip-detection",
+    "type": "update",
+    "title": "OCR で IP アドレスも検出できるように",
+    "summary": "文字検出（OCR）の対象に IPv4 / IPv6 を追加し、ネットワーク設定やログのスクショに写った IP も自動でマスクしやすくしました。",
+    "tags": [],
+    "url": "/updates/2026-09-16-ocr-ip-detection"
+  },
+  {
     "id": "faq:画像はサーバーに送信されますか",
     "type": "faq",
     "title": "画像はサーバーに送信されますか？",
