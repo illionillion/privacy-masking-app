@@ -39,6 +39,11 @@ describe("isValidIpAddress", () => {
   it("ポート付き IPv4 を受け入れる", () => {
     expect(isValidIpAddress("10.0.0.1:8080")).toBe(true);
   });
+
+  it("IPv4 埋め込み IPv6 を受け入れる", () => {
+    expect(isValidIpAddress("::ffff:192.0.2.128")).toBe(true);
+    expect(isValidIpAddress("2001:db8::192.0.2.1")).toBe(true);
+  });
 });
 
 describe("findIpMatches", () => {
@@ -58,6 +63,19 @@ describe("findIpMatches", () => {
     expect(findIpMatches("abcd:2001:db8::1")).toEqual([
       { start: 0, end: 16, text: "abcd:2001:db8::1" },
     ]);
+  });
+
+  it("IPv4 埋め込み IPv6 を検出する", () => {
+    expect(findIpMatches("::ffff:192.0.2.128")).toEqual([
+      { start: 0, end: 18, text: "::ffff:192.0.2.128" },
+    ]);
+  });
+
+  it("一般ラベルや文末句点に隣接する IPv4 を検出する", () => {
+    expect(findIpMatches("Address:192.168.0.1")).toEqual([
+      { start: 8, end: 19, text: "192.168.0.1" },
+    ]);
+    expect(findIpMatches("192.168.0.1.")).toEqual([{ start: 0, end: 11, text: "192.168.0.1" }]);
   });
 
   it("ラベル付きの不正トークンを部分一致で検出しない", () => {
