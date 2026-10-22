@@ -1,9 +1,11 @@
 1:"$Sreact.fragment"
-2:I[1261,["5","static/chunks/5-45a81fb9158df9e5.js","511","static/chunks/511-38bd9ff3bfaedad9.js","141","static/chunks/141-f5c91c03ce0192eb.js","54","static/chunks/app/guides/%5Bslug%5D/page-09df4b1166bbce47.js"],"MarkdownWithToc"]
-3:I[4196,["5","static/chunks/5-45a81fb9158df9e5.js","511","static/chunks/511-38bd9ff3bfaedad9.js","141","static/chunks/141-f5c91c03ce0192eb.js","54","static/chunks/app/guides/%5Bslug%5D/page-09df4b1166bbce47.js"],"MarkdownContent"]
-5:I[2005,["5","static/chunks/5-45a81fb9158df9e5.js","511","static/chunks/511-38bd9ff3bfaedad9.js","141","static/chunks/141-f5c91c03ce0192eb.js","54","static/chunks/app/guides/%5Bslug%5D/page-09df4b1166bbce47.js"],""]
-6:I[8849,[],"OutletBoundary"]
+2:I[4042,["30","static/chunks/30-71e170e482ea5655.js","905","static/chunks/905-f55d2a7071559cb1.js","191","static/chunks/191-610ad128c53e170f.js","54","static/chunks/app/guides/%5Bslug%5D/page-9d8931aa33ebc58f.js"],"MarkdownWithToc"]
+3:I[1978,["30","static/chunks/30-71e170e482ea5655.js","905","static/chunks/905-f55d2a7071559cb1.js","191","static/chunks/191-610ad128c53e170f.js","54","static/chunks/app/guides/%5Bslug%5D/page-9d8931aa33ebc58f.js"],"MarkdownContent"]
+5:I[6030,["30","static/chunks/30-71e170e482ea5655.js","905","static/chunks/905-f55d2a7071559cb1.js","191","static/chunks/191-610ad128c53e170f.js","54","static/chunks/app/guides/%5Bslug%5D/page-9d8931aa33ebc58f.js"],""]
+6:I[6510,[],"OutletBoundary"]
 7:"$Sreact.suspense"
+b:I[6510,[],"ViewportBoundary"]
+c:I[6510,[],"MetadataBoundary"]
 4:Ta0c,## 編集モードで手動で編集する
 
 編集ボタンを押すと編集モーダルが開き、手動でマスクを調整できます。
@@ -89,5 +91,39 @@
 
 `すべてクリア` を押すと、読み込んだ画像をまとめて削除できます。
 
-![すべてクリア](/guides/manual-edit/reset.png)0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"text":"編集モードで手動で編集する","id":"編集モードで手動で編集する"},{"text":"すでにあるマスクを調整する","id":"すでにあるマスクを調整する"},{"text":"マスキングの種類を変更する","id":"マスキングの種類を変更する"},{"text":"誤判定・不要なマスキングは削除","id":"誤判定・不要なマスキングは削除"},{"text":"足りない場所にマスクを追加する","id":"足りない場所にマスクを追加する"},{"text":"拡大・縮小して細かく編集する","id":"拡大・縮小して細かく編集する"},{"text":"再検出","id":"再検出"},{"text":"保存","id":"保存"},{"text":"読み込んだ画像をリセットする","id":"読み込んだ画像をリセットする"}],"header":[["$","p",null,{"className":"text-xs font-semibold tracking-wide text-indigo-600","children":["ガイド ",2]}],["$","h1",null,{"className":"mt-2 text-2xl font-bold tracking-tight text-zinc-900","children":"手動での編集の仕方"}],["$","p",null,{"className":"mt-3 text-sm leading-relaxed text-zinc-600","children":"自動検出後にマスク範囲を追加・調整して、隠したい場所を手動で編集する方法を説明します。"}]],"children":[["$","$L3",null,{"content":"$4"}],["$","p",null,{"className":"pt-2","children":["$","$L5",null,{"href":"/guides","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"使い方ガイド一覧へ戻る"}]}]]}],null,["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"1AJnxsk_fhSmkbq7b5L1x"}
+![すべてクリア](/guides/manual-edit/reset.png)a:X
+22:X
+22:C
+0:{"buildId":"rMI-hMJ1HtLi_3GcT71QK","data":[{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"text":"編集モードで手動で編集する","id":"編集モードで手動で編集する"},{"text":"すでにあるマスクを調整する","id":"すでにあるマスクを調整する"},{"text":"マスキングの種類を変更する","id":"マスキングの種類を変更する"},{"text":"誤判定・不要なマスキングは削除","id":"誤判定・不要なマスキングは削除"},{"text":"足りない場所にマスクを追加する","id":"足りない場所にマスクを追加する"},{"text":"拡大・縮小して細かく編集する","id":"拡大・縮小して細かく編集する"},{"text":"再検出","id":"再検出"},{"text":"保存","id":"保存"},{"text":"読み込んだ画像をリセットする","id":"読み込んだ画像をリセットする"}],"header":[["$","p",null,{"className":"text-xs font-semibold tracking-wide text-indigo-600","children":["ガイド ",2]}],["$","h1",null,{"className":"mt-2 text-2xl font-bold tracking-tight text-zinc-900","children":"手動での編集の仕方"}],["$","p",null,{"className":"mt-3 text-sm leading-relaxed text-zinc-600","children":"自動検出後にマスク範囲を追加・調整して、隠したい場所を手動で編集する方法を説明します。"}]],"children":[["$","$L3",null,{"content":"$4"}],["$","p",null,{"className":"pt-2","children":["$","$L5",null,{"href":"/guides","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"使い方ガイド一覧へ戻る"}]}]]}],null,["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":"$@9","staleTime":"$a","varyParams":null},{"rsc":["$","$1","h",{"children":[null,["$","$Lb",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#fafafa"}]]}],["$","div",null,{"hidden":true,"children":["$","$Lc",null,{"children":["$","$7",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"手動での編集の仕方 | 使い方ガイド | 伏せ太郎（Fusely）"}],["$","meta","1",{"name":"description","content":"自動検出後にマスク範囲を追加・調整して、隠したい場所を手動で編集する方法を説明します。"}],["$","meta","2",{"name":"application-name","content":"伏せ太郎 | Fusely"}],["$","link","3",{"rel":"manifest","href":"/manifest.webmanifest"}],["$","meta","4",{"name":"keywords","content":"伏せ太郎,Fusely,画像 個人情報 マスキング,スクショ 個人情報 隠す,スクショ 顔 隠す,写真 個人情報 消す,ブラウザ 顔隠し,顔隠し Webアプリ,電話番号 画像 隠す,自動 マスキング 無料,アップロード不要 マスキング,顔隠し,個人情報 保護,モザイク,ぼかし,黒塗り,OCR"}],["$","meta","5",{"name":"google-adsense-account","content":"ca-pub-5141642513537299"}],["$","link","6",{"rel":"canonical","href":"https://fusely-app.pages.dev/guides/manual-edit"}],["$","meta","7",{"name":"format-detection","content":"telephone=no"}],["$","meta","8",{"name":"google-site-verification","content":"h8_qALSr2HLxo3u0KCmFKOB-BfRPs6Wh_oPvaYGu1kU"}],"$Ld","$Le","$Lf","$L10","$L11","$L12","$L13","$L14","$L15","$L16","$L17","$L18","$L19","$L1a","$L1b","$L1c","$L1d"]}]}]}],"$L1e"]}],"isPartial":"$@1f","staleTime":"$a","varyParams":null},{"rsc":"$L20","isPartial":"$@21","staleTime":"$a","varyParams":"$22"},{"rsc":"$L23","isPartial":"$@24","staleTime":"$a","varyParams":"$22"}],"isUpgradeableISRFallback":false,"a":"$@25","rootVaryParams":null,"needsRuntimeRequest":"$@26"}
+27:I[8443,[],"IconMark"]
+28:I[4311,[],""]
+29:I[4027,[],""]
 8:null
+d:["$","meta","9",{"name":"mobile-web-app-capable","content":"yes"}]
+e:["$","meta","10",{"name":"apple-mobile-web-app-title","content":"伏せ太郎"}]
+f:["$","meta","11",{"name":"apple-mobile-web-app-status-bar-style","content":"default"}]
+10:["$","meta","12",{"property":"og:title","content":"手動での編集の仕方 | 使い方ガイド | 伏せ太郎（Fusely）"}]
+11:["$","meta","13",{"property":"og:description","content":"自動検出後にマスク範囲を追加・調整して、隠したい場所を手動で編集する方法を説明します。"}]
+12:["$","meta","14",{"property":"og:url","content":"https://fusely-app.pages.dev/guides/manual-edit"}]
+13:["$","meta","15",{"property":"og:image","content":"https://fusely-app.pages.dev/hero.png"}]
+14:["$","meta","16",{"property":"og:image:width","content":"1731"}]
+15:["$","meta","17",{"property":"og:image:height","content":"909"}]
+16:["$","meta","18",{"property":"og:image:alt","content":"伏せ太郎 | Fusely - 画像内の顔・文字を、すばやくマスキング"}]
+17:["$","meta","19",{"name":"twitter:card","content":"summary_large_image"}]
+18:["$","meta","20",{"name":"twitter:title","content":"手動での編集の仕方 | 使い方ガイド | 伏せ太郎（Fusely）"}]
+19:["$","meta","21",{"name":"twitter:description","content":"自動検出後にマスク範囲を追加・調整して、隠したい場所を手動で編集する方法を説明します。"}]
+1a:["$","meta","22",{"name":"twitter:image","content":"https://fusely-app.pages.dev/hero.png"}]
+1b:["$","link","23",{"rel":"icon","href":"favicon.ico"}]
+1c:["$","link","24",{"rel":"apple-touch-icon","href":"/icons/apple-touch-icon.png"}]
+1d:["$","$L27","25",{}]
+1e:["$","meta",null,{"name":"next-size-adjust","content":""}]
+20:["$","$1","c",{"children":[null,["$","$L28",null,{"parallelRouterKey":"children","template":["$","$L29",null,{}]}]]}]
+23:["$","$1","c",{"children":[null,["$","$L28",null,{"parallelRouterKey":"children","template":["$","$L29",null,{}]}]]}]
+26:true
+a:300
+a:C
+25:0
+1f:"$undefined"
+21:"$undefined"
+24:"$undefined"
+9:"$undefined"

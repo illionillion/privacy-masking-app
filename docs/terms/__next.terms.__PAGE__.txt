@@ -1,7 +1,9 @@
 1:"$Sreact.fragment"
-2:I[4196,["5","static/chunks/5-45a81fb9158df9e5.js","511","static/chunks/511-38bd9ff3bfaedad9.js","66","static/chunks/app/terms/page-9eaff3c32da6d1a2.js"],"MarkdownContent"]
-4:I[8849,[],"OutletBoundary"]
+2:I[1978,["30","static/chunks/30-71e170e482ea5655.js","905","static/chunks/905-f55d2a7071559cb1.js","66","static/chunks/app/terms/page-f8d83b946c8898f6.js"],"MarkdownContent"]
+4:I[6510,[],"OutletBoundary"]
 5:"$Sreact.suspense"
+9:I[6510,[],"ViewportBoundary"]
+a:I[6510,[],"MetadataBoundary"]
 3:T10c0,本利用規約（以下「本規約」）は、伏せ太郎（Fusely）（以下「本サービス」）の利用条件を定めるものです。本サービスを利用する前に、本規約をお読みください。
 
 ## 第1条（適用）
@@ -52,5 +54,33 @@
 
 本規約は日本法を準拠法とします。
 
-[トップページへ戻る](/)0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"利用規約"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["最終更新日",": ","2026年5月12日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":["$","$L2",null,{"content":"$3"}]}]]}],null,["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"1AJnxsk_fhSmkbq7b5L1x"}
+[トップページへ戻る](/)8:X
+1c:X
+1c:C
+0:{"buildId":"rMI-hMJ1HtLi_3GcT71QK","data":[{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"利用規約"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["最終更新日",": ","2026年5月12日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":["$","$L2",null,{"content":"$3"}]}]]}],null,["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":"$@7","staleTime":"$8","varyParams":null},{"rsc":["$","$1","h",{"children":[null,["$","$L9",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#fafafa"}]]}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$5",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"利用規約 | 伏せ太郎（Fusely）"}],["$","meta","1",{"name":"description","content":"伏せ太郎（Fusely）の利用規約。免責、禁止事項、連絡方法、ソフトウェアライセンスについて定めます。"}],["$","meta","2",{"name":"application-name","content":"伏せ太郎 | Fusely"}],["$","link","3",{"rel":"manifest","href":"/manifest.webmanifest"}],["$","meta","4",{"name":"keywords","content":"伏せ太郎,Fusely,画像 個人情報 マスキング,スクショ 個人情報 隠す,スクショ 顔 隠す,写真 個人情報 消す,ブラウザ 顔隠し,顔隠し Webアプリ,電話番号 画像 隠す,自動 マスキング 無料,アップロード不要 マスキング,顔隠し,個人情報 保護,モザイク,ぼかし,黒塗り,OCR"}],["$","meta","5",{"name":"google-adsense-account","content":"ca-pub-5141642513537299"}],["$","link","6",{"rel":"canonical","href":"https://fusely-app.pages.dev/terms"}],["$","meta","7",{"name":"format-detection","content":"telephone=no"}],["$","meta","8",{"name":"google-site-verification","content":"h8_qALSr2HLxo3u0KCmFKOB-BfRPs6Wh_oPvaYGu1kU"}],["$","meta","9",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","10",{"name":"apple-mobile-web-app-title","content":"伏せ太郎"}],["$","meta","11",{"name":"apple-mobile-web-app-status-bar-style","content":"default"}],["$","meta","12",{"property":"og:title","content":"利用規約 | 伏せ太郎（Fusely）"}],"$Lb","$Lc","$Ld","$Le","$Lf","$L10","$L11","$L12","$L13","$L14","$L15","$L16","$L17"]}]}]}],"$L18"]}],"isPartial":"$@19","staleTime":"$8","varyParams":null},{"rsc":"$L1a","isPartial":"$@1b","staleTime":"$8","varyParams":"$1c"}],"isUpgradeableISRFallback":false,"a":"$@1d","rootVaryParams":null,"needsRuntimeRequest":"$@1e"}
+1f:I[8443,[],"IconMark"]
+20:I[4311,[],""]
+21:I[4027,[],""]
 6:null
+b:["$","meta","13",{"property":"og:description","content":"伏せ太郎（Fusely）の利用規約。免責、禁止事項、連絡方法、ソフトウェアライセンスについて定めます。"}]
+c:["$","meta","14",{"property":"og:url","content":"https://fusely-app.pages.dev/terms"}]
+d:["$","meta","15",{"property":"og:image","content":"https://fusely-app.pages.dev/hero.png"}]
+e:["$","meta","16",{"property":"og:image:width","content":"1731"}]
+f:["$","meta","17",{"property":"og:image:height","content":"909"}]
+10:["$","meta","18",{"property":"og:image:alt","content":"伏せ太郎 | Fusely - 画像内の顔・文字を、すばやくマスキング"}]
+11:["$","meta","19",{"name":"twitter:card","content":"summary_large_image"}]
+12:["$","meta","20",{"name":"twitter:title","content":"利用規約 | 伏せ太郎（Fusely）"}]
+13:["$","meta","21",{"name":"twitter:description","content":"伏せ太郎（Fusely）の利用規約。免責、禁止事項、連絡方法、ソフトウェアライセンスについて定めます。"}]
+14:["$","meta","22",{"name":"twitter:image","content":"https://fusely-app.pages.dev/hero.png"}]
+15:["$","link","23",{"rel":"icon","href":"favicon.ico"}]
+16:["$","link","24",{"rel":"apple-touch-icon","href":"/icons/apple-touch-icon.png"}]
+17:["$","$L1f","25",{}]
+18:["$","meta",null,{"name":"next-size-adjust","content":""}]
+1a:["$","$1","c",{"children":[null,["$","$L20",null,{"parallelRouterKey":"children","template":["$","$L21",null,{}]}]]}]
+1e:true
+8:300
+8:C
+1d:0
+19:"$undefined"
+1b:"$undefined"
+7:"$undefined"

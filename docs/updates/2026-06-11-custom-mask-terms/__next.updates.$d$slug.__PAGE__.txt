@@ -1,8 +1,10 @@
 1:"$Sreact.fragment"
-2:I[4196,["5","static/chunks/5-45a81fb9158df9e5.js","511","static/chunks/511-38bd9ff3bfaedad9.js","229","static/chunks/app/updates/%5Bslug%5D/page-68a2869fe23f14b3.js"],"MarkdownContent"]
-4:I[2005,["5","static/chunks/5-45a81fb9158df9e5.js","511","static/chunks/511-38bd9ff3bfaedad9.js","229","static/chunks/app/updates/%5Bslug%5D/page-68a2869fe23f14b3.js"],""]
-5:I[8849,[],"OutletBoundary"]
+2:I[1978,["30","static/chunks/30-71e170e482ea5655.js","905","static/chunks/905-f55d2a7071559cb1.js","229","static/chunks/app/updates/%5Bslug%5D/page-11abeeb326c3f783.js"],"MarkdownContent"]
+4:I[6030,["30","static/chunks/30-71e170e482ea5655.js","905","static/chunks/905-f55d2a7071559cb1.js","229","static/chunks/app/updates/%5Bslug%5D/page-11abeeb326c3f783.js"],""]
+5:I[6510,[],"OutletBoundary"]
 6:"$Sreact.suspense"
+a:I[6510,[],"ViewportBoundary"]
+b:I[6510,[],"MetadataBoundary"]
 3:Tb18,メールアドレスや電話番号は従来どおり自動検出されますが、**人名のように決まったパターンに当てはまらない文字列** は、これまで手動マスクが中心でした。今回 **マスク語句** を追加し、あらかじめ登録した文字列が OCR 結果に含まれていれば、自動でマスク候補に載るようにしました。
 
 ## こんなときに
@@ -32,5 +34,32 @@
 - 検出漏れ・誤検出は起こり得るため、公開前の目視確認は引き続き必要です
 - 登録は最大 50 件・1 語 100 文字まで
 
-開発の経緯は [Issue #89](https://github.com/illionillion/privacy-masking-app/issues/89) を参照してください。Pull Request 公開後に本記事へリンクを追記します。0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"カスタムマスク語句（人名・社名の登録）を追加"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["公開日",": ","2026年6月11日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":[["$","$L2",null,{"content":"$3"}],["$","p",null,{"className":"pt-2","children":["$","$L4",null,{"href":"/updates","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"更新情報一覧へ戻る"}]}]]}]]}],null,["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"1AJnxsk_fhSmkbq7b5L1x"}
+開発の経緯は [Issue #89](https://github.com/illionillion/privacy-masking-app/issues/89) を参照してください。Pull Request 公開後に本記事へリンクを追記します。9:X
+1a:X
+1a:C
+0:{"buildId":"rMI-hMJ1HtLi_3GcT71QK","data":[{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"mx-auto w-full max-w-3xl px-4 py-10","children":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"カスタムマスク語句（人名・社名の登録）を追加"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["公開日",": ","2026年6月11日"]}],["$","div",null,{"className":"mt-8 space-y-6 text-sm leading-relaxed text-zinc-700","children":[["$","$L2",null,{"content":"$3"}],["$","p",null,{"className":"pt-2","children":["$","$L4",null,{"href":"/updates","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"更新情報一覧へ戻る"}]}]]}]]}],null,["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],"isPartial":"$@8","staleTime":"$9","varyParams":null},{"rsc":["$","$1","h",{"children":[null,["$","$La",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#fafafa"}]]}],["$","div",null,{"hidden":true,"children":["$","$Lb",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"カスタムマスク語句（人名・社名の登録）を追加 | 更新情報 | 伏せ太郎（Fusely）"}],["$","meta","1",{"name":"description","content":"人名や社名など、自分で登録した文字列を OCR 検出時に自動マスクできる「マスク語句」を追加しました。複数画像に同じ名前が散らばる資料加工や、名刺の姓名分割にも向いています。"}],["$","meta","2",{"name":"application-name","content":"伏せ太郎 | Fusely"}],["$","link","3",{"rel":"manifest","href":"/manifest.webmanifest"}],["$","meta","4",{"name":"keywords","content":"伏せ太郎,Fusely,画像 個人情報 マスキング,スクショ 個人情報 隠す,スクショ 顔 隠す,写真 個人情報 消す,ブラウザ 顔隠し,顔隠し Webアプリ,電話番号 画像 隠す,自動 マスキング 無料,アップロード不要 マスキング,顔隠し,個人情報 保護,モザイク,ぼかし,黒塗り,OCR"}],["$","meta","5",{"name":"google-adsense-account","content":"ca-pub-5141642513537299"}],["$","link","6",{"rel":"canonical","href":"https://fusely-app.pages.dev/updates/2026-06-11-custom-mask-terms"}],["$","meta","7",{"name":"format-detection","content":"telephone=no"}],["$","meta","8",{"name":"google-site-verification","content":"h8_qALSr2HLxo3u0KCmFKOB-BfRPs6Wh_oPvaYGu1kU"}],["$","meta","9",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","10",{"name":"apple-mobile-web-app-title","content":"伏せ太郎"}],["$","meta","11",{"name":"apple-mobile-web-app-status-bar-style","content":"default"}],["$","meta","12",{"property":"og:title","content":"カスタムマスク語句（人名・社名の登録）を追加 | 更新情報 | 伏せ太郎（Fusely）"}],["$","meta","13",{"property":"og:description","content":"人名や社名など、自分で登録した文字列を OCR 検出時に自動マスクできる「マスク語句」を追加しました。複数画像に同じ名前が散らばる資料加工や、名刺の姓名分割にも向いています。"}],["$","meta","14",{"property":"og:url","content":"https://fusely-app.pages.dev/updates/2026-06-11-custom-mask-terms"}],["$","meta","15",{"property":"og:image","content":"https://fusely-app.pages.dev/hero.png"}],"$Lc","$Ld","$Le","$Lf","$L10","$L11","$L12","$L13","$L14","$L15"]}]}]}],"$L16"]}],"isPartial":"$@17","staleTime":"$9","varyParams":null},{"rsc":"$L18","isPartial":"$@19","staleTime":"$9","varyParams":"$1a"},{"rsc":"$L1b","isPartial":"$@1c","staleTime":"$9","varyParams":"$1a"}],"isUpgradeableISRFallback":false,"a":"$@1d","rootVaryParams":null,"needsRuntimeRequest":"$@1e"}
+1f:I[8443,[],"IconMark"]
+20:I[4311,[],""]
+21:I[4027,[],""]
 7:null
+c:["$","meta","16",{"property":"og:image:width","content":"1731"}]
+d:["$","meta","17",{"property":"og:image:height","content":"909"}]
+e:["$","meta","18",{"property":"og:image:alt","content":"伏せ太郎 | Fusely - 画像内の顔・文字を、すばやくマスキング"}]
+f:["$","meta","19",{"name":"twitter:card","content":"summary_large_image"}]
+10:["$","meta","20",{"name":"twitter:title","content":"カスタムマスク語句（人名・社名の登録）を追加 | 更新情報 | 伏せ太郎（Fusely）"}]
+11:["$","meta","21",{"name":"twitter:description","content":"人名や社名など、自分で登録した文字列を OCR 検出時に自動マスクできる「マスク語句」を追加しました。複数画像に同じ名前が散らばる資料加工や、名刺の姓名分割にも向いています。"}]
+12:["$","meta","22",{"name":"twitter:image","content":"https://fusely-app.pages.dev/hero.png"}]
+13:["$","link","23",{"rel":"icon","href":"favicon.ico"}]
+14:["$","link","24",{"rel":"apple-touch-icon","href":"/icons/apple-touch-icon.png"}]
+15:["$","$L1f","25",{}]
+16:["$","meta",null,{"name":"next-size-adjust","content":""}]
+18:["$","$1","c",{"children":[null,["$","$L20",null,{"parallelRouterKey":"children","template":["$","$L21",null,{}]}]]}]
+1b:["$","$1","c",{"children":[null,["$","$L20",null,{"parallelRouterKey":"children","template":["$","$L21",null,{}]}]]}]
+1e:true
+9:300
+9:C
+1d:0
+17:"$undefined"
+19:"$undefined"
+1c:"$undefined"
+8:"$undefined"
