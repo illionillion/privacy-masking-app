@@ -1,12 +1,24 @@
-1:"$Sreact.fragment"
-2:I[4042,["30","static/chunks/30-71e170e482ea5655.js","905","static/chunks/905-f55d2a7071559cb1.js","191","static/chunks/191-610ad128c53e170f.js","953","static/chunks/app/blog/%5Bslug%5D/page-09483e37e9500093.js"],"MarkdownWithToc"]
-3:I[1978,["30","static/chunks/30-71e170e482ea5655.js","905","static/chunks/905-f55d2a7071559cb1.js","191","static/chunks/191-610ad128c53e170f.js","953","static/chunks/app/blog/%5Bslug%5D/page-09483e37e9500093.js"],"MarkdownContent"]
-5:I[6030,["30","static/chunks/30-71e170e482ea5655.js","905","static/chunks/905-f55d2a7071559cb1.js","191","static/chunks/191-610ad128c53e170f.js","953","static/chunks/app/blog/%5Bslug%5D/page-09483e37e9500093.js"],""]
-6:I[6510,[],"OutletBoundary"]
-7:"$Sreact.suspense"
-b:I[6510,[],"ViewportBoundary"]
-c:I[6510,[],"MetadataBoundary"]
-4:T1263,運動会、発表会、家族旅行、日常のスナップ。子どもの写真は、まわりに見せたくなる場面が多いです。一方で、ネットに上げた写真は「家族のアルバム」ではなく、**第三者が保存・転載・再利用しやすい公開物**にもなり得ます。不安を煽る必要はありませんが、投稿ボタンを押す前に一度立ち止まると、後から取り返しにくいリスクを下げやすくなります。
+2:"$Sreact.fragment"
+3:I[4754,[],""]
+4:I[2448,[],""]
+b:"static/chunks/311-393ddb9c0f7ad050.js"
+c:"static/chunks/616-96ecd3b2abd6cbd5.js"
+d:"static/chunks/901-cdaafb3f4912b541.js"
+e:"static/chunks/app/blog/%5Bslug%5D/page-243765f51854697e.js"
+f:I[5136,["311","$b","616","$c","901","$d","953","$e"],"MarkdownWithToc"]
+10:I[8359,["311","$b","616","$c","901","$d","953","$e"],"MarkdownContent"]
+12:I[311,["311","$b","616","$c","901","$d","953","$e"],""]
+13:I[5419,[],"OutletBoundary"]
+14:"$Sreact.suspense"
+17:"ViewportBoundary"
+18:I[5419,[],"$17"]
+19:"MetadataBoundary"
+1a:I[5419,[],"$19"]
+1b:I[5986,[],"IconMark"]
+6:X
+6:C
+7:X
+11:T1263,運動会、発表会、家族旅行、日常のスナップ。子どもの写真は、まわりに見せたくなる場面が多いです。一方で、ネットに上げた写真は「家族のアルバム」ではなく、**第三者が保存・転載・再利用しやすい公開物**にもなり得ます。不安を煽る必要はありませんが、投稿ボタンを押す前に一度立ち止まると、後から取り返しにくいリスクを下げやすくなります。
 
 ## 子どもの写真が「普通の投稿」になりにくい理由
 
@@ -61,46 +73,16 @@ c:I[6510,[],"MetadataBoundary"]
 
 ## まとめ
 
-子どもの写真の共有は、今のうれしさを伝える行為であると同時に、子どもの顔や生活の手がかりを長く残す行為でもあります。「隠しておけば絶対安全」ではありませんが、**公開範囲・写り込み・キャプションを投稿前に見直す習慣**は、将来の本人の気持ちや、想定外の拡散への備えになります。公開する前に、一度写真を拡大して見直してみてください。a:X
-29:X
-29:C
-0:{"buildId":"rMI-hMJ1HtLi_3GcT71QK","data":[{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"text":"子どもの写真が「普通の投稿」になりにくい理由","id":"子どもの写真が普通の投稿になりにくい理由"},{"text":"特に注意したい写り込み・公開の仕方","id":"特に注意したい写り込み・公開の仕方"},{"text":"投稿前チェックリスト","id":"投稿前チェックリスト"},{"text":"顔や個人情報を隠してから共有する","id":"顔や個人情報を隠してから共有する"},{"text":"まとめ","id":"まとめ"}],"header":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"子どもの写真をネットに上げる前に注意したいこと"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["公開日: ","2026年7月22日"]}],["$","p",null,{"className":"mt-3 text-xs font-semibold tracking-wide text-indigo-600","children":"プライバシー"}],["$","ul",null,{"className":"mt-3 flex flex-wrap gap-2","children":[["$","li","SNS",{"className":"rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600","children":"SNS"}],["$","li","子ども",{"className":"rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600","children":"子ども"}],["$","li","顔隠し",{"className":"rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600","children":"顔隠し"}],["$","li","個人情報",{"className":"rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600","children":"個人情報"}]]}]],"children":[["$","$L3",null,{"content":"$4"}],["$","p",null,{"className":"pt-2","children":["$","$L5",null,{"href":"/blog","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"ブログ一覧へ戻る"}]}]]}],null,["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":"$@9","staleTime":"$a","varyParams":null},{"rsc":["$","$1","h",{"children":[null,["$","$Lb",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#fafafa"}]]}],["$","div",null,{"hidden":true,"children":["$","$Lc",null,{"children":["$","$7",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"子どもの写真をネットに上げる前に注意したいこと | ブログ | 伏せ太郎（Fusely）"}],["$","meta","1",{"name":"description","content":"子どもの写真を SNS やグループに共有する前に確認したい、写り込み・拡散・将来のリスクと、投稿前のチェックポイントをまとめます。"}],"$Ld","$Le","$Lf","$L10","$L11","$L12","$L13","$L14","$L15","$L16","$L17","$L18","$L19","$L1a","$L1b","$L1c","$L1d","$L1e","$L1f","$L20","$L21","$L22","$L23","$L24"]}]}]}],"$L25"]}],"isPartial":"$@26","staleTime":"$a","varyParams":null},{"rsc":"$L27","isPartial":"$@28","staleTime":"$a","varyParams":"$29"},{"rsc":"$L2a","isPartial":"$@2b","staleTime":"$a","varyParams":"$29"}],"isUpgradeableISRFallback":false,"a":"$@2c","rootVaryParams":null,"needsRuntimeRequest":"$@2d"}
-2e:I[8443,[],"IconMark"]
-2f:I[4311,[],""]
-30:I[4027,[],""]
-8:null
-d:["$","meta","2",{"name":"application-name","content":"伏せ太郎 | Fusely"}]
-e:["$","link","3",{"rel":"manifest","href":"/manifest.webmanifest"}]
-f:["$","meta","4",{"name":"keywords","content":"伏せ太郎,Fusely,画像 個人情報 マスキング,スクショ 個人情報 隠す,スクショ 顔 隠す,写真 個人情報 消す,ブラウザ 顔隠し,顔隠し Webアプリ,電話番号 画像 隠す,自動 マスキング 無料,アップロード不要 マスキング,顔隠し,個人情報 保護,モザイク,ぼかし,黒塗り,OCR"}]
-10:["$","meta","5",{"name":"google-adsense-account","content":"ca-pub-5141642513537299"}]
-11:["$","link","6",{"rel":"canonical","href":"https://fusely-app.pages.dev/blog/2026-07-22-child-photo-online-privacy"}]
-12:["$","meta","7",{"name":"format-detection","content":"telephone=no"}]
-13:["$","meta","8",{"name":"google-site-verification","content":"h8_qALSr2HLxo3u0KCmFKOB-BfRPs6Wh_oPvaYGu1kU"}]
-14:["$","meta","9",{"name":"mobile-web-app-capable","content":"yes"}]
-15:["$","meta","10",{"name":"apple-mobile-web-app-title","content":"伏せ太郎"}]
-16:["$","meta","11",{"name":"apple-mobile-web-app-status-bar-style","content":"default"}]
-17:["$","meta","12",{"property":"og:title","content":"子どもの写真をネットに上げる前に注意したいこと | ブログ | 伏せ太郎（Fusely）"}]
-18:["$","meta","13",{"property":"og:description","content":"子どもの写真を SNS やグループに共有する前に確認したい、写り込み・拡散・将来のリスクと、投稿前のチェックポイントをまとめます。"}]
-19:["$","meta","14",{"property":"og:url","content":"https://fusely-app.pages.dev/blog/2026-07-22-child-photo-online-privacy"}]
-1a:["$","meta","15",{"property":"og:image","content":"https://fusely-app.pages.dev/hero.png"}]
-1b:["$","meta","16",{"property":"og:image:width","content":"1731"}]
-1c:["$","meta","17",{"property":"og:image:height","content":"909"}]
-1d:["$","meta","18",{"property":"og:image:alt","content":"伏せ太郎 | Fusely - 画像内の顔・文字を、すばやくマスキング"}]
-1e:["$","meta","19",{"name":"twitter:card","content":"summary_large_image"}]
-1f:["$","meta","20",{"name":"twitter:title","content":"子どもの写真をネットに上げる前に注意したいこと | ブログ | 伏せ太郎（Fusely）"}]
-20:["$","meta","21",{"name":"twitter:description","content":"子どもの写真を SNS やグループに共有する前に確認したい、写り込み・拡散・将来のリスクと、投稿前のチェックポイントをまとめます。"}]
-21:["$","meta","22",{"name":"twitter:image","content":"https://fusely-app.pages.dev/hero.png"}]
-22:["$","link","23",{"rel":"icon","href":"favicon.ico"}]
-23:["$","link","24",{"rel":"apple-touch-icon","href":"/icons/apple-touch-icon.png"}]
-24:["$","$L2e","25",{}]
-25:["$","meta",null,{"name":"next-size-adjust","content":""}]
-27:["$","$1","c",{"children":[null,["$","$L2f",null,{"parallelRouterKey":"children","template":["$","$L30",null,{}]}]]}]
-2a:["$","$1","c",{"children":[null,["$","$L2f",null,{"parallelRouterKey":"children","template":["$","$L30",null,{}]}]]}]
-2d:true
-a:300
-a:C
-2c:0
-26:"$undefined"
-28:"$undefined"
-2b:"$undefined"
+子どもの写真の共有は、今のうれしさを伝える行為であると同時に、子どもの顔や生活の手がかりを長く残す行為でもあります。「隠しておけば絶対安全」ではありませんが、**公開範囲・写り込み・キャプションを投稿前に見直す習慣**は、将来の本人の気持ちや、想定外の拡散への備えになります。公開する前に、一度写真を拡大して見直してみてください。a:[["children",{"s":"__PAGE__","h":160,"d":{"r":["$","$2","c",{"children":[["$","$Lf",null,{"headings":[{"text":"子どもの写真が「普通の投稿」になりにくい理由","id":"子どもの写真が普通の投稿になりにくい理由"},{"text":"特に注意したい写り込み・公開の仕方","id":"特に注意したい写り込み・公開の仕方"},{"text":"投稿前チェックリスト","id":"投稿前チェックリスト"},{"text":"顔や個人情報を隠してから共有する","id":"顔や個人情報を隠してから共有する"},{"text":"まとめ","id":"まとめ"}],"header":[["$","h1",null,{"className":"text-2xl font-bold tracking-tight text-zinc-900","children":"子どもの写真をネットに上げる前に注意したいこと"}],["$","p",null,{"className":"mt-2 text-sm text-zinc-500","children":["公開日: ","2026年7月22日"]}],["$","p",null,{"className":"mt-3 text-xs font-semibold tracking-wide text-indigo-600","children":"プライバシー"}],["$","ul",null,{"className":"mt-3 flex flex-wrap gap-2","children":[["$","li","SNS",{"className":"rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600","children":"SNS"}],["$","li","子ども",{"className":"rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600","children":"子ども"}],["$","li","顔隠し",{"className":"rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600","children":"顔隠し"}],["$","li","個人情報",{"className":"rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600","children":"個人情報"}]]}]],"children":[["$","$L10",null,{"content":"$11"}],["$","p",null,{"className":"pt-2","children":["$","$L12",null,{"href":"/blog","className":"font-medium text-indigo-600 underline-offset-2 hover:underline","children":"ブログ一覧へ戻る"}]}]]}],null,["$","$L13",null,{"children":["$","$14",null,{"name":"Next.MetadataOutlet","children":"$@15"}]}]]}],"p":"$@16","v":null,"s":"$7"}}]]
+8:[["children",{"s":{"n":"slug","t":"d","k":"2026-07-22-child-photo-online-privacy","s":[]},"h":65632,"d":{"r":["$","$2","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","template":["$","$L4",null,{}]}]]}],"p":"$@9","v":"$6","s":"$7"},"c":"$Qa"}]]
+1:[["children",{"s":"blog","h":131136,"d":{"r":["$","$2","c",{"children":[null,["$","$L3",null,{"parallelRouterKey":"children","template":["$","$L4",null,{}]}]]}],"p":"$@5","v":"$6","s":"$7"},"c":"$Q8"}]]
+0:{"t":{"t":{"s":"","h":131088,"c":"$Q1"},"h":{"r":["$","$2","h",{"children":[null,["$","$L18",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#fafafa"}]]}],["$","$L1a",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$14",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"子どもの写真をネットに上げる前に注意したいこと | ブログ | 伏せ太郎（Fusely）"}],["$","meta","1",{"name":"description","content":"子どもの写真を SNS やグループに共有する前に確認したい、写り込み・拡散・将来のリスクと、投稿前のチェックポイントをまとめます。"}],["$","meta","2",{"name":"application-name","content":"伏せ太郎 | Fusely"}],["$","link","3",{"rel":"manifest","href":"/manifest.webmanifest"}],["$","meta","4",{"name":"keywords","content":"伏せ太郎,Fusely,画像 個人情報 マスキング,スクショ 個人情報 隠す,スクショ 顔 隠す,写真 個人情報 消す,ブラウザ 顔隠し,顔隠し Webアプリ,電話番号 画像 隠す,自動 マスキング 無料,アップロード不要 マスキング,顔隠し,個人情報 保護,モザイク,ぼかし,黒塗り,OCR"}],["$","meta","5",{"name":"google-adsense-account","content":"ca-pub-5141642513537299"}],["$","link","6",{"rel":"canonical","href":"https://fusely-app.pages.dev/blog/2026-07-22-child-photo-online-privacy"}],["$","meta","7",{"name":"format-detection","content":"telephone=no"}],["$","meta","8",{"name":"google-site-verification","content":"h8_qALSr2HLxo3u0KCmFKOB-BfRPs6Wh_oPvaYGu1kU"}],["$","meta","9",{"name":"mobile-web-app-capable","content":"yes"}],["$","meta","10",{"name":"apple-mobile-web-app-title","content":"伏せ太郎"}],["$","meta","11",{"name":"apple-mobile-web-app-status-bar-style","content":"default"}],["$","meta","12",{"property":"og:title","content":"子どもの写真をネットに上げる前に注意したいこと | ブログ | 伏せ太郎（Fusely）"}],["$","meta","13",{"property":"og:description","content":"子どもの写真を SNS やグループに共有する前に確認したい、写り込み・拡散・将来のリスクと、投稿前のチェックポイントをまとめます。"}],["$","meta","14",{"property":"og:url","content":"https://fusely-app.pages.dev/blog/2026-07-22-child-photo-online-privacy"}],["$","meta","15",{"property":"og:image","content":"https://fusely-app.pages.dev/hero.png"}],["$","meta","16",{"property":"og:image:width","content":"1731"}],["$","meta","17",{"property":"og:image:height","content":"909"}],["$","meta","18",{"property":"og:image:alt","content":"伏せ太郎 | Fusely - 画像内の顔・文字を、すばやくマスキング"}],["$","meta","19",{"name":"twitter:card","content":"summary_large_image"}],["$","meta","20",{"name":"twitter:title","content":"子どもの写真をネットに上げる前に注意したいこと | ブログ | 伏せ太郎（Fusely）"}],["$","meta","21",{"name":"twitter:description","content":"子どもの写真を SNS やグループに共有する前に確認したい、写り込み・拡散・将来のリスクと、投稿前のチェックポイントをまとめます。"}],["$","meta","22",{"name":"twitter:image","content":"https://fusely-app.pages.dev/hero.png"}],["$","link","23",{"rel":"icon","href":"favicon.ico"}],["$","link","24",{"rel":"apple-touch-icon","href":"/icons/apple-touch-icon.png"}],["$","$L1b","25",{}]]}]}],null]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"p":"$@1c","v":null,"s":"$7"}},"a":"$@1d","u":"$@1e","b":"nd1tqazlXDcAgkGO7QPvR"}
+15:null
+1e:true
+7:300
+7:C
+1d:0
 9:"$undefined"
+5:"$undefined"
+1c:"$undefined"
+16:"$undefined"

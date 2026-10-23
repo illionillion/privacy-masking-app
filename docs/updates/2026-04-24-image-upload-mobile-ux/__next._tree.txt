@@ -1,4 +1,7 @@
 :HL["/_next/static/media/22a5144ee8d83bca-s.p.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 :HL["/_next/static/media/7d4881bb7e1bf84d-s.p.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 :HL["/_next/static/css/cfb1d14e01299678.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":4112,"slots":{"children":{"name":"updates","param":null,"prefetchHints":4160,"slots":{"children":{"name":"slug","param":{"type":"d","key":"2026-04-24-image-upload-mobile-ux","siblings":[]},"prefetchHints":4192,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":4256,"slots":null}}}}}}},"staleTime":300,"buildId":"rMI-hMJ1HtLi_3GcT71QK"}
+3:[["children",{"s":"__PAGE__","h":160}]]
+2:[["children",{"s":{"n":"slug","t":"d","k":"2026-04-24-image-upload-mobile-ux","s":[]},"h":65632,"c":"$Q3"}]]
+1:[["children",{"s":"updates","h":131136,"c":"$Q2"}]]
+0:{"b":"nd1tqazlXDcAgkGO7QPvR","t":{"t":{"s":"","h":131088,"c":"$Q1"}}}
