@@ -87,7 +87,8 @@
       "nanoid": "^3.3.18",
       "gray-matter>js-yaml": "^3.15.1",
       "@eslint/eslintrc>js-yaml": "^4.3.1",
-      "@serwist/next>browserslist": "^4.28.7"
+      "@serwist/next>browserslist": "^4.28.7",
+      "zod": "^4.6.6"
     }
   }
 }
